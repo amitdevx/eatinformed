@@ -53,6 +53,26 @@ export async function assessHealthSafety(input: AssessHealthSafetyInput): Promis
     };
   }
 
+  // Validate input length to prevent abuse (max 10,000 characters for ingredients list)
+  const maxIngredientsLength = 10000;
+  if (input.ingredients.length > maxIngredientsLength) {
+    return {
+      rating: 0,
+      pros: [],
+      cons: [],
+      warnings: ["The ingredients list is too long to process. Please provide a shorter list."],
+      ingredientAnalysis: [],
+      dietaryInfo: {
+        allergens: [],
+        suitability: [],
+        isVegetarian: false,
+        isVegan: false,
+        isGlutenFree: false,
+        summary: "Could not perform dietary analysis due to input length limitations.",
+      },
+    };
+  }
+
   const prompt = ai.definePrompt({
     name: 'assessHealthSafetyPrompt',
     input: {schema: AssessHealthSafetyInputSchema},

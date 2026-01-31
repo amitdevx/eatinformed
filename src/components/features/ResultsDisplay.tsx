@@ -14,6 +14,7 @@ import NutritionChart from './NutritionChart';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Image from 'next/image';
+import { SITE_URL } from '@/lib/constants';
 
 interface ResultsDisplayProps {
   ingredientsData: ExtractIngredientsOutput | null;
@@ -77,7 +78,7 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
   const generateSummaryText = useCallback(() => {
     if (!assessmentData) return '';
     const { rating, pros, cons } = assessmentData;
-    const url = typeof window !== "undefined" ? window.location.origin : "https://eatinformed.amitdivekar.qzz.io/";
+    const url = typeof window !== "undefined" ? window.location.origin : SITE_URL;
     // A concise summary formatted for social media, especially Twitter.
     let summary = `This product scored ${rating.toFixed(1)}/5 on EatInformed.`;
     if (pros.length > 0) {

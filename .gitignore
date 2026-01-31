@@ -43,3 +43,8 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# SQLite database files
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
