@@ -5,12 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const SESSION_COOKIE_NAME = 'session';
 
-// Define cookie options
+// Define cookie options with proper security settings
 const getCookieOptions = (expires: number) => ({
   name: SESSION_COOKIE_NAME,
   value: '',
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
   path: '/',
   expires,
 });
@@ -36,19 +37,23 @@ export async function POST(request: NextRequest) {
     cookieStore.set(options.name, options.value, options);
 
     return NextResponse.json({ status: 'success' }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Session login error:', error);
     let errorMessage = 'An unexpected error occurred.';
-    if (error.code === 'auth/id-token-revoked') {
-      errorMessage = 'The ID token has been revoked. Please re-authenticate.';
-    } else if (error.code === 'auth/argument-error') {
-      errorMessage = 'Invalid ID token provided.';
+    // Check for Firebase Auth error codes
+    if (error && typeof error === 'object' && 'code' in error) {
+      const errorCode = (error as { code: string }).code;
+      if (errorCode === 'auth/id-token-revoked') {
+        errorMessage = 'The ID token has been revoked. Please re-authenticate.';
+      } else if (errorCode === 'auth/argument-error') {
+        errorMessage = 'Invalid ID token provided.';
+      }
     }
     return NextResponse.json({ error: errorMessage }, { status: 401 });
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   if (!adminAuth) {
     return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
   }
@@ -68,7 +73,7 @@ export async function GET(request: NextRequest) {
     cookieStore.set(options.name, '', options);
 
     return NextResponse.json({ status: 'success' }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Session logout error:', error);
     return NextResponse.json({ error: 'Failed to log out.' }, { status: 500 });
   }

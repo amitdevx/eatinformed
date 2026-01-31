@@ -75,8 +75,9 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         description: 'You have been successfully logged in.',
       });
       await handleAuthSuccess(idToken);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -103,8 +104,9 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         description: 'You have been successfully logged in.',
       });
       await handleAuthSuccess(idToken);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred during Google Sign-In.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during Google Sign-In.';
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -129,8 +131,9 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         description: 'Your progress will be saved for this session.',
       });
       await handleAuthSuccess(idToken);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during Guest Sign-In.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during Guest Sign-In.';
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }

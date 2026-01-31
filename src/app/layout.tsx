@@ -8,21 +8,22 @@ import Navbar from '@/components/layout/Navbar';
 import ParticleBackground from '@/components/layout/ParticleBackground';
 import FloatingIcons from '@/components/layout/FloatingIcons';
 import { AuthProvider } from '@/context/AuthContext';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 // Default metadata, can be overridden by individual pages
 export const metadata: Metadata = {
-  title: 'EatInformed - AI Nutrition Analysis',
-  description: 'Transform your nutrition with AI power. Upload a food label for instant analysis of ingredients, health, and dietary suitability.',
+  title: `${SITE_NAME} - AI Nutrition Analysis`,
+  description: SITE_DESCRIPTION,
 };
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'EatInformed',
-  url: 'https://eatinformed.amitdivekar.qzz.io/',
-  logo: 'https://eatinformed.amitdivekar.qzz.io/favicon.png', 
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.png`, 
 };
 
 
@@ -34,9 +35,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} dark`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/png" href="/favicon.png" />
         <script
           type="application/ld+json"

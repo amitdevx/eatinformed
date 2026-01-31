@@ -1,13 +1,12 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/constants'
  
 export default function robots(): MetadataRoute.Robots {
-  const sitemapUrl = 'https://eatinformed.amitdivekar.qzz.io/sitemap.xml';
-  
   return {
     rules: {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: sitemapUrl,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   }
 }

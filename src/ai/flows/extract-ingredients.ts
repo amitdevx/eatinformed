@@ -18,6 +18,35 @@ export async function extractIngredients(input: ExtractIngredientsInput): Promis
       status: 'unreadable',
     };
   }
+
+  // Validate the image input is a proper data URI
+  if (!input.image || typeof input.image !== 'string') {
+    return {
+      ingredients: [],
+      nutrition: { rawText: "Invalid image input provided.", nutrients: [] },
+      status: 'unreadable',
+    };
+  }
+
+  // Check for valid data URI format
+  const dataUriPattern = /^data:image\/(png|jpeg|webp|gif);base64,/i;
+  if (!dataUriPattern.test(input.image)) {
+    return {
+      ingredients: [],
+      nutrition: { rawText: "Invalid image format. Please provide a valid image.", nutrients: [] },
+      status: 'unreadable',
+    };
+  }
+
+  // Validate reasonable image size (max ~10MB base64 encoded)
+  const maxBase64Length = 10 * 1024 * 1024 * 1.37; // ~10MB with base64 overhead
+  if (input.image.length > maxBase64Length) {
+    return {
+      ingredients: [],
+      nutrition: { rawText: "Image file is too large. Please use a smaller image.", nutrients: [] },
+      status: 'unreadable',
+    };
+  }
   
   const prompt = ai.definePrompt({
     name: 'extractIngredientsPrompt',

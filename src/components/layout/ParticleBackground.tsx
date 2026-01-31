@@ -16,7 +16,9 @@ const ParticleBackground = () => {
     });
   }, []);
 
-  const particlesLoaded = async (container?: Container) => {};
+  const particlesLoaded = async (_container?: Container): Promise<void> => {
+    // Container is available for debugging or additional configuration if needed
+  };
 
   const options: ISourceOptions = useMemo(
     () => ({
