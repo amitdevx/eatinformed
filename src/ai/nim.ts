@@ -93,6 +93,22 @@ export const parseNIMResponse = (content: string | null): any => {
     // 4g: Remove any BOM or zero-width characters
     repaired = repaired.replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
 
+    // ponytail: auto-close truncated JSON strings and braces
+    const quotes = (repaired.match(/(?<!\\)"/g) || []).length;
+    if (quotes % 2 !== 0) {
+      repaired += '"';
+    }
+    const openBrackets = (repaired.match(/\[/g) || []).length;
+    const closeBrackets = (repaired.match(/\]/g) || []).length;
+    if (openBrackets > closeBrackets) {
+      repaired += ']'.repeat(openBrackets - closeBrackets);
+    }
+    const openBraces = (repaired.match(/\{/g) || []).length;
+    const closeBraces = (repaired.match(/\}/g) || []).length;
+    if (openBraces > closeBraces) {
+      repaired += '}'.repeat(openBraces - closeBraces);
+    }
+
     return JSON.parse(repaired);
   } catch (innerError: any) {
     // Provide a detailed error for debugging

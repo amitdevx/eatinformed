@@ -2,6 +2,9 @@
 import { z } from 'zod';
 
 export const ProductAnalysisOutputSchema = z.object({
+  productName: z.string().optional().default(''),
+  brand: z.string().optional().default(''),
+  novaGroup: z.coerce.number().min(1).max(4).optional().default(4),
   ingredients: z.array(z.string()).default([]),
   nutrition: z.object({
     rawText: z.string().default(''),

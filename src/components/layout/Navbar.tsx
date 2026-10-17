@@ -54,15 +54,17 @@ const AuthButton = ({ isMobile = false }) => {
     );
   }
 
-  if (user && userProfile) {
+  // ponytail: render avatar if user is authenticated; don't flash login button if profile is pending
+  if (user) {
+    const displayName = userProfile?.name || user.displayName || user.email?.split('@')[0] || (user.isAnonymous ? 'Guest' : 'User');
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user.photoURL ?? ''} alt={userProfile.name} />
+              <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
               <AvatarFallback>
-                {userProfile.name?.charAt(0).toUpperCase() || <UserIcon />}
+                {displayName.charAt(0).toUpperCase() || <UserIcon />}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -70,11 +72,11 @@ const AuthButton = ({ isMobile = false }) => {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{userProfile.name}</p>
+              <p className="text-sm font-medium leading-none">{displayName}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {user.email}
+                {user.email || (user.isAnonymous ? 'Anonymous Session' : '')}
               </p>
-              {userProfile?.isAnonymous && (
+              {user.isAnonymous && (
                 <Badge variant="outline" className="text-[10px] border-yellow-500/50 text-yellow-500 w-fit mt-2">
                   Guest Mode
                 </Badge>

@@ -16,60 +16,86 @@ const getCookieOptions = (expires: number) => ({
   expires,
 });
 
-export async function POST(request: NextRequest) {
+type RouteContext = {
+  params: Promise<{ action?: string[] } | any>;
+};
+
+export async function POST(request: NextRequest, context: RouteContext) {
+  const { action } = await context.params;
+  const currentAction = action?.[0];
+
   if (!adminAuth) {
     return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
   }
 
-  try {
-    const { idToken } = await request.json();
-    if (!idToken) {
-      return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
-    }
-
-    const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-
-    const options = getCookieOptions(Date.now() + expiresIn);
-    options.value = sessionCookie;
-
-        const cookieStore = await cookies();
-    cookieStore.set(options.name, options.value, options);
-
-    return NextResponse.json({ status: 'success' }, { status: 200 });
-  } catch (error: unknown) {
-    console.error('Session login error:', error);
-    let errorMessage = 'An unexpected error occurred.';
-    // Check for Firebase Auth error codes
-    if (error && typeof error === 'object' && 'code' in error) {
-      const errorCode = (error as { code: string }).code;
-      if (errorCode === 'auth/id-token-revoked') {
-        errorMessage = 'The ID token has been revoked. Please re-authenticate.';
-      } else if (errorCode === 'auth/argument-error') {
-        errorMessage = 'Invalid ID token provided.';
+  // ponytail: route explicitly by action instead of treating all POSTs as login
+  if (currentAction === 'login') {
+    try {
+      const { idToken } = await request.json();
+      if (!idToken) {
+        return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
       }
+
+      const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
+      const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+
+      const options = getCookieOptions(Date.now() + expiresIn);
+      options.value = sessionCookie;
+
+      const cookieStore = await cookies();
+      cookieStore.set(options.name, options.value, options);
+
+      return NextResponse.json({ status: 'success' }, { status: 200 });
+    } catch (error: unknown) {
+      console.error('Session login error:', error);
+      let errorMessage = 'An unexpected error occurred.';
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'auth/id-token-revoked') {
+          errorMessage = 'The ID token has been revoked. Please re-authenticate.';
+        } else if (errorCode === 'auth/argument-error') {
+          errorMessage = 'Invalid ID token provided.';
+        }
+      }
+      return NextResponse.json({ error: errorMessage }, { status: 401 });
     }
-    return NextResponse.json({ error: errorMessage }, { status: 401 });
   }
+
+  if (currentAction === 'logout') {
+    return handleLogout();
+  }
+
+  return NextResponse.json({ error: `Unsupported action: ${currentAction}` }, { status: 404 });
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const { action } = await context.params;
+  const currentAction = action?.[0];
+
+  // ponytail: only logout on explicit logout action, never on arbitrary GET/prefetch
+  if (currentAction === 'logout') {
+    return handleLogout();
+  }
+
+  return NextResponse.json({ error: `Not found` }, { status: 404 });
+}
+
+async function handleLogout() {
   if (!adminAuth) {
     return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
   }
-  
+
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     if (sessionCookie) {
-      // It's good practice to verify the cookie before revoking tokens
       const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie).catch(() => null);
       if (decodedClaims) {
         await adminAuth.revokeRefreshTokens(decodedClaims.sub);
       }
     }
 
-    const options = getCookieOptions(0); // Expire the cookie immediately
+    const options = getCookieOptions(0);
     cookieStore.set(options.name, '', options);
 
     return NextResponse.json({ status: 'success' }, { status: 200 });

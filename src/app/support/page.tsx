@@ -7,14 +7,14 @@ export default function SupportPage() {
       <div className="container mx-auto px-4 max-w-4xl text-center">
         <h1 className="text-5xl font-bold text-white mb-6">Support Center</h1>
         <p className="text-xl text-gray-300 mb-16">
-          We're here to help. Reach out to us if you have any questions or issues.
+          We&apos;re here to help. Reach out to us if you have any questions or issues.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
           <div className="bg-card/40 border border-border/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors">
             <Mail className="w-10 h-10 text-primary mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Email Support</h3>
-            <p className="text-gray-400 mb-6">Send us an email and we'll get back to you within 24 hours.</p>
+            <p className="text-gray-400 mb-6">Send us an email and we&apos;ll get back to you within 24 hours.</p>
             <Button variant="outline" className="border-gray-600 text-white w-full">support@eatinformed.com</Button>
           </div>
 

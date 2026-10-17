@@ -9,6 +9,10 @@ const ParticleBackground = () => {
   const [init, setInit] = useState(false);
 
   useEffect(() => {
+    // ponytail: respect prefers-reduced-motion to keep app snappy and accessible
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
     initParticlesEngine(async (engine) => {
       await loadSlim(engine);
     }).then(() => {
@@ -27,12 +31,13 @@ const ParticleBackground = () => {
           value: "transparent",
         },
       },
-      fpsLimit: 120, // Increase FPS limit for smoother animation
+      // ponytail: cap at 60fps and 50 particles to prevent mobile battery drain and thermal throttling
+      fpsLimit: 60,
       interactivity: {
         events: {
           onHover: {
-            enable: true, // Enable mouse interaction
-            mode: "repulse", // Change to repulse instead of grab
+            enable: true,
+            mode: "repulse",
           },
         },
         modes: {
@@ -44,26 +49,26 @@ const ParticleBackground = () => {
       },
       particles: {
         color: {
-          value: "#22c55e", // Use primary green color
+          value: "#22c55e",
         },
         links: {
-          enable: false, // Disable links as requested
+          enable: false,
         },
         move: {
-          direction: "bottom", // Make them fall
+          direction: "bottom",
           enable: true,
           outModes: {
-            default: "out", // Let them fall out of the screen
+            default: "out",
           },
           random: true,
-          speed: 1, // slightly faster falling
+          speed: 1,
           straight: false,
         },
         number: {
           density: {
             enable: true,
           },
-          value: 150, // Increase number since links are gone
+          value: 50, // optimized from 150
         },
         opacity: {
           value: { min: 0.1, max: 0.6 },

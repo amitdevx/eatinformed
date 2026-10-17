@@ -12,13 +12,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import NutritionChart from './NutritionChart';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { SITE_URL } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 interface ResultsDisplayProps {
-  ingredientsData: ProductAnalysisOutput | null;
-  assessmentData: ProductAnalysisOutput | null;
+  data?: ProductAnalysisOutput | null;
+  ingredientsData?: ProductAnalysisOutput | null; // legacy alias
+  assessmentData?: ProductAnalysisOutput | null;  // legacy alias
   imagePreviewUrl?: string | null; 
 }
 
@@ -88,33 +91,69 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export default function ResultsDisplay({ ingredientsData, assessmentData, imagePreviewUrl }: ResultsDisplayProps) {
+const novaColors: Record<number, string> = {
+  1: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  2: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  3: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  4: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+};
+
+const novaLabels: Record<number, string> = {
+  1: "NOVA 1: Minimally Processed",
+  2: "NOVA 2: Processed Culinary Ingredient",
+  3: "NOVA 3: Processed Food",
+  4: "NOVA 4: Ultra-Processed",
+};
+
+export default function ResultsDisplay(props: ResultsDisplayProps) {
+  const analysisData = props.data || props.assessmentData || props.ingredientsData;
+  const { imagePreviewUrl } = props;
   const resultsCardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
+  // ponytail: truncate pro/con so social tweet stays well within 280-char limit
   const generateSummaryText = useCallback(() => {
-    if (!assessmentData) return '';
-    const { rating, pros, cons } = assessmentData;
+    if (!analysisData) return '';
+    const { rating, pros, cons } = analysisData;
     const url = typeof window !== "undefined" ? window.location.origin : SITE_URL;
-    // A concise summary formatted for social media, especially Twitter.
-    let summary = `This product scored ${rating.toFixed(1)}/5 on EatInformed.`;
-    if (pros.length > 0) {
-      summary += `\n👍 Pro: ${pros[0]}`;
+    const scoreStr = typeof rating === 'number' && !isNaN(rating) ? `${rating.toFixed(1)}/5` : 'N/A';
+    const truncate = (s: string, len: number) => s.length > len ? s.slice(0, len - 1) + '…' : s;
+    let summary = `This product scored ${scoreStr} on EatInformed.`;
+    if (pros && pros.length > 0) {
+      summary += `\n👍 Pro: ${truncate(pros[0], 65)}`;
     }
-    if (cons.length > 0) {
-      summary += `\n👎 Con: ${cons[0]}`;
+    if (cons && cons.length > 0) {
+      summary += `\n👎 Con: ${truncate(cons[0], 65)}`;
     }
     summary += `\n\nCheck your food's score: ${url}`;
     return summary;
-  }, [assessmentData]);
+  }, [analysisData]);
+
+  // ponytail: strip backdropFilter on cloned doc so html2canvas doesn't render black boxes
+  const captureCardCanvas = async () => {
+    if (!resultsCardRef.current) return null;
+    return await html2canvas(resultsCardRef.current, {
+      backgroundColor: '#0F172A',
+      useCORS: true,
+      scale: 1.5,
+      logging: false,
+      onclone: (clonedDoc) => {
+        const elements = clonedDoc.querySelectorAll<HTMLElement>('*');
+        elements.forEach((el) => {
+          if (el.style) {
+            el.style.backdropFilter = 'none';
+            // @ts-ignore
+            el.style.webkitBackdropFilter = 'none';
+          }
+        });
+      },
+    });
+  };
 
   const handleDownloadImage = async () => {
-    if (!resultsCardRef.current) return;
     try {
-      const canvas = await html2canvas(resultsCardRef.current, {
-        backgroundColor: '#0F172A',
-        useCORS: true, 
-      });
+      const canvas = await captureCardCanvas();
+      if (!canvas) return;
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = dataUrl;
@@ -142,6 +181,31 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
     });
   }, [generateSummaryText, toast]);
 
+  // ponytail: instant markdown report export for notes/notion
+  const handleCopyMarkdown = useCallback(() => {
+    if (!analysisData) return;
+    const { productName, brand, rating, novaGroup, pros, cons, warnings, ingredients } = analysisData;
+    let md = `# ${productName || 'EatInformed Food Analysis'}\n`;
+    if (brand) md += `**Brand**: ${brand}\n`;
+    md += `**Score**: ${rating.toFixed(1)}/5\n`;
+    if (novaGroup && novaLabels[novaGroup]) md += `**Processing**: ${novaLabels[novaGroup]}\n\n`;
+    if (pros && pros.length > 0) md += `### Pros\n` + pros.map(p => `- ${p}`).join('\n') + '\n\n';
+    if (cons && cons.length > 0) md += `### Cons\n` + cons.map(c => `- ${c}`).join('\n') + '\n\n';
+    if (warnings && warnings.length > 0) md += `### Warnings\n` + warnings.map(w => `- ⚠️ ${w}`).join('\n') + '\n\n';
+    if (ingredients && ingredients.length > 0) md += `### Ingredients\n` + ingredients.join(', ') + '\n';
+    navigator.clipboard.writeText(md).then(() => {
+      toast({ title: 'Report Copied!', description: 'Full Markdown report copied to clipboard.' });
+    });
+  }, [analysisData, toast]);
+
+  // ponytail: instant ingredients list export
+  const handleCopyIngredients = useCallback(() => {
+    if (!analysisData?.ingredients?.length) return;
+    navigator.clipboard.writeText(analysisData.ingredients.join(', ')).then(() => {
+      toast({ title: 'Ingredients Copied!', description: 'Ingredients list copied to clipboard.' });
+    });
+  }, [analysisData, toast]);
+
   const handleShare = useCallback(async (platform: 'twitter' | 'whatsapp') => {
     const summaryText = generateSummaryText();
     const title = 'My Food Scan Results from EatInformed';
@@ -149,30 +213,24 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
     // Advanced Share (Image + Text) using Web Share API
     if (navigator.share && resultsCardRef.current) {
       try {
-        const canvas = await html2canvas(resultsCardRef.current, {
-          backgroundColor: '#0F172A',
-          useCORS: true,
-        });
-        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+        const canvas = await captureCardCanvas();
+        const blob = canvas ? await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png')) : null;
         
         if (blob) {
           const file = new File([blob], 'eatinformed-results.png', { type: 'image/png' });
-          // Check if the browser can share this file
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
               title: title,
               text: summaryText,
               files: [file],
             });
-            return; // Exit after successful advanced share
+            return;
           }
         }
       } catch (error: any) {
-        // If user cancels the share dialog, it's not an error. Otherwise, log it and fall back.
         if (error.name !== 'AbortError') {
           console.error('Error using Web Share API with image, falling back:', error);
         } else {
-          // User cancelled, so we don't proceed to the fallback.
           return;
         }
       }
@@ -193,26 +251,27 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
     }
   }, [generateSummaryText]);
 
-  if (!assessmentData) {
+  if (!analysisData) {
     return null;
   }
 
-  const isZeroRatingScenario = assessmentData.rating === 0;
-  const dietInfo = assessmentData.dietaryInfo;
-  const nutrition = ingredientsData?.nutrition;
+  const isZeroRatingScenario = analysisData.rating === 0;
+  const dietInfo = analysisData.dietaryInfo;
+  const nutrition = analysisData.nutrition;
   const hasStructuredNutrition = nutrition?.nutrients && nutrition.nutrients.length > 0;
 
   const renderStars = (rating: number) => {
     const totalStars = 5;
+    const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
     return (
       <div className="flex items-center gap-1">
         {[...Array(totalStars)].map((_, index) => (
           <Star
             key={index}
-            className={`h-8 w-8 ${index < Math.round(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
+            className={`h-8 w-8 ${index < Math.round(validRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
           />
         ))}
-        <span className="ml-3 text-3xl font-bold text-foreground">{rating > 0 ? `${rating.toFixed(1)}/5` : 'N/A'}</span>
+        <span className="ml-3 text-3xl font-bold text-foreground">{validRating > 0 ? `${validRating.toFixed(1)}/5` : 'N/A'}</span>
       </div>
     );
   };
@@ -237,12 +296,25 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
             </motion.div>
           )}
           <motion.div variants={itemVariants}>
-            <CardTitle className="text-4xl font-black drop-shadow-md">
-                {isZeroRatingScenario ? "Analysis Incomplete" : "Analysis Complete"}
+            {analysisData.brand && (
+              <span className="text-sm font-semibold tracking-widest uppercase text-primary mb-1 block">
+                {analysisData.brand}
+              </span>
+            )}
+            <CardTitle className="text-3xl sm:text-4xl font-black drop-shadow-md">
+                {analysisData.productName || (isZeroRatingScenario ? "Analysis Incomplete" : "Analysis Complete")}
             </CardTitle>
-            <div className="mt-6 flex flex-col items-center gap-2 bg-black/20 p-4 rounded-3xl border border-white/5 w-fit mx-auto">
-             {renderStars(assessmentData.rating)}
-             <p className="text-primary font-medium tracking-wide uppercase text-sm mt-1">Health Rating</p>
+            <div className="mt-6 flex flex-col items-center gap-3 bg-black/20 p-5 rounded-3xl border border-white/5 w-fit mx-auto">
+             {renderStars(analysisData.rating)}
+             <p className="text-primary font-medium tracking-wide uppercase text-xs">Health Rating</p>
+             {analysisData.novaGroup && (
+               <Badge 
+                 variant="outline" 
+                 className={cn("px-3 py-1 font-semibold text-xs border rounded-full mt-1", novaColors[analysisData.novaGroup] || "text-gray-300")}
+               >
+                 {novaLabels[analysisData.novaGroup] || `NOVA ${analysisData.novaGroup}`}
+               </Badge>
+             )}
             </div>
           </motion.div>
         </CardHeader>
@@ -253,16 +325,16 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
                   <BulletList items={dietInfo?.suitability || []} variant="suitability" />
               </ResultSection>
 
-              <ResultSection title="Warnings" icon={<AlertTriangle className="h-6 w-6 text-yellow-400" />} hidden={!assessmentData.warnings || assessmentData.warnings.length === 0 || (isZeroRatingScenario && assessmentData.warnings[0]?.includes('Unable to evaluate'))}>
-                  <BulletList items={assessmentData.warnings} variant="warnings" />
+              <ResultSection title="Warnings" icon={<AlertTriangle className="h-6 w-6 text-yellow-400" />} hidden={!analysisData.warnings || analysisData.warnings.length === 0 || (isZeroRatingScenario && analysisData.warnings[0]?.includes('Unable to evaluate'))}>
+                  <BulletList items={analysisData.warnings} variant="warnings" />
               </ResultSection>
 
-              <ResultSection title="Pros" icon={<ThumbsUp className="h-6 w-6 text-green-500" />} hidden={!assessmentData.pros || assessmentData.pros.length === 0 || isZeroRatingScenario}>
-                 <BulletList items={assessmentData.pros} variant="pros" />
+              <ResultSection title="Pros" icon={<ThumbsUp className="h-6 w-6 text-green-500" />} hidden={!analysisData.pros || analysisData.pros.length === 0 || isZeroRatingScenario}>
+                 <BulletList items={analysisData.pros} variant="pros" />
               </ResultSection>
 
-              <ResultSection title="Cons" icon={<ThumbsDown className="h-6 w-6 text-red-500" />} hidden={!assessmentData.cons || assessmentData.cons.length === 0 || isZeroRatingScenario}>
-                <BulletList items={assessmentData.cons} variant="cons" />
+              <ResultSection title="Cons" icon={<ThumbsDown className="h-6 w-6 text-red-500" />} hidden={!analysisData.cons || analysisData.cons.length === 0 || isZeroRatingScenario}>
+                <BulletList items={analysisData.cons} variant="cons" />
               </ResultSection>
           </motion.div>
           
@@ -272,9 +344,9 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
              </p>
           </ResultSection>
           
-          <ResultSection title="Ingredient Analysis" icon={<ListChecks className="h-6 w-6 text-primary" />} hidden={!assessmentData.ingredientAnalysis || assessmentData.ingredientAnalysis.length === 0}>
+          <ResultSection title="Ingredient Analysis" icon={<ListChecks className="h-6 w-6 text-primary" />} hidden={!analysisData.ingredientAnalysis || analysisData.ingredientAnalysis.length === 0}>
             <Accordion type="single" collapsible className="w-full bg-black/20 rounded-xl border border-white/5 p-2">
-              {assessmentData.ingredientAnalysis.map((item, index) => (
+              {analysisData.ingredientAnalysis.map((item, index) => (
                 <AccordionItem value={`item-${index}`} key={index} className="border-b-white/5 last:border-0">
                   <AccordionTrigger className="text-base font-medium hover:no-underline px-4 rounded-lg hover:bg-white/5">
                     <div className="flex items-center">
@@ -343,6 +415,14 @@ export default function ResultsDisplay({ ingredientsData, assessmentData, imageP
                   <DropdownMenuItem onClick={handleCopySummary} className="hover:bg-white/10">
                     <Copy className="mr-2 h-4 w-4" />
                     <span>Copy Summary</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopyMarkdown} className="hover:bg-white/10">
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>Copy Markdown Report</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopyIngredients} className="hover:bg-white/10">
+                    <ListChecks className="mr-2 h-4 w-4" />
+                    <span>Copy Ingredients List</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem onClick={() => handleShare('twitter')} className="hover:bg-white/10">

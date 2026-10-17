@@ -141,7 +141,8 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    // ponytail: type-safe tab switch without widening state
+    <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'login' | 'signup')} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>

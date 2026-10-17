@@ -6,22 +6,38 @@ export default function DocsPage() {
     {
       title: "Getting Started",
       icon: BookOpen,
-      links: ["Quick Start Guide", "Setting up your Profile", "Understanding Health Scores"]
+      links: [
+        { label: "Quick Start Guide", href: "/how-it-works" },
+        { label: "Scanning Food Labels", href: "/check" },
+        { label: "Understanding Health Scores", href: "/how-it-works" },
+      ]
     },
     {
       title: "AI Analysis",
       icon: Code,
-      links: ["How OCR works", "Nutritional Reasoning Model", "Allergen Detection Logic"]
+      links: [
+        { label: "How Vision OCR works", href: "/product" },
+        { label: "Nutritional Reasoning Model", href: "/product" },
+        { label: "Allergen Detection Logic", href: "/how-it-works" },
+      ]
     },
     {
       title: "Account Settings",
       icon: Settings,
-      links: ["Managing Profiles", "Data Privacy", "Subscription Management"]
+      links: [
+        { label: "Managing Profiles", href: "/check" },
+        { label: "Data Privacy", href: "/support" },
+        { label: "Pricing & Plans", href: "/pricing" },
+      ]
     },
     {
-      title: "API & Integrations",
+      title: "Help & Support",
       icon: FileText,
-      links: ["API Documentation", "Webhooks", "Rate Limits"]
+      links: [
+        { label: "Support Center", href: "/support" },
+        { label: "Contact Us", href: "/support" },
+        { label: "FAQs", href: "/support" },
+      ]
     }
   ];
 
@@ -47,9 +63,9 @@ export default function DocsPage() {
               <ul className="space-y-3">
                 {section.links.map((link, i) => (
                   <li key={i}>
-                    <Link href="#" className="text-gray-400 hover:text-primary transition-colors flex items-center gap-2">
+                    <Link href={link.href} className="text-gray-400 hover:text-primary transition-colors flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary/50 block"></span>
-                      {link}
+                      {link.label}
                     </Link>
                   </li>
                 ))}

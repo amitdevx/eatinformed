@@ -1,14 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import { extractIngredients } from './src/ai/flows/extract-ingredients';
-import { assessHealthSafety } from './src/ai/flows/assess-health-safety';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
 async function run() {
   try {
-    const imagePath = '/home/amitdevx/Downloads/71q038rjYWL.jpg';
+    const imagePath = process.env.TEST_IMAGE_PATH || process.argv[2] || path.join(__dirname, 'test-label.jpg');
+    if (!fs.existsSync(imagePath)) {
+      console.log(`Test image not found at ${imagePath}. Pass path as argument or set TEST_IMAGE_PATH.`);
+      return;
+    }
     console.log(`Loading image from ${imagePath}...`);
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');

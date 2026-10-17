@@ -43,7 +43,8 @@ const FloatingIcons = () => {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden pointer-events-none">
+    // ponytail: hide heavy continuous SVG floating animations on mobile to conserve CPU/battery
+    <div className="hidden md:block fixed top-0 left-0 w-full h-full -z-20 overflow-hidden pointer-events-none">
       {iconData.map(({ id, Icon, size, x, duration, delay, rotation }) => (
         <motion.div
           key={id}

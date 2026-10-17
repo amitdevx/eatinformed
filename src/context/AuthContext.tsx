@@ -27,37 +27,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ponytail: subscribe once on mount; never re-bind listener on user change
   useEffect(() => {
-    // Only subscribe to auth changes if Firebase auth is initialized
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        setLoading(true);
-        if (firebaseUser && firestore) {
-          // If the user ID is different from the current one, fetch their profile
-          if (firebaseUser.uid !== user?.uid) {
+    if (!auth) {
+      setLoading(false);
+      setUser(null);
+      setUserProfile(null);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        if (firestore) {
+          try {
             const userDocRef = doc(firestore, "users", firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
               setUserProfile(userDoc.data() as UserProfile);
             }
+          } catch (profileError) {
+            console.warn("Failed to load user profile from Firestore:", profileError);
           }
-          setUser(firebaseUser);
-        } else {
-          setUser(null);
-          setUserProfile(null);
         }
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else {
-      // If Firebase isn't configured, stop loading and set user to null.
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
       setLoading(false);
-      setUser(null);
-      setUserProfile(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]); // Rerun effect only when user UID changes
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, userProfile, loading }}>
