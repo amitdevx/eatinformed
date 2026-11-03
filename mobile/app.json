@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "EatInformed",
+    "slug": "eatinformed",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "android": {
+      "package": "com.eatinformed.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.INTERNET"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow EatInformed to access your camera to scan food labels."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow EatInformed to access your photos to select food label images."
+        }
+      ]
+    ]
+  }
+}
