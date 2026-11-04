@@ -20,7 +20,7 @@ const getBaseUrl = (): string => {
 
 export const apiClient = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 45000, // 45 seconds to accommodate vision and reasoning AI pipeline
+  timeout: 60000, // 60 seconds to accommodate vision and reasoning AI pipeline
   headers: {
     'Content-Type': 'application/json',
   },

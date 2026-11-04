@@ -124,11 +124,13 @@ export default function ScanScreen() {
     try {
       const analysis = await scanFoodLabel(selectedImageBase64);
 
-      if (analysis.status !== 'success') {
+      if (analysis.status !== 'success' && (!analysis.ingredients || analysis.ingredients.length === 0)) {
         const errorDetail =
-          analysis.status === 'unreadable'
+          analysis.warnings?.[0] ||
+          analysis.nutrition?.rawText ||
+          (analysis.status === 'unreadable'
             ? 'The label image was blurry or too dark. Please take a clearer, well-lit photo.'
-            : 'No ingredient or nutrition text was found. Please ensure the nutrition panel is clearly visible.';
+            : 'No ingredient or nutrition text was found. Please ensure the nutrition panel is clearly visible.');
         setErrorMessage(errorDetail);
         setIsLoading(false);
         return;
