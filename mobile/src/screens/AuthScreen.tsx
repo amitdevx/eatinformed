@@ -15,6 +15,7 @@ import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { colors } from '../theme/colors';
 import { borderRadius, spacing, typography } from '../theme/tokens';
+import { saveUserSession } from '../lib/auth';
 import { RootStackParamList } from '../navigation/types';
 
 type RouteProps = RouteProp<RootStackParamList, 'Auth'>;
@@ -41,20 +42,8 @@ export default function AuthScreen() {
     setError(null);
 
     try {
-      // Simulate/execute auth flow
-      // In production, connects to Firebase Auth client
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      Alert.alert(
-        activeTab === 'login' ? 'Signed In' : 'Account Created',
-        `Welcome to EatInformed! Logged in as ${email}.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      await saveUserSession(email.trim());
+      navigation.goBack();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Authentication failed.');
     } finally {

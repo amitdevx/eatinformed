@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   User,
@@ -27,6 +27,7 @@ import { Badge } from '../components/Badge';
 import { colors } from '../theme/colors';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { checkApiHealth } from '../api/client';
+import { getUserSession, clearUserSession } from '../lib/auth';
 import { RootStackParamList } from '../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -49,9 +50,20 @@ export default function ProfileScreen() {
     setIsCheckingServer(false);
   };
 
-  useEffect(() => {
-    checkBackend();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      checkBackend();
+      getUserSession().then((session) => {
+        if (session && session.isLoggedIn) {
+          setIsLoggedIn(true);
+          setUserEmail(session.email);
+        } else {
+          setIsLoggedIn(false);
+          setUserEmail(null);
+        }
+      });
+    }, [])
+  );
 
   const handleAuthAction = () => {
     if (isLoggedIn) {
@@ -63,7 +75,8 @@ export default function ProfileScreen() {
           {
             text: 'Sign Out',
             style: 'destructive',
-            onPress: () => {
+            onPress: async () => {
+              await clearUserSession();
               setIsLoggedIn(false);
               setUserEmail(null);
             },
