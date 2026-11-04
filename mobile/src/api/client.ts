@@ -2,17 +2,20 @@ import axios, { AxiosError } from 'axios';
 import { Platform } from 'react-native';
 import { ProductAnalysisOutput } from '../types';
 
-// Default development URLs:
-// Android Emulator maps host machine to 10.0.2.2
-// Physical devices can configure EXPO_PUBLIC_API_URL in .env
+// Default development and production URLs:
+// Android Emulator maps host machine to 10.0.2.2 in development
+// Production release builds default to the live EatInformed domain
 const getBaseUrl = (): string => {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:9003';
+  if (__DEV__) {
+    if (Platform.OS === 'android') {
+      return 'http://10.0.2.2:9003';
+    }
+    return 'http://localhost:9003';
   }
-  return 'http://localhost:9003';
+  return 'https://eatinformed.amitdevx.tech';
 };
 
 export const apiClient = axios.create({
