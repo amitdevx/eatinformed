@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

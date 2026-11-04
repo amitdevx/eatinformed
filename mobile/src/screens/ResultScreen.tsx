@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
 import { colors } from '../theme/colors';
 import { borderRadius, spacing, typography } from '../theme/tokens';
+import { saveScanToHistory } from '../lib/history';
 import { RootStackParamList } from '../navigation/types';
 
 type RouteProps = RouteProp<RootStackParamList, 'Result'>;
@@ -38,9 +39,15 @@ type ActiveTab = 'overview' | 'ingredients' | 'nutrition';
 export default function ResultScreen() {
   const route = useRoute<RouteProps>();
   const navigation = useNavigation<NavigationProp>();
-  const { data } = route.params;
+  const { data, imageUri } = route.params;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+
+  useEffect(() => {
+    if (data && data.status === 'success') {
+      saveScanToHistory(data, imageUri);
+    }
+  }, [data, imageUri]);
 
   const productName = data.productName || 'Food Product';
   const brand = data.brand || '';
