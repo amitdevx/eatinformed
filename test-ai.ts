@@ -34,7 +34,7 @@ async function run() {
 Extract the ingredients list and nutritional facts. IF YOU OUTPUT ANY TEXT OUTSIDE THE JSON OBJECT, THE SYSTEM WILL CRASH.`;
 
     const response = await nimClient!.chat.completions.create({
-      model: 'meta/llama-3.2-11b-vision-instruct',
+      model: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
       messages: [
         {
           role: 'user',
@@ -49,11 +49,12 @@ Extract the ingredients list and nutritional facts. IF YOU OUTPUT ANY TEXT OUTSI
       top_p: 0.9,
     });
     
-    const rawContent = response.choices?.[0]?.message?.content;
+    const msg = response.choices?.[0]?.message as any;
+    const rawContent = msg?.content || msg?.reasoning_content;
     console.log("\n--- Extraction Result ---");
-    console.log("RAW:", rawContent);
+    console.log("RAW preview:", rawContent ? rawContent.substring(0, 300) : "NULL");
     const extractResult = parseNIMResponse(rawContent);
-    console.log("PARSED:", JSON.stringify(extractResult, null, 2));
+    console.log("PARSED SUCCESS:", JSON.stringify(extractResult, null, 2));
   } catch (err) {
     console.error("Error running test:", err);
   }

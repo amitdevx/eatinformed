@@ -113,9 +113,9 @@ Remember: Output ONLY the raw JSON object. Start with { and end with }.`;
   const userPrompt = `Analyze these ingredients:\n"${input.ingredients}"`;
 
   try {
-    // Build request options - some models may not support response_format
+    // Build request options
     const requestOptions: any = {
-      model: 'meta/llama-3.3-70b-instruct',
+      model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
       messages: [
         {
           role: 'system',
@@ -126,28 +126,19 @@ Remember: Output ONLY the raw JSON object. Start with { and end with }.`;
           content: userPrompt,
         },
       ],
-      max_tokens: 2048,
+      max_tokens: 3000,
       temperature: 0.2,
       top_p: 0.9,
     };
 
-    // Try with response_format first, fall back without it if unsupported
     let rawContent: string | null = null;
     try {
-      const response = await nimClient.chat.completions.create({
-        ...requestOptions,
-        response_format: { type: 'json_object' },
-      });
-      rawContent = response.choices?.[0]?.message?.content;
-    } catch (formatError: any) {
-      // If the model doesn't support response_format, retry without it
-      if (formatError.message?.includes('response_format') || formatError.status === 400) {
-        console.warn("DEBUG: Model does not support response_format, retrying without it.");
-        const response = await nimClient.chat.completions.create(requestOptions);
-        rawContent = response.choices?.[0]?.message?.content;
-      } else {
-        throw formatError;
-      }
+      const response = await nimClient.chat.completions.create(requestOptions);
+      const choice = response.choices?.[0]?.message as any;
+      rawContent = choice?.content || choice?.reasoning_content;
+    } catch (err: any) {
+      console.warn("DEBUG: Assessment call failed:", err.message);
+      throw err;
     }
 
     if (!rawContent) {

@@ -75,7 +75,7 @@ Remember: Output ONLY the raw JSON object. Start with { and end with }.`;
 
   try {
     const response = await nimClient.chat.completions.create({
-      model: 'meta/llama-3.2-90b-vision-instruct',
+      model: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
       messages: [
         {
           role: 'user',
@@ -90,12 +90,13 @@ Remember: Output ONLY the raw JSON object. Start with { and end with }.`;
           ],
         },
       ],
-      max_tokens: 2048,
+      max_tokens: 3000,
       temperature: 0.1,
       top_p: 0.9,
     });
 
-    const rawContent = response.choices?.[0]?.message?.content;
+    const msg = response.choices?.[0]?.message as any;
+    const rawContent = msg?.content || msg?.reasoning_content;
 
     if (!rawContent) {
       throw new Error('The AI model failed to provide an output.');

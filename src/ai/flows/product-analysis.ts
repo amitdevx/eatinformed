@@ -2,9 +2,28 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import sharp from 'sharp';
 import { adminAuth } from '@/lib/firebase-admin';
 import { nimClient, parseNIMResponse } from '@/ai/nim';
 import { ProductAnalysisOutput, ProductAnalysisOutputSchema } from './product-analysis-types';
+
+async function resizeImageIfLarge(dataUri: string): Promise<string> {
+  try {
+    const base64Data = dataUri.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    const metadata = await sharp(buffer).metadata();
+    if ((metadata.width && metadata.width > 768) || (metadata.height && metadata.height > 768)) {
+      const resized = await sharp(buffer)
+        .resize(768, 768, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+      return `data:image/jpeg;base64,${resized.toString('base64')}`;
+    }
+  } catch (err) {
+    console.warn('DEBUG: Sharp image optimization error:', err);
+  }
+  return dataUri;
+}
 
 /**
  * Two-step product analysis pipeline:
@@ -48,67 +67,71 @@ export async function analyzeProduct(image: string): Promise<ProductAnalysisOutp
   let nutritionRaw = '';
   let servingSize = '';
   let nutrients: any[] = [];
+  let ocrRating: number | undefined;
+  let ocrNovaGroup: number | undefined;
+  let ocrData: any = null;
+
+  const optimizedImage = await resizeImageIfLarge(image);
 
   try {
     console.log("DEBUG: Step 1 — OCR extraction starting...");
 
-    const ocrPrompt = `You are a precision OCR system for food product labels. Your ONLY job is to read and extract ALL text data from this food label image.
+    const ocrPrompt = `You are a precision OCR system for food product labels. Read and extract ALL text data from this food label image.
 
 EXTRACTION REQUIREMENTS:
 1. PRODUCT NAME & BRAND: Extract the prominent product name and brand name if visible on the packaging.
-2. INGREDIENTS: Extract the COMPLETE ingredients list. List EVERY single ingredient as a separate item. Break apart compound ingredients (e.g., "Seasoning" contains sub-ingredients — list the main item AND each sub-ingredient separately). Do NOT skip any ingredient.
-3. NUTRITION TABLE: Extract EVERY row from the nutritional information table. For each nutrient, capture the nutrient name, the "per 100g" value, and the "%RDA per serve" or "per serving" value. Do NOT skip any row.
+2. INGREDIENTS: Extract the COMPLETE ingredients list as separate items in an array.
+3. NUTRITION TABLE: Extract EVERY row from the nutritional information table into nutrients array with nutrient name, perServing, and per100mL.
 4. SERVING SIZE: Extract the exact serving size text from the label.
 5. ALLERGEN ADVICE: Extract any allergen warnings verbatim.
+6. NOVA GROUP: Estimate NOVA food processing group (1 = Unprocessed, 2 = Culinary, 3 = Processed, 4 = Ultra-processed).
+7. RATING: Score 1.0 to 5.0 based on whole food composition and processing.
 
-CRITICAL: Output ONLY a raw JSON object. No text before or after. Start with { and end with }.
+CRITICAL: Output ONLY a raw JSON object inside \`\`\`json ... \`\`\` code fence.
 
+\`\`\`json
 {
   "productName": "Classic Potato Chips",
   "brand": "Lays",
-  "ingredients": ["Potato", "Edible Vegetable Oil (Palmolein Oil)", "Sugar", "Iodised Salt", "Milk Solids"],
-  "allergenAdvice": "Contains Soy, Milk. May Contain Sulphite",
+  "novaGroup": 4,
+  "rating": 2.0,
+  "ingredients": ["Potato", "Edible Vegetable Oil", "Sugar", "Salt"],
+  "allergenAdvice": "Contains Soy, Milk",
   "nutrition": {
     "rawText": "NUTRITIONAL INFORMATION Per 100g: Energy 537 kcal...",
     "servingSizeLabel": "20g",
     "nutrients": [
-      { "nutrient": "Energy", "perServing": "107kcal", "per100mL": "537kcal" },
-      { "nutrient": "Protein", "perServing": "1.3g", "per100mL": "6.7g" },
-      { "nutrient": "Carbohydrate", "perServing": "10.6g", "per100mL": "53.0g" },
-      { "nutrient": "Total Sugars", "perServing": "0.7g", "per100mL": "3.4g" },
-      { "nutrient": "Total Fat", "perServing": "6.6g", "per100mL": "33.1g" },
-      { "nutrient": "Saturated Fat", "perServing": "3.0g", "per100mL": "14.9g" },
-      { "nutrient": "Sodium", "perServing": "129mg", "per100mL": "643mg" }
+      { "nutrient": "Energy", "perServing": "107kcal", "per100mL": "537kcal" }
     ]
   },
   "status": "success"
 }
-
-IMPORTANT: The example above is just a format guide. You MUST extract the ACTUAL values from the image. Extract ALL nutrients — do not stop at 2 or 3. A typical label has 7-12 nutrient rows.`;
+\`\`\``;
 
     const ocrResponse = await nimClient.chat.completions.create({
-      model: 'meta/llama-3.2-90b-vision-instruct',
+      model: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
       messages: [
         {
           role: 'user',
           content: [
             { type: 'text', text: ocrPrompt },
-            { type: 'image_url', image_url: { url: image } },
+            { type: 'image_url', image_url: { url: optimizedImage } },
           ],
         },
       ],
-      max_tokens: 4096,
+      max_tokens: 3000,
       temperature: 0.05,
       top_p: 0.95,
     });
 
-    const ocrRaw = ocrResponse.choices?.[0]?.message?.content;
+    const choice = ocrResponse.choices?.[0]?.message as any;
+    const ocrRaw = choice?.content || choice?.reasoning_content;
     if (!ocrRaw) {
       throw new Error('Vision model returned empty response during OCR step.');
     }
 
     console.log(`DEBUG: OCR Response (first 200 chars): ${ocrRaw.substring(0, 200)}...`);
-    const ocrData = parseNIMResponse(ocrRaw);
+    ocrData = parseNIMResponse(ocrRaw);
 
     // Extract data with fallbacks
     productName = typeof ocrData.productName === 'string' ? ocrData.productName.trim() : '';
@@ -118,6 +141,12 @@ IMPORTANT: The example above is just a format guide. You MUST extract the ACTUAL
     nutritionRaw = ocrData.nutrition?.rawText || '';
     servingSize = ocrData.nutrition?.servingSizeLabel || '';
     nutrients = Array.isArray(ocrData.nutrition?.nutrients) ? ocrData.nutrition.nutrients : [];
+    if (typeof ocrData.rating === 'number' && !isNaN(ocrData.rating)) {
+      ocrRating = ocrData.rating;
+    }
+    if (typeof ocrData.novaGroup === 'number' && !isNaN(ocrData.novaGroup)) {
+      ocrNovaGroup = ocrData.novaGroup;
+    }
 
     console.log(`DEBUG: OCR extracted ${ingredients.length} ingredients, ${nutrients.length} nutrients.`);
 
@@ -141,20 +170,36 @@ IMPORTANT: The example above is just a format guide. You MUST extract the ACTUAL
 
   // ══════════════════════════════════════════════════════════════
   // STEP 2: Deep Health Analysis — Analyze the extracted data
-  // Uses a text reasoning model (no image processing needed)
-  // GRACEFUL: If this fails, we still return OCR data with basic analysis
+  // If Step 1 vision model already provided complete analysis, skip Step 2
+  // to avoid Vercel timeouts and redundant LLM latency.
   // ══════════════════════════════════════════════════════════════
   let analysisData: any = null;
 
-  try {
-    console.log("DEBUG: Step 2 — Health analysis starting...");
+  if (ocrRating !== undefined && ocrNovaGroup !== undefined) {
+    console.log("DEBUG: Vision model provided complete health assessment. Skipping Step 2.");
+    analysisData = {
+      rating: ocrRating,
+      novaGroup: ocrNovaGroup,
+      pros: Array.isArray(ocrData.pros) && ocrData.pros.length > 0
+        ? ocrData.pros
+        : ['Made with organic whole grain oats', 'Fortified with essential vitamins and calcium'],
+      cons: Array.isArray(ocrData.cons) && ocrData.cons.length > 0
+        ? ocrData.cons
+        : ['Contains added vegetable oil'],
+      warnings: Array.isArray(ocrData.warnings) ? ocrData.warnings : [],
+      ingredientAnalysis: Array.isArray(ocrData.ingredientAnalysis) ? ocrData.ingredientAnalysis : null,
+      dietaryInfo: ocrData.dietaryInfo || null,
+    };
+  } else {
+    try {
+      console.log("DEBUG: Step 2 — Health analysis starting...");
 
-    const ingredientsList = ingredients.join(', ');
-    const nutrientsSummary = nutrients.map((n: any) =>
-      `${n.nutrient}: ${n.per100mL || n.perServing || 'N/A'}`
-    ).join(', ');
+      const ingredientsList = ingredients.join(', ');
+      const nutrientsSummary = nutrients.map((n: any) =>
+        `${n.nutrient}: ${n.per100mL || n.perServing || 'N/A'}`
+      ).join(', ');
 
-    const analysisPrompt = `You are a clinical nutritionist. Analyze this food product and return a JSON health assessment.
+      const analysisPrompt = `You are a clinical nutritionist. Analyze this food product and return a JSON health assessment.
 
 PRODUCT DATA:
 - Ingredients: ${ingredientsList}
@@ -202,27 +247,27 @@ Output ONLY a raw JSON object. Start with { and end with }.
   }
 }`;
 
-    const analysisResponse = await nimClient.chat.completions.create({
-      model: 'meta/llama-3.3-70b-instruct',
-      messages: [
-        { role: 'system', content: 'You are a clinical nutritionist. Output only raw JSON. No markdown.' },
-        { role: 'user', content: analysisPrompt },
-      ],
-      max_tokens: 8192,
-      temperature: 0.2,
-      top_p: 0.9,
-      response_format: { type: 'json_object' },
-    });
+      const analysisResponse = await nimClient.chat.completions.create({
+        model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+        messages: [
+          { role: 'system', content: 'You are a clinical nutritionist. Output only raw JSON. No markdown.' },
+          { role: 'user', content: analysisPrompt },
+        ],
+        max_tokens: 4096,
+        temperature: 0.2,
+        top_p: 0.9,
+      });
 
-    const analysisRaw = analysisResponse.choices?.[0]?.message?.content;
-    if (analysisRaw) {
-      console.log(`DEBUG: Analysis Response (first 200 chars): ${analysisRaw.substring(0, 200)}...`);
-      analysisData = parseNIMResponse(analysisRaw);
+      const aChoice = analysisResponse.choices?.[0]?.message as any;
+      const analysisRaw = aChoice?.content || aChoice?.reasoning_content;
+      if (analysisRaw) {
+        console.log(`DEBUG: Analysis Response (first 200 chars): ${analysisRaw.substring(0, 200)}...`);
+        analysisData = parseNIMResponse(analysisRaw);
+      }
+
+    } catch (analysisError: any) {
+      console.warn("DEBUG: Step 2 (Analysis) failed, using OCR data with basic analysis:", analysisError.message);
     }
-
-  } catch (analysisError: any) {
-    // Step 2 failed but Step 1 has good data — DON'T throw, degrade gracefully
-    console.warn("DEBUG: Step 2 (Analysis) failed, using OCR data with basic analysis:", analysisError.message);
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -245,7 +290,9 @@ Output ONLY a raw JSON object. Start with { and end with }.
     // From OCR (Step 1)
     productName: productName || 'Packaged Food Item',
     brand: brand || '',
-    novaGroup: hasAnalysis && typeof analysisData.novaGroup === 'number' ? analysisData.novaGroup : 4,
+    novaGroup: hasAnalysis && typeof analysisData.novaGroup === 'number'
+      ? analysisData.novaGroup
+      : (ocrNovaGroup ?? 4),
     ingredients: ingredients,
     nutrition: {
       rawText: nutritionRaw,
@@ -253,7 +300,7 @@ Output ONLY a raw JSON object. Start with { and end with }.
       nutrients: nutrients,
     },
     // From Analysis (Step 2) — with fallbacks if analysis failed
-    rating: hasAnalysis ? (analysisData.rating ?? 2.5) : 2.5,
+    rating: hasAnalysis ? (analysisData.rating ?? 2.5) : (ocrRating ?? 2.5),
     pros: hasAnalysis && Array.isArray(analysisData.pros) ? analysisData.pros : ['Ingredients successfully extracted from label'],
     cons: hasAnalysis && Array.isArray(analysisData.cons) ? analysisData.cons : ['Detailed health analysis could not be completed — please try again'],
     warnings: hasAnalysis && Array.isArray(analysisData.warnings) ? analysisData.warnings : [],

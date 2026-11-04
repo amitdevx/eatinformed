@@ -1,26 +1,30 @@
 
 import OpenAI from 'openai';
 
-let nimClient: OpenAI | null = null;
+let nimClientInstance: OpenAI | null = null;
 
-// This prevents a startup crash if the key is not configured.
-if (process.env.NVIDIA_API_KEY) {
-  nimClient = new OpenAI({
-    apiKey: process.env.NVIDIA_API_KEY,
-    baseURL: process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1',
-    timeout: 120 * 1000, // 120 second timeout — covers both OCR and analysis steps
-  });
-} else {
-  // Log a clear warning to the console during server startup.
-  console.warn(
-    '\n' +
-      '**********************************************************************************\n' +
-      '** WARNING: NVIDIA_API_KEY is not set in your environment.                     **\n' +
-      '** The AI-powered features of this app will be disabled.                       **\n' +
-      '** To enable them, get a key from build.nvidia.com and add it to your .env file.**\n' +
-      '**********************************************************************************\n'
-  );
-}
+export const getNimClient = (): OpenAI | null => {
+  if (!nimClientInstance && process.env.NVIDIA_API_KEY) {
+    nimClientInstance = new OpenAI({
+      apiKey: process.env.NVIDIA_API_KEY,
+      baseURL: (process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/+$/, ''),
+      timeout: 120 * 1000,
+    });
+  }
+  return nimClientInstance;
+};
+
+export const nimClient = new Proxy({} as any, {
+  get(_target, prop) {
+    const client = getNimClient();
+    if (!client) return undefined;
+    const value = (client as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+});
 
 /**
  * Expert utility to extract, repair, and parse JSON from LLM responses.
@@ -35,14 +39,22 @@ export const parseNIMResponse = (content: string | null): any => {
 
   let cleaned = content.trim();
 
-  // Stage 1: Strip markdown code fences (```json ... ``` or ``` ... ```)
-  const codeFenceMatch = cleaned.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-  if (codeFenceMatch) {
-    cleaned = codeFenceMatch[1].trim();
+  // Stage 1: If there are markdown code fences, check from the LAST fence backwards
+  const allFences = Array.from(cleaned.matchAll(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/g));
+  if (allFences.length > 0) {
+    for (let i = allFences.length - 1; i >= 0; i--) {
+      const candidate = allFences[i][1].trim();
+      const firstB = candidate.indexOf('{');
+      const lastB = candidate.lastIndexOf('}');
+      if (firstB !== -1 && lastB > firstB) {
+        cleaned = candidate.substring(firstB, lastB + 1);
+        break;
+      }
+    }
   }
 
   // Stage 2: Locate the outermost JSON object
-  const firstBrace = cleaned.indexOf('{');
+  const firstBrace = cleaned.lastIndexOf('\n{') !== -1 ? cleaned.lastIndexOf('\n{') + 1 : cleaned.indexOf('{');
   const lastBrace = cleaned.lastIndexOf('}');
 
   if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
@@ -120,5 +132,3 @@ export const parseNIMResponse = (content: string | null): any => {
     );
   }
 };
-
-export { nimClient };
