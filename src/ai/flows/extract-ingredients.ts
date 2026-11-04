@@ -75,7 +75,7 @@ Remember: Output ONLY the raw JSON object. Start with { and end with }.`;
 
   try {
     const response = await nimClient.chat.completions.create({
-      model: 'meta/llama-3.2-11b-vision-instruct',
+      model: 'meta/llama-3.2-90b-vision-instruct',
       messages: [
         {
           role: 'user',

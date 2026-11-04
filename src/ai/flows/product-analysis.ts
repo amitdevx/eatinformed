@@ -87,7 +87,7 @@ CRITICAL: Output ONLY a raw JSON object. No text before or after. Start with { a
 IMPORTANT: The example above is just a format guide. You MUST extract the ACTUAL values from the image. Extract ALL nutrients — do not stop at 2 or 3. A typical label has 7-12 nutrient rows.`;
 
     const ocrResponse = await nimClient.chat.completions.create({
-      model: 'meta/llama-3.2-11b-vision-instruct',
+      model: 'meta/llama-3.2-90b-vision-instruct',
       messages: [
         {
           role: 'user',

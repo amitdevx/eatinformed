@@ -69,6 +69,7 @@ export default function ResultScreen() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.8}
         >
           <ArrowLeft size={20} color={colors.text} />
@@ -77,6 +78,7 @@ export default function ResultScreen() {
         <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShare}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.8}
         >
           <Share2 size={20} color={colors.text} />

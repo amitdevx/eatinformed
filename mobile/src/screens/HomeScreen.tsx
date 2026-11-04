@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ScanLine, Sparkles, ArrowRight, ShieldCheck, Zap, BookOpen } from 'lucide-react-native';
+import { ScanLine, Sparkles, ArrowRight, ShieldCheck, Zap, BookOpen, History, User } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
@@ -36,6 +36,14 @@ export default function HomeScreen() {
 
   const handleOpenGuide = () => {
     (navigation as any).navigate('Guide');
+  };
+
+  const handleOpenHistory = () => {
+    (navigation as any).navigate('History');
+  };
+
+  const handleOpenProfile = () => {
+    (navigation as any).navigate('Profile');
   };
 
   return (
@@ -76,6 +84,34 @@ export default function HomeScreen() {
             icon={<ScanLine size={20} color="#000000" />}
             style={styles.ctaButton}
           />
+          <View style={styles.quickNavRow}>
+            <TouchableOpacity
+              style={styles.quickNavButton}
+              onPress={handleOpenHistory}
+              activeOpacity={0.8}
+            >
+              <History size={16} color={colors.textSecondary} />
+              <Text style={styles.quickNavText}>History</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickNavButton}
+              onPress={handleOpenGuide}
+              activeOpacity={0.8}
+            >
+              <BookOpen size={16} color={colors.textSecondary} />
+              <Text style={styles.quickNavText}>Guide</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickNavButton}
+              onPress={handleOpenProfile}
+              activeOpacity={0.8}
+            >
+              <User size={16} color={colors.textSecondary} />
+              <Text style={styles.quickNavText}>Account</Text>
+            </TouchableOpacity>
+          </View>
         </CardContent>
       </Card>
 
@@ -199,6 +235,30 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: '100%',
+  },
+  quickNavRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  quickNavButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickNavText: {
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.semibold,
+    color: colors.textSecondary,
+    marginLeft: 6,
   },
   sectionHeader: {
     marginTop: spacing.lg,

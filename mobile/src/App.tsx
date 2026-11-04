@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import {
   Home,
@@ -27,12 +27,42 @@ import AuthScreen from './screens/AuthScreen';
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['eatinformed://', 'https://eatinformed.amitdevx.tech'],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          Home: 'home',
+          Scan: 'scan',
+          History: 'history',
+          Guide: 'guide',
+          Profile: 'profile',
+        },
+      },
+      Result: 'result',
+      Auth: 'auth',
+    },
+  },
+};
+
 function TabNavigator() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 8;
+  const tabBarHeight = 56 + bottomPadding;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: tabBarHeight,
+          paddingBottom: bottomPadding,
+          paddingTop: 6,
+        },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: styles.tabBarLabel,
@@ -92,7 +122,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <Stack.Navigator
           screenOptions={{
             headerShown: false,
