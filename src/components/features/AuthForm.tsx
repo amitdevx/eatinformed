@@ -160,24 +160,24 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
             </Button>
             
             <Button 
-              variant="ghost" 
-              className="border border-dashed border-white/20 hover:bg-white/5"
+              variant="outline" 
+              className="border-dashed border-border hover:bg-muted text-foreground transition-colors"
               onClick={handleAnonymousSignIn} 
               disabled={isProcessing}
             >
               {isProcessing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <span className="text-sm font-medium">Continue as Guest</span>
+                <span className="text-xs sm:text-sm font-medium text-foreground">Continue as Guest</span>
               )}
             </Button>
             </div>
-            <div className="relative">
+            <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-border" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
+                <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
             </div>
             </div>
 

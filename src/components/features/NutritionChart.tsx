@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { Activity } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 export interface NutrientItem {
   nutrient: string;
@@ -16,12 +16,10 @@ interface NutritionChartProps {
   servingSizeLabel?: string;
 }
 
-// Reference Daily Values (FDA/WHO standard, 2,000 kcal diet)
-// ponytail: normalizing to % DV solves multi-unit scale distortion (kcal vs g vs mg)
 interface NutrientDef {
   key: string;
   label: string;
-  dailyValue: number; // in base units
+  dailyValue: number;
   baseUnit: string;
   aliases: string[];
 }
@@ -39,7 +37,6 @@ const NUTRIENT_DEFS: NutrientDef[] = [
   { key: 'sodium', label: 'Sodium', dailyValue: 2300, baseUnit: 'mg', aliases: ['sodium', 'salt', 'na'] },
 ];
 
-// ponytail: parse European decimals, ranges, trace amounts, and units cleanly
 function parseNutrientAmount(raw: string | undefined, def: NutrientDef): { amount: number; display: string } {
   if (!raw || raw.toLowerCase() === 'n/a' || raw === 'nil' || raw === 'nd') {
     return { amount: 0, display: '0 ' + def.baseUnit };
@@ -48,28 +45,23 @@ function parseNutrientAmount(raw: string | undefined, def: NutrientDef): { amoun
   const trimmed = raw.trim();
   const normalized = trimmed.replace(/,/g, '.');
 
-  // Handle range (e.g., "10 - 15g" -> upper bound 15)
   const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
   let num = 0;
   if (rangeMatch) {
     num = parseFloat(rangeMatch[2]);
   } else {
-    // Extract first number
     const numMatch = normalized.match(/(\d+(?:\.\d+)?)/);
     num = numMatch ? parseFloat(numMatch[1]) : 0;
   }
 
   if (isNaN(num)) num = 0;
 
-  // Handle unit conversions
   if (def.key === 'energy' && /kj\b/i.test(normalized)) {
-    // 1 kcal ~ 4.184 kJ
     num = Number((num / 4.184).toFixed(1));
   } else if (def.key === 'sodium') {
     if (/\bg\b/i.test(normalized) && !/mg/i.test(normalized)) {
-      num = num * 1000; // grams to mg
+      num = num * 1000;
     } else if (/salt/i.test(normalized)) {
-      // 1g salt ~ 400mg sodium
       num = num * 400;
     }
   }
@@ -85,11 +77,10 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
     return null;
   }
 
-  // Find matching items using aliases
-  const chartData = NUTRIENT_DEFS.map(def => {
-    const matched = data.find(item => {
+  const chartData = NUTRIENT_DEFS.map((def) => {
+    const matched = data.find((item) => {
       const name = item.nutrient.trim().toLowerCase();
-      return def.aliases.some(alias => name === alias || name.startsWith(alias + ' '));
+      return def.aliases.some((alias) => name === alias || name.startsWith(alias + ' '));
     });
 
     if (!matched) return null;
@@ -97,7 +88,6 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
     const servingParsed = parseNutrientAmount(matched.perServing, def);
     const per100Parsed = parseNutrientAmount(matched.per100mL, def);
 
-    // Calculate % Daily Value (capped at 150% for sensible chart scaling)
     const servingPct = Number(Math.min(150, (servingParsed.amount / def.dailyValue) * 100).toFixed(1));
     const per100Pct = Number(Math.min(150, (per100Parsed.amount / def.dailyValue) * 100).toFixed(1));
 
@@ -115,7 +105,6 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
     return null;
   }
 
-  // ponytail: use alphanumeric keys for chartConfig to avoid invalid CSS variables
   const chartConfig = {
     servingPct: {
       label: servingSizeLabel ? `Serving (${servingSizeLabel.replace(/Serving size: /i, '')})` : 'Per Serving',
@@ -123,36 +112,35 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
     },
     per100Pct: {
       label: 'Per 100g/mL',
-      color: 'hsl(var(--accent))',
+      color: 'hsl(var(--muted-foreground))',
     },
   } satisfies ChartConfig;
 
   return (
-    <Card className="mt-6 border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
+    <Card className="mt-6 border border-border bg-card shadow-sm overflow-hidden rounded-2xl">
+      <CardHeader className="pb-3 border-b border-border">
+        <CardTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
+          <BarChart3 className="h-4 w-4 text-primary shrink-0" />
           Nutritional Profile (% Daily Value)
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs text-muted-foreground">
           Comparison of key nutrients as % of standard Daily Value (based on a 2,000 kcal diet).
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* ponytail: ChartContainer already has ResponsiveContainer internally; do NOT nest another */}
-        <ChartContainer config={chartConfig} className="h-[420px] w-full">
+      <CardContent className="pt-4">
+        <ChartContainer config={chartConfig} className="h-[380px] w-full">
           <BarChart
             data={chartData}
             layout="vertical"
             margin={{ top: 10, right: 30, left: 30, bottom: 5 }}
             barGap={4}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.1)" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
             <XAxis
               type="number"
               domain={[0, 'dataMax + 10']}
               tickFormatter={(v) => `${v}%`}
-              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.6)' }}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             />
             <YAxis
               dataKey="name"
@@ -160,10 +148,10 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
               tickLine={false}
               axisLine={false}
               width={100}
-              tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.85)', fontWeight: 500 }}
+              tick={{ fontSize: 12, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
             />
             <ChartTooltip
-              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+              cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
               content={
                 <ChartTooltipContent
                   indicator="dot"
@@ -171,9 +159,9 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
                     const isServing = name === 'servingPct' || name === 'Per Serving';
                     const raw = isServing ? props?.payload?.servingRaw : props?.payload?.per100Raw;
                     return (
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white">{value}% DV</span>
-                        <span className="text-xs text-white/60">({raw})</span>
+                      <div className="flex items-center gap-2 text-foreground">
+                        <span className="font-bold text-xs">{value}% DV</span>
+                        <span className="text-[11px] text-muted-foreground">({raw})</span>
                       </div>
                     );
                   }}
@@ -181,8 +169,8 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
               }
             />
             <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="servingPct" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={12} />
-            <Bar dataKey="per100Pct" fill="hsl(var(--accent))" fillOpacity={0.7} radius={[0, 4, 4, 0]} barSize={12} />
+            <Bar isAnimationActive={false} dataKey="servingPct" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={11} />
+            <Bar isAnimationActive={false} dataKey="per100Pct" fill="hsl(var(--muted-foreground))" fillOpacity={0.6} radius={[0, 4, 4, 0]} barSize={11} />
           </BarChart>
         </ChartContainer>
       </CardContent>

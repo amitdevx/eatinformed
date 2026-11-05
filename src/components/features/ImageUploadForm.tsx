@@ -378,15 +378,14 @@ export function CheckPageClient() {
   if (analysisData) {
     return (
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* ponytail: pass clean data prop to ResultsDisplay */}
         <ResultsDisplay data={analysisData} imagePreviewUrl={imagePreviewUrl} />
-        <div className="text-center mt-12 mb-8">
-          <Button onClick={handleReset} size="lg" className="rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-1">
-            <RefreshCw className="mr-2 h-5 w-5" />
+        <div className="text-center mt-10 mb-8">
+          <Button onClick={handleReset} size="lg" className="rounded-full bg-foreground hover:bg-foreground/90 text-background text-xs sm:text-sm font-semibold px-7 py-3 transition-all active:scale-[0.98]">
+            <RefreshCw className="mr-2 h-4 w-4" />
             Scan Another Product
           </Button>
         </div>
@@ -395,19 +394,19 @@ export function CheckPageClient() {
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-6 mt-10">
+    <div className="w-full max-w-xl mx-auto space-y-6 mt-6">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="w-full bg-card/60 backdrop-blur-xl border border-white/10 shadow-2xl">
-          <CardHeader>
-            <CardTitle className="text-3xl font-headline flex items-center justify-center text-foreground drop-shadow-sm">
-                <ScanLine className="mr-3 h-8 w-8 text-primary"/>
+        <Card className="w-full bg-card border border-border shadow-sm rounded-3xl p-6 sm:p-8">
+          <CardHeader className="text-center p-0 mb-6">
+            <CardTitle className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight flex items-center justify-center gap-2">
+                <ScanLine className="h-6 w-6 text-primary"/>
                 Scan a Product
             </CardTitle>
-            <CardDescription className="text-center text-muted-foreground/80">
+            <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
               {imagePreviewUrl ? "Confirm the image is clear, then start the analysis." : "Upload a clear image of a food label or use your camera to get an instant health analysis."}
             </CardDescription>
           </CardHeader>
@@ -452,25 +451,25 @@ export function CheckPageClient() {
                   A clear photo of the ingredients list & nutrition facts provides the most accurate results.
                 </p>
                 <div className="flex w-full justify-center space-x-4 pt-4">
-                  <Button variant="outline" onClick={handleReset} className="rounded-full border-white/10 hover:bg-white/5">
-                    <RefreshCw className="mr-2 h-4 w-4" />
+                  <Button variant="outline" onClick={handleReset} className="rounded-full border-border bg-card hover:bg-muted text-foreground text-xs font-semibold px-5 py-2">
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
                     Try Again
                   </Button>
-                  <Button onClick={() => handleScan(imagePreviewUrl!)} className="rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40">
-                    <ScanLine className="mr-2 h-4 w-4" />
-                    Analyze Image
+                  <Button onClick={() => handleScan(imagePreviewUrl!)} className="rounded-full bg-foreground hover:bg-foreground/90 text-background text-xs font-semibold px-5 py-2">
+                    <ScanLine className="mr-1.5 h-3.5 w-3.5" />
+                    Analyze Label
                   </Button>
                 </div>
               </motion.div>
             ) : (
               <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Tabs defaultValue="upload" className="w-full" onValueChange={handleTabChange}>
-                  <TabsList className="grid w-full grid-cols-2 bg-black/40 border border-white/5 rounded-full p-1">
-                    <TabsTrigger value="upload" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-                      <UploadCloud className="mr-2 h-5 w-5"/> Upload Image
+                  <TabsList className="grid w-full grid-cols-2 bg-muted/50 border border-border rounded-full p-1 max-w-xs mx-auto mb-6">
+                    <TabsTrigger value="upload" className="rounded-full data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground text-xs font-semibold py-1.5 transition-all">
+                      <UploadCloud className="mr-1.5 h-4 w-4"/> Upload
                     </TabsTrigger>
-                    <TabsTrigger value="camera" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-                      <Camera className="mr-2 h-5 w-5" /> Use Camera
+                    <TabsTrigger value="camera" className="rounded-full data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground text-xs font-semibold py-1.5 transition-all">
+                      <Camera className="mr-1.5 h-4 w-4" /> Camera
                     </TabsTrigger>
                   </TabsList>
                   <div className="mt-8">
@@ -481,20 +480,20 @@ export function CheckPageClient() {
                           onDragOver={handleDragOver}
                           onDrop={handleDrop}
                           className={cn(
-                            "flex flex-col items-center justify-center space-y-4 p-10 border-2 border-dashed rounded-2xl transition-all duration-300",
-                            isDragging ? "border-primary bg-primary/10 scale-[1.02]" : "border-white/20 hover:border-primary/50 hover:bg-white/5"
+                            "flex flex-col items-center justify-center space-y-3 p-8 sm:p-10 border-2 border-dashed rounded-2xl transition-all duration-200",
+                            isDragging ? "border-primary bg-primary/10" : "border-border hover:border-foreground/30 bg-muted/20"
                           )}
                         >
-                            <div className="p-4 rounded-full bg-primary/10 text-primary mb-2">
-                              <UploadCloud className="h-10 w-10" />
+                            <div className="p-3 rounded-full bg-muted text-foreground mb-1">
+                              <UploadCloud className="h-6 w-6" />
                             </div>
                             <div className="text-center">
-                              <Label htmlFor="file-upload" className="text-lg font-semibold text-primary cursor-pointer hover:underline">
-                                  Click to upload an image
+                              <Label htmlFor="file-upload" className="text-sm font-semibold text-foreground cursor-pointer hover:underline block">
+                                  Click to upload label image
                               </Label>
-                              <p className="text-sm text-muted-foreground mt-1">or drag and drop</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">or drag and drop into frame</p>
                             </div>
-                            <p className="text-xs text-muted-foreground/60 px-2 py-1 bg-white/5 rounded-md">PNG, JPG, or WEBP</p>
+                            <p className="text-[10px] text-muted-foreground px-2 py-0.5 bg-muted rounded-full">PNG, JPG, or WEBP</p>
                             <Input
                                 id="file-upload"
                                 type="file"
@@ -506,7 +505,7 @@ export function CheckPageClient() {
                         </div>
                     </TabsContent>
                     <TabsContent value="camera" className="m-0">
-                      <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 shadow-inner">
+                      <div className="relative rounded-2xl overflow-hidden border border-border bg-black shadow-inner">
                         <video ref={videoRef} className="w-full aspect-video object-cover" autoPlay muted playsInline />
                         <canvas ref={canvasRef} className="hidden" />
                         
@@ -556,27 +555,27 @@ export function CheckPageClient() {
                   </div>
                 </Tabs>
 
-                {/* ponytail: 1-click sample demo labels for zero-friction testing */}
-                <div className="mt-8 pt-6 border-t border-white/10">
-                  <div className="flex items-center gap-1.5 justify-center mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                {/* 1-click sample demo labels */}
+                <div className="mt-8 pt-6 border-t border-border">
+                  <div className="flex items-center gap-1.5 justify-center mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
                     <span>Or try an instant sample label</span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     {SAMPLE_PRODUCTS.map((sample) => (
                       <button
                         key={sample.id}
                         type="button"
                         onClick={() => handleSelectSample(sample)}
-                        className="flex flex-col items-start p-3 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-primary/40 transition-all text-left group"
+                        className="flex flex-col items-start p-3 rounded-2xl border border-border bg-muted/30 hover:bg-muted/80 transition-all text-left group"
                       >
-                        <span className="text-xs font-medium text-foreground group-hover:text-primary transition-colors">
+                        <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
                           {sample.title}
                         </span>
-                        <span className="text-[11px] text-muted-foreground line-clamp-1">
+                        <span className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
                           {sample.subtitle}
                         </span>
-                        <span className={cn("text-[10px] mt-2 px-1.5 py-0.5 rounded border font-medium", sample.badgeColor)}>
+                        <span className={cn("text-[10px] mt-2 px-2 py-0.5 rounded-full border font-semibold", sample.badgeColor)}>
                           {sample.badge}
                         </span>
                       </button>
@@ -588,11 +587,11 @@ export function CheckPageClient() {
             </AnimatePresence>
 
             {error && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
-                  <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-5">
+                  <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-foreground">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Analysis Error</AlertTitle>
-                      <AlertDescription>{error}</AlertDescription>
+                      <AlertTitle className="text-xs font-semibold">Analysis Notice</AlertTitle>
+                      <AlertDescription className="text-xs text-muted-foreground mt-0.5">{error}</AlertDescription>
                   </Alert>
                 </motion.div>
             )}
@@ -600,18 +599,18 @@ export function CheckPageClient() {
         </Card>
       </motion.div>
 
-      {/* ponytail: Instant local scan history (0ms fetch, no DB overhead) */}
+      {/* Instant local scan history */}
       {recentScans.length > 0 && !imagePreviewUrl && !isLoading && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full bg-card/40 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg"
+          className="w-full bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-sm"
         >
-          <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center justify-between mb-4 px-1">
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-foreground">Recent Scans</h3>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-muted-foreground font-mono">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-mono">
                 {recentScans.length}
               </span>
             </div>
@@ -619,39 +618,39 @@ export function CheckPageClient() {
               variant="ghost"
               size="sm"
               onClick={handleClearHistory}
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="h-7 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5 mr-1" />
               Clear
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {recentScans.map((scan) => (
               <button
                 key={scan.id}
                 type="button"
                 onClick={() => handleSelectHistoryItem(scan)}
-                className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left group"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-border bg-muted/20 hover:bg-muted/60 transition-all text-left group"
               >
                 <div className="min-w-0 pr-2">
                   <p className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                     {scan.productName}
                   </p>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {scan.brand ? `${scan.brand} • ` : ''}{new Date(scan.timestamp).toLocaleDateString()}
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                    {scan.brand ? `${scan.brand} - ` : ''}{new Date(scan.timestamp).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {scan.novaGroup && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/10 text-muted-foreground">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-foreground border border-border">
                       NOVA {scan.novaGroup}
                     </span>
                   )}
                   <span className={cn(
-                    "text-xs font-bold px-2 py-0.5 rounded-full border",
-                    scan.rating >= 4 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" :
-                    scan.rating >= 2.5 ? "bg-amber-500/10 text-amber-400 border-amber-500/30" :
-                    "bg-red-500/10 text-red-400 border-red-500/30"
+                    "text-xs font-bold px-2.5 py-0.5 rounded-full border",
+                    scan.rating >= 4 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" :
+                    scan.rating >= 2.5 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25" :
+                    "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
                   )}>
                     {scan.rating.toFixed(1)} / 5
                   </span>
