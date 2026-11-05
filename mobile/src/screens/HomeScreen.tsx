@@ -7,13 +7,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ScanLine, ArrowRight, BookOpen, History, User } from 'lucide-react-native';
+import { ScanLine, ArrowRight, BookOpen, History, User, Sun, Moon } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { SAMPLE_PRODUCTS, SampleProduct } from '../lib/sample-products';
 import { RootStackParamList } from '../navigation/types';
@@ -22,6 +22,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { colors, isDark, toggleTheme } = useTheme();
 
   const handleStartScan = () => {
     (navigation as any).navigate('Scan');
@@ -48,31 +49,43 @@ export default function HomeScreen() {
 
   return (
     <Screen scrollable>
-      {/* Apple Minimal Brand Header */}
+      {/* Apple Minimal Header with Theme Toggle */}
       <View style={styles.header}>
-        <View style={styles.eyebrowContainer}>
-          <View style={styles.eyebrowDot} />
-          <Text style={styles.eyebrowText}>Food Product Intelligence</Text>
+        <View style={styles.topRow}>
+          <Text style={[styles.brandTitle, { color: colors.text }]}>EatInformed</Text>
+          <TouchableOpacity
+            style={[styles.themeToggleButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+            onPress={toggleTheme}
+            activeOpacity={0.75}
+            accessibilityLabel="Toggle theme"
+          >
+            {isDark ? (
+              <Sun size={18} color={colors.textSecondary} />
+            ) : (
+              <Moon size={18} color={colors.textSecondary} />
+            )}
+          </TouchableOpacity>
         </View>
-        <Text style={styles.heroTitle}>
+
+        <Text style={[styles.heroTitle, { color: colors.text }]}>
           Food clarity.{'\n'}
-          <Text style={styles.heroSubtitle}>For what you eat.</Text>
+          <Text style={{ color: colors.textSecondary }}>For what you eat.</Text>
         </Text>
-        <Text style={styles.heroDescription}>
+        <Text style={[styles.heroDescription, { color: colors.textSecondary }]}>
           Scan any ingredient list or nutrition panel for instant NOVA processing classification, chemical additive screening, and health scores.
         </Text>
       </View>
 
       {/* Main Scan Action Card */}
-      <Card style={styles.ctaCard}>
+      <Card style={{ borderColor: isDark ? 'rgba(48, 209, 88, 0.25)' : 'rgba(52, 199, 89, 0.35)' }}>
         <CardContent>
           <View style={styles.ctaTopRow}>
-            <View style={styles.ctaIconContainer}>
+            <View style={[styles.ctaIconContainer, { backgroundColor: colors.primaryMuted }]}>
               <ScanLine size={24} color={colors.primary} />
             </View>
             <View style={styles.ctaTextContainer}>
-              <Text style={styles.ctaTitle}>Scan a Product Label</Text>
-              <Text style={styles.ctaDescription}>
+              <Text style={[styles.ctaTitle, { color: colors.text }]}>Scan a Product Label</Text>
+              <Text style={[styles.ctaDescription, { color: colors.textSecondary }]}>
                 Camera capture or photo library upload
               </Text>
             </View>
@@ -87,30 +100,30 @@ export default function HomeScreen() {
           />
           <View style={styles.quickNavRow}>
             <TouchableOpacity
-              style={styles.quickNavButton}
+              style={[styles.quickNavButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
               onPress={handleOpenHistory}
               activeOpacity={0.75}
             >
               <History size={14} color={colors.textSecondary} />
-              <Text style={styles.quickNavText}>History</Text>
+              <Text style={[styles.quickNavText, { color: colors.textSecondary }]}>History</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.quickNavButton}
+              style={[styles.quickNavButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
               onPress={handleOpenGuide}
               activeOpacity={0.75}
             >
               <BookOpen size={14} color={colors.textSecondary} />
-              <Text style={styles.quickNavText}>NOVA Guide</Text>
+              <Text style={[styles.quickNavText, { color: colors.textSecondary }]}>NOVA Guide</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.quickNavButton}
+              style={[styles.quickNavButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
               onPress={handleOpenProfile}
               activeOpacity={0.75}
             >
               <User size={14} color={colors.textSecondary} />
-              <Text style={styles.quickNavText}>Account</Text>
+              <Text style={[styles.quickNavText, { color: colors.textSecondary }]}>Account</Text>
             </TouchableOpacity>
           </View>
         </CardContent>
@@ -119,8 +132,8 @@ export default function HomeScreen() {
       {/* Demo Samples Section */}
       <View style={styles.sectionHeader}>
         <View>
-          <Text style={styles.sectionTitle}>Try Instant Samples</Text>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Try Instant Samples</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Compare products across the food processing spectrum
           </Text>
         </View>
@@ -134,8 +147,8 @@ export default function HomeScreen() {
         >
           <View style={styles.sampleHeader}>
             <View style={styles.sampleInfo}>
-              <Text style={styles.sampleTitle}>{sample.title}</Text>
-              <Text style={styles.sampleSubtitle}>{sample.subtitle}</Text>
+              <Text style={[styles.sampleTitle, { color: colors.text }]}>{sample.title}</Text>
+              <Text style={[styles.sampleSubtitle, { color: colors.textSecondary }]}>{sample.subtitle}</Text>
             </View>
             <ArrowRight size={16} color={colors.textSecondary} />
           </View>
@@ -147,15 +160,15 @@ export default function HomeScreen() {
       ))}
 
       {/* Educational NOVA Banner */}
-      <Card onPress={handleOpenGuide} style={styles.infoCard}>
+      <Card onPress={handleOpenGuide} style={{ borderColor: colors.info + '30' }}>
         <CardContent>
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
               <BookOpen size={20} color={colors.info} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={styles.infoTitle}>The NOVA Standard</Text>
-              <Text style={styles.infoDescription}>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>The NOVA Standard</Text>
+              <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
                 Developed at the University of Sao Paulo to classify foods by the extent and purpose of industrial processing.
               </Text>
             </View>
@@ -171,54 +184,36 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.base,
   },
-  eyebrowContainer: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
-  eyebrowDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.primary,
-    marginRight: 6,
+  brandTitle: {
+    fontSize: typography.fontSizes.sm,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: -0.2,
   },
-  eyebrowText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.medium,
-    color: colors.textSecondary,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+  themeToggleButton: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroTitle: {
     fontSize: typography.fontSizes.xxxl,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
     letterSpacing: -0.6,
     lineHeight: 40,
-    marginBottom: spacing.sm,
-  },
-  heroSubtitle: {
-    color: colors.textSecondary,
+    marginBottom: spacing.xs,
   },
   heroDescription: {
     fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
     lineHeight: 20,
-    marginTop: 2,
-  },
-  ctaCard: {
-    backgroundColor: colors.surface,
-    borderColor: 'rgba(48, 209, 88, 0.25)',
-    borderWidth: 1,
-    marginTop: spacing.sm,
+    marginTop: 4,
   },
   ctaTopRow: {
     flexDirection: 'row',
@@ -229,7 +224,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -240,12 +234,10 @@ const styles = StyleSheet.create({
   ctaTitle: {
     fontSize: typography.fontSizes.md,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
     letterSpacing: -0.2,
   },
   ctaDescription: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   ctaButton: {
@@ -262,17 +254,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceRaised,
     paddingVertical: 10,
     paddingHorizontal: 6,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   quickNavText: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.medium,
-    color: colors.textSecondary,
     marginLeft: 5,
   },
   sectionHeader: {
@@ -282,12 +271,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: typography.fontSizes.lg,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   sampleCard: {
@@ -305,24 +292,16 @@ const styles = StyleSheet.create({
   sampleTitle: {
     fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
     letterSpacing: -0.2,
   },
   sampleSubtitle: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   sampleMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  infoCard: {
-    borderColor: 'rgba(10, 132, 255, 0.2)',
-    backgroundColor: colors.surface,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xxl,
   },
   infoRow: {
     flexDirection: 'row',
@@ -338,12 +317,10 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: typography.fontSizes.sm,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
     marginBottom: 2,
   },
   infoDescription: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
     lineHeight: 18,
   },
 });

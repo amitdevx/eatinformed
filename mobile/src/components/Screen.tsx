@@ -9,7 +9,7 @@ import {
   RefreshControlProps,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { layout } from '../theme/tokens';
 
 interface ScreenProps {
@@ -28,6 +28,7 @@ export function Screen({
   refreshControl,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const containerStyle: ViewStyle = {
     flex: 1,

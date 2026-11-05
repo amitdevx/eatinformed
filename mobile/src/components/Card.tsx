@@ -6,7 +6,7 @@ import {
   ViewStyle,
   TouchableOpacity,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 interface CardProps {
@@ -16,10 +16,17 @@ interface CardProps {
 }
 
 export function Card({ children, style, onPress }: CardProps) {
+  const { colors } = useTheme();
+  const cardStyle = [
+    styles.card,
+    { backgroundColor: colors.surface, borderColor: colors.border },
+    style,
+  ];
+
   if (onPress) {
     return (
       <TouchableOpacity
-        style={[styles.card, style]}
+        style={cardStyle}
         onPress={onPress}
         activeOpacity={0.8}
       >
@@ -28,7 +35,7 @@ export function Card({ children, style, onPress }: CardProps) {
     );
   }
 
-  return <View style={[styles.card, style]}>{children}</View>;
+  return <View style={cardStyle}>{children}</View>;
 }
 
 export function CardHeader({
@@ -42,11 +49,12 @@ export function CardHeader({
   rightElement?: React.ReactNode;
   style?: ViewStyle;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={[styles.header, style]}>
       <View style={styles.headerText}>
-        {title && <Text style={styles.title}>{title}</Text>}
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        {title && <Text style={[styles.title, { color: colors.text }]}>{title}</Text>}
+        {subtitle && <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
       </View>
       {rightElement && <View style={styles.rightElement}>{rightElement}</View>}
     </View>
@@ -54,11 +62,13 @@ export function CardHeader({
 }
 
 export function CardTitle({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
-  return <Text style={[styles.title, style]}>{children}</Text>;
+  const { colors } = useTheme();
+  return <Text style={[styles.title, { color: colors.text }, style]}>{children}</Text>;
 }
 
 export function CardDescription({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
-  return <Text style={[styles.subtitle, style]}>{children}</Text>;
+  const { colors } = useTheme();
+  return <Text style={[styles.subtitle, { color: colors.textSecondary }, style]}>{children}</Text>;
 }
 
 export function CardContent({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
@@ -66,15 +76,14 @@ export function CardContent({ children, style }: { children: React.ReactNode; st
 }
 
 export function CardFooter({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.footer, style]}>{children}</View>;
+  const { colors } = useTheme();
+  return <View style={[styles.footer, { borderTopColor: colors.border }, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.base,
     overflow: 'hidden',
@@ -92,12 +101,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typography.fontSizes.md,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
     letterSpacing: -0.2,
   },
   subtitle: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
     marginTop: 2,
     lineHeight: 16,
   },
@@ -111,7 +118,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',

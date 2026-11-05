@@ -28,12 +28,14 @@ import { colors } from '../theme/colors';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession } from '../lib/auth';
+import { useTheme, ThemeMode } from '../theme/ThemeContext';
 import { RootStackParamList } from '../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { colors, isDark, theme: currentTheme, setTheme } = useTheme();
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
   const [serverMessage, setServerMessage] = useState<string>('Checking server status...');
   const [isCheckingServer, setIsCheckingServer] = useState(false);
@@ -132,6 +134,41 @@ export default function ProfileScreen() {
             }
             style={styles.authButton}
           />
+        </CardContent>
+      </Card>
+
+      {/* Apple Appearance / Theme Selector Card */}
+      <Card>
+        <CardHeader
+          title="Appearance"
+          subtitle="Match device settings or choose a preferred theme"
+        />
+        <CardContent>
+          <View style={[styles.themeSegmentContainer, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+            {(['system', 'light', 'dark'] as ThemeMode[]).map((mode) => {
+              const isSelected = currentTheme === mode;
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.themeSegment,
+                    isSelected && { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
+                  ]}
+                  onPress={() => setTheme(mode)}
+                  activeOpacity={0.75}
+                >
+                  <Text
+                    style={[
+                      styles.themeSegmentText,
+                      { color: isSelected ? colors.text : colors.textSecondary, fontWeight: isSelected ? '600' : '400' },
+                    ]}
+                  >
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </CardContent>
       </Card>
 
@@ -337,5 +374,22 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.xs,
     color: colors.borderStrong,
     marginTop: 2,
+  },
+  themeSegmentContainer: {
+    flexDirection: 'row',
+    padding: 3,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  themeSegment: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.sm,
+  },
+  themeSegmentText: {
+    fontSize: typography.fontSizes.xs,
+    letterSpacing: -0.2,
   },
 });

@@ -13,7 +13,7 @@ import {
   User,
 } from 'lucide-react-native';
 
-import { colors } from './theme/colors';
+import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { RootStackParamList, BottomTabParamList } from './navigation/types';
 
 import HomeScreen from './screens/HomeScreen';
@@ -48,6 +48,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 function TabNavigator() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const bottomPadding = insets.bottom > 0 ? insets.bottom : 8;
   const tabBarHeight = 56 + bottomPadding;
 
@@ -73,7 +74,7 @@ function TabNavigator() {
               return <Home size={iconSize} color={color} />;
             case 'Scan':
               return (
-                <View style={[styles.scanTabIcon, focused && styles.scanTabIconFocused]}>
+                <View style={[styles.scanTabIcon, focused && { ...styles.scanTabIconFocused, backgroundColor: colors.primary, borderColor: colors.surface }]}>
                   <ScanLine size={iconSize} color={focused ? '#000000' : color} />
                 </View>
               );
@@ -118,10 +119,12 @@ function TabNavigator() {
   );
 }
 
-export default function App() {
+function MainApp() {
+  const { colors, isDark } = useTheme();
+
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <NavigationContainer linking={linking}>
         <Stack.Navigator
           screenOptions={{
@@ -152,15 +155,15 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainApp />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    height: 64,
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
   tabBarLabel: {
     fontSize: 11,
     fontWeight: '600',
@@ -174,9 +177,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primary,
     marginBottom: 8,
     borderWidth: 2,
-    borderColor: colors.surface,
   },
 });
