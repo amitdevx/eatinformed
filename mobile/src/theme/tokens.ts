@@ -1,4 +1,4 @@
-// EatInformed Design System Tokens
+// EatInformed Design System Tokens - Apple HIG Aligned
 
 export const spacing = {
   xs: 4,
@@ -33,10 +33,10 @@ export const typography = {
 
 export const borderRadius = {
   xs: 6,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 24,
   full: 9999,
 };
 

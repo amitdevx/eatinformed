@@ -1,54 +1,54 @@
-// EatInformed Design System Colors
-// Matches EatInformed website: Pure Black aesthetic with Emerald Green accent
+// EatInformed Apple Minimal Design System Palette
+// Pure Black OLED backdrop with iOS System Green accent and clean dark surfaces
 
 export const colors = {
   // Brand
-  primary: '#22C55E',
-  primaryDark: '#16A34A',
-  primaryLight: '#4ADE80',
-  primaryMuted: 'rgba(34, 197, 94, 0.15)',
+  primary: '#30D158', // Apple iOS System Green
+  primaryDark: '#248A3D',
+  primaryLight: '#34C759',
+  primaryMuted: 'rgba(48, 209, 88, 0.12)',
 
   // Background and Surfaces
-  background: '#000000',
-  surface: '#0C0C0E',
-  surfaceRaised: '#141417',
-  surfaceHighlight: '#1F1F24',
+  background: '#000000', // Pure Black OLED
+  surface: '#161618', // Apple System Gray 6 Dark
+  surfaceRaised: '#1C1C1E', // Apple System Gray 5 Dark
+  surfaceHighlight: '#2C2C2E', // Apple Elevated Surface
 
   // Borders
-  border: '#1F1F23',
-  borderStrong: '#2E2E35',
+  border: 'rgba(255, 255, 255, 0.08)',
+  borderStrong: 'rgba(255, 255, 255, 0.16)',
 
   // Typography
-  text: '#FAFAFA',
-  textSecondary: '#A1A1AA',
-  textMuted: '#71717A',
+  text: '#F5F5F7', // Apple Primary Off-White
+  textSecondary: '#86868B', // Apple Muted Gray
+  textMuted: '#6E6E73',
 
   // Semantic
-  success: '#10B981',
-  successLight: 'rgba(16, 185, 129, 0.15)',
-  danger: '#EF4444',
-  dangerLight: 'rgba(239, 68, 68, 0.15)',
-  warning: '#F59E0B',
-  warningLight: 'rgba(245, 158, 11, 0.15)',
-  info: '#3B82F6',
-  infoLight: 'rgba(59, 130, 246, 0.15)',
+  success: '#30D158',
+  successLight: 'rgba(48, 209, 88, 0.12)',
+  danger: '#FF453A', // Apple System Red
+  dangerLight: 'rgba(255, 69, 58, 0.12)',
+  warning: '#FF9F0A', // Apple System Orange
+  warningLight: 'rgba(255, 159, 10, 0.12)',
+  info: '#0A84FF', // Apple System Blue
+  infoLight: 'rgba(10, 132, 255, 0.12)',
 
   // NOVA Food Processing Classification System
-  nova1: '#10B981',
-  nova1Bg: 'rgba(16, 185, 129, 0.15)',
-  nova1Border: 'rgba(16, 185, 129, 0.3)',
+  nova1: '#30D158',
+  nova1Bg: 'rgba(48, 209, 88, 0.12)',
+  nova1Border: 'rgba(48, 209, 88, 0.25)',
 
-  nova2: '#3B82F6',
-  nova2Bg: 'rgba(59, 130, 246, 0.15)',
-  nova2Border: 'rgba(59, 130, 246, 0.3)',
+  nova2: '#0A84FF',
+  nova2Bg: 'rgba(10, 132, 255, 0.12)',
+  nova2Border: 'rgba(10, 132, 255, 0.25)',
 
-  nova3: '#F59E0B',
-  nova3Bg: 'rgba(245, 158, 11, 0.15)',
-  nova3Border: 'rgba(245, 158, 11, 0.3)',
+  nova3: '#FF9F0A',
+  nova3Bg: 'rgba(255, 159, 10, 0.12)',
+  nova3Border: 'rgba(255, 159, 10, 0.25)',
 
-  nova4: '#F43F5E',
-  nova4Bg: 'rgba(244, 63, 94, 0.15)',
-  nova4Border: 'rgba(244, 63, 94, 0.3)',
+  nova4: '#FF453A',
+  nova4Bg: 'rgba(255, 69, 58, 0.12)',
+  nova4Border: 'rgba(255, 69, 58, 0.25)',
 };
 
 export const getNovaColor = (novaGroup?: number) => {
@@ -58,14 +58,14 @@ export const getNovaColor = (novaGroup?: number) => {
         text: colors.nova1,
         bg: colors.nova1Bg,
         border: colors.nova1Border,
-        label: 'NOVA 1: Unprocessed / Minimal',
+        label: 'NOVA 1: Whole Food',
       };
     case 2:
       return {
         text: colors.nova2,
         bg: colors.nova2Bg,
         border: colors.nova2Border,
-        label: 'NOVA 2: Culinary Ingredients',
+        label: 'NOVA 2: Culinary Base',
       };
     case 3:
       return {

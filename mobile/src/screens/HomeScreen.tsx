@@ -7,9 +7,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ScanLine, Sparkles, ArrowRight, ShieldCheck, Zap, BookOpen, History, User } from 'lucide-react-native';
+import { ScanLine, ArrowRight, BookOpen, History, User } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
+import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
@@ -48,67 +48,68 @@ export default function HomeScreen() {
 
   return (
     <Screen scrollable>
-      {/* Brand Header */}
+      {/* Apple Minimal Brand Header */}
       <View style={styles.header}>
-        <View style={styles.brandRow}>
-          <View style={styles.logoBadge}>
-            <Sparkles size={18} color={colors.primary} />
-          </View>
-          <Text style={styles.brandName}>EatInformed</Text>
+        <View style={styles.eyebrowContainer}>
+          <View style={styles.eyebrowDot} />
+          <Text style={styles.eyebrowText}>Clinical Food Intelligence</Text>
         </View>
         <Text style={styles.heroTitle}>
-          Transform Your Nutrition with{' '}
-          <Text style={styles.heroHighlight}>AI Power</Text>
+          Food clarity.{'\n'}
+          <Text style={styles.heroSubtitle}>Down to the molecule.</Text>
         </Text>
-        <Text style={styles.heroSubtitle}>
-          Scan any ingredient list or nutrition facts panel for instant food safety,
-          NOVA classification, and health assessment.
+        <Text style={styles.heroDescription}>
+          Scan any ingredient list or nutrition panel for instant NOVA processing classification, chemical additive screening, and clinical health scores.
         </Text>
       </View>
 
       {/* Main Scan Action Card */}
       <Card style={styles.ctaCard}>
         <CardContent>
-          <View style={styles.ctaIconContainer}>
-            <ScanLine size={32} color={colors.primary} />
+          <View style={styles.ctaTopRow}>
+            <View style={styles.ctaIconContainer}>
+              <ScanLine size={24} color={colors.primary} />
+            </View>
+            <View style={styles.ctaTextContainer}>
+              <Text style={styles.ctaTitle}>Scan a Product Label</Text>
+              <Text style={styles.ctaDescription}>
+                Camera capture or photo library upload
+              </Text>
+            </View>
           </View>
-          <Text style={styles.ctaTitle}>Ready to Check a Product?</Text>
-          <Text style={styles.ctaDescription}>
-            Point your camera at a food label or pick an image from your photo gallery.
-          </Text>
           <Button
             title="Scan Food Label"
             onPress={handleStartScan}
             variant="primary"
             size="lg"
-            icon={<ScanLine size={20} color="#000000" />}
+            icon={<ScanLine size={18} color="#000000" />}
             style={styles.ctaButton}
           />
           <View style={styles.quickNavRow}>
             <TouchableOpacity
               style={styles.quickNavButton}
               onPress={handleOpenHistory}
-              activeOpacity={0.8}
+              activeOpacity={0.75}
             >
-              <History size={16} color={colors.textSecondary} />
+              <History size={14} color={colors.textSecondary} />
               <Text style={styles.quickNavText}>History</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.quickNavButton}
               onPress={handleOpenGuide}
-              activeOpacity={0.8}
+              activeOpacity={0.75}
             >
-              <BookOpen size={16} color={colors.textSecondary} />
-              <Text style={styles.quickNavText}>Guide</Text>
+              <BookOpen size={14} color={colors.textSecondary} />
+              <Text style={styles.quickNavText}>NOVA Guide</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.quickNavButton}
               onPress={handleOpenProfile}
-              activeOpacity={0.8}
+              activeOpacity={0.75}
             >
-              <User size={16} color={colors.textSecondary} />
+              <User size={14} color={colors.textSecondary} />
               <Text style={styles.quickNavText}>Account</Text>
             </TouchableOpacity>
           </View>
@@ -118,9 +119,9 @@ export default function HomeScreen() {
       {/* Demo Samples Section */}
       <View style={styles.sectionHeader}>
         <View>
-          <Text style={styles.sectionTitle}>Try Sample Products</Text>
+          <Text style={styles.sectionTitle}>Try Instant Samples</Text>
           <Text style={styles.sectionSubtitle}>
-            Instant analysis examples without taking a photo
+            Compare products across the food processing spectrum
           </Text>
         </View>
       </View>
@@ -136,7 +137,7 @@ export default function HomeScreen() {
               <Text style={styles.sampleTitle}>{sample.title}</Text>
               <Text style={styles.sampleSubtitle}>{sample.subtitle}</Text>
             </View>
-            <ArrowRight size={18} color={colors.textSecondary} />
+            <ArrowRight size={16} color={colors.textSecondary} />
           </View>
           <View style={styles.sampleMeta}>
             <RatingStars rating={sample.data.rating} size="sm" />
@@ -150,12 +151,12 @@ export default function HomeScreen() {
         <CardContent>
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <BookOpen size={24} color={colors.info} />
+              <BookOpen size={20} color={colors.info} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={styles.infoTitle}>Understand NOVA Groups</Text>
+              <Text style={styles.infoTitle}>The NOVA Standard</Text>
               <Text style={styles.infoDescription}>
-                Learn how ultra-processed foods impact long-term health and how to identify clean whole foods.
+                Developed at the University of Sao Paulo to classify foods by the extent and purpose of industrial processing.
               </Text>
             </View>
           </View>
@@ -167,71 +168,85 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.base,
   },
-  brandRow: {
+  eyebrowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     marginBottom: spacing.md,
   },
-  logoBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.primaryMuted,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm,
+  eyebrowDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginRight: 6,
   },
-  brandName: {
-    fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text,
-    letterSpacing: 0.5,
+  eyebrowText: {
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.medium,
+    color: colors.textSecondary,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   heroTitle: {
     fontSize: typography.fontSizes.xxxl,
-    fontWeight: typography.fontWeights.black,
+    fontWeight: typography.fontWeights.bold,
     color: colors.text,
+    letterSpacing: -0.6,
     lineHeight: 40,
     marginBottom: spacing.sm,
   },
-  heroHighlight: {
-    color: colors.primary,
-  },
   heroSubtitle: {
-    fontSize: typography.fontSizes.base,
     color: colors.textSecondary,
-    lineHeight: 22,
+  },
+  heroDescription: {
+    fontSize: typography.fontSizes.sm,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginTop: 2,
   },
   ctaCard: {
-    backgroundColor: colors.surfaceRaised,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
-    borderWidth: 1.5,
+    backgroundColor: colors.surface,
+    borderColor: 'rgba(48, 209, 88, 0.25)',
+    borderWidth: 1,
     marginTop: spacing.sm,
   },
+  ctaTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.base,
+  },
   ctaIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: borderRadius.full,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginRight: spacing.md,
+  },
+  ctaTextContainer: {
+    flex: 1,
   },
   ctaTitle: {
-    fontSize: typography.fontSizes.xl,
-    fontWeight: typography.fontWeights.bold,
+    fontSize: typography.fontSizes.md,
+    fontWeight: typography.fontWeights.semibold,
     color: colors.text,
-    marginBottom: spacing.xs,
+    letterSpacing: -0.2,
   },
   ctaDescription: {
-    fontSize: typography.fontSizes.base,
+    fontSize: typography.fontSizes.xs,
     color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: spacing.base,
+    marginTop: 2,
   },
   ctaButton: {
     width: '100%',
@@ -247,30 +262,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceRaised,
     paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: borderRadius.sm,
+    paddingHorizontal: 6,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
   quickNavText: {
     fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
+    fontWeight: typography.fontWeights.medium,
     color: colors.textSecondary,
-    marginLeft: 6,
+    marginLeft: 5,
   },
   sectionHeader: {
     marginTop: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
-    fontSize: typography.fontSizes.xl,
-    fontWeight: typography.fontWeights.bold,
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.semibold,
     color: colors.text,
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.xs,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -281,18 +297,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   sampleInfo: {
     flex: 1,
   },
   sampleTitle: {
-    fontSize: typography.fontSizes.md,
+    fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.semibold,
     color: colors.text,
+    letterSpacing: -0.2,
   },
   sampleSubtitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.xs,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -302,9 +319,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoCard: {
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-    backgroundColor: colors.surfaceRaised,
-    marginTop: spacing.sm,
+    borderColor: 'rgba(10, 132, 255, 0.2)',
+    backgroundColor: colors.surface,
+    marginTop: spacing.xs,
     marginBottom: spacing.xxl,
   },
   infoRow: {
@@ -319,13 +336,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoTitle: {
-    fontSize: typography.fontSizes.base,
-    fontWeight: typography.fontWeights.bold,
+    fontSize: typography.fontSizes.sm,
+    fontWeight: typography.fontWeights.semibold,
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   infoDescription: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.xs,
     color: colors.textSecondary,
     lineHeight: 18,
   },

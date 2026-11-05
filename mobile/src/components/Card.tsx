@@ -21,7 +21,7 @@ export function Card({ children, style, onPress }: CardProps) {
       <TouchableOpacity
         style={[styles.card, style]}
         onPress={onPress}
-        activeOpacity={0.85}
+        activeOpacity={0.8}
       >
         {children}
       </TouchableOpacity>
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.base,
+    padding: spacing.lg,
     marginBottom: spacing.base,
     overflow: 'hidden',
   },
@@ -83,31 +83,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   headerText: {
     flex: 1,
     paddingRight: spacing.sm,
   },
   title: {
-    fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.bold,
+    fontSize: typography.fontSizes.md,
+    fontWeight: typography.fontWeights.semibold,
     color: colors.text,
+    letterSpacing: -0.2,
   },
   subtitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.xs,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
+    lineHeight: 16,
   },
   rightElement: {
     alignSelf: 'flex-start',
   },
   content: {
-    // Content takes default layout
+    // Clean layout
   },
   footer: {
     marginTop: spacing.md,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     flexDirection: 'row',

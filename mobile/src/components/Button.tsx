@@ -60,7 +60,7 @@ export function Button({
     if (disabled) return colors.textMuted;
     switch (variant) {
       case 'primary':
-        return '#000000'; // Pure black text on emerald green button
+        return '#000000'; // Clean black text on green
       case 'secondary':
         return colors.text;
       case 'outline':
@@ -76,15 +76,15 @@ export function Button({
 
   const getBorderColor = (): string => {
     if (disabled) return colors.border;
-    if (variant === 'outline') return colors.primary;
+    if (variant === 'outline') return colors.borderStrong;
     if (variant === 'secondary') return colors.border;
     return 'transparent';
   };
 
   const sizeStyles: Record<ButtonSize, { paddingVertical: number; paddingHorizontal: number; minHeight: number; fontSize: number }> = {
-    sm: { paddingVertical: 8, paddingHorizontal: 14, minHeight: 38, fontSize: typography.fontSizes.sm },
-    md: { paddingVertical: 12, paddingHorizontal: 20, minHeight: 48, fontSize: typography.fontSizes.base },
-    lg: { paddingVertical: 16, paddingHorizontal: 28, minHeight: 56, fontSize: typography.fontSizes.md },
+    sm: { paddingVertical: 8, paddingHorizontal: 14, minHeight: 38, fontSize: typography.fontSizes.xs },
+    md: { paddingVertical: 12, paddingHorizontal: 20, minHeight: 48, fontSize: typography.fontSizes.sm },
+    lg: { paddingVertical: 15, paddingHorizontal: 26, minHeight: 52, fontSize: typography.fontSizes.base },
   };
 
   const currentSize = sizeStyles[size];
@@ -105,7 +105,7 @@ export function Button({
       ]}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={0.75}
     >
       {loading ? (
         <ActivityIndicator color={getTextColor()} size="small" />
@@ -133,7 +133,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full, // Apple smooth pill button
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
   text: {
     fontWeight: typography.fontWeights.semibold,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   leftIcon: {
     marginRight: spacing.sm,

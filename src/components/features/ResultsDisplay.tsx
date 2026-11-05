@@ -117,7 +117,7 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
     const { rating, pros, cons } = analysisData;
     const url = typeof window !== "undefined" ? window.location.origin : SITE_URL;
     const scoreStr = typeof rating === 'number' && !isNaN(rating) ? `${rating.toFixed(1)}/5` : 'N/A';
-    const truncate = (s: string, len: number) => s.length > len ? s.slice(0, len - 1) + '…' : s;
+    const truncate = (s: string, len: number) => s.length > len ? s.slice(0, len - 1) + '...' : s;
     let summary = `This product scored ${scoreStr} on EatInformed.`;
     if (pros && pros.length > 0) {
       summary += `\n👍 Pro: ${truncate(pros[0], 65)}`;
@@ -437,11 +437,8 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
               </DropdownMenu>
           </motion.div>
           <motion.p variants={itemVariants} className="text-xs text-muted-foreground/60 px-4 text-center">
-            Disclaimer: Information provided by EatInformed is for general guidance only and not a substitute for professional medical or nutritional advice. Always consult with a qualified healthcare provider for any health concerns or before making any decisions related to your health or diet. Ingredient data and regulations can change; verify critical information with product packaging and official sources.
+            Disclaimer: Information provided by EatInformed is for general guidance only and not a substitute for professional medical or nutritional advice. Always consult with a qualified healthcare provider for any health concerns or before making any decisions related to your health or diet.
           </motion.p>
-          <motion.div variants={itemVariants} className="w-full h-24 bg-white/5 rounded-xl flex items-center justify-center text-muted-foreground/50 text-sm border border-white/10 border-dashed">
-              [ Placeholder for Non-Intrusive Ad ]
-          </motion.div>
         </CardFooter>
       </Card>
     </motion.div>

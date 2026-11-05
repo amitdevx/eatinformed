@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -48,191 +47,177 @@ const AuthButton = ({ isMobile = false }) => {
 
   if (loading) {
     return (
-      <Button variant="ghost" className="rounded-full" size="icon">
-        <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-      </Button>
+      <div className="h-8 w-8 animate-pulse rounded-full bg-white/10" />
     );
   }
 
-  // ponytail: render avatar if user is authenticated; don't flash login button if profile is pending
   if (user) {
     const displayName = userProfile?.name || user.displayName || user.email?.split('@')[0] || (user.isAnonymous ? 'Guest' : 'User');
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10">
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 border border-white/10">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
-              <AvatarFallback>
-                {displayName.charAt(0).toUpperCase() || <UserIcon />}
+              <AvatarFallback className="bg-[#1C1C1E] text-[#F5F5F7] text-xs">
+                {displayName.charAt(0).toUpperCase() || <UserIcon className="h-4 w-4" />}
               </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuContent className="w-56 bg-[#161618] border-white/10 text-[#F5F5F7] rounded-2xl" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{displayName}</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {user.email || (user.isAnonymous ? 'Anonymous Session' : '')}
+              <p className="text-sm font-semibold leading-none">{displayName}</p>
+              <p className="text-xs leading-none text-[#86868B]">
+                {user.email || (user.isAnonymous ? 'Guest Session' : '')}
               </p>
               {user.isAnonymous && (
-                <Badge variant="outline" className="text-[10px] border-yellow-500/50 text-yellow-500 w-fit mt-2">
+                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 w-fit mt-1">
                   Guest Mode
                 </Badge>
               )}
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => router.push('/check')}>
-             <UserIcon className="mr-2 h-4 w-4" />
-             <span>Dashboard</span>
+          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuItem onClick={() => router.push('/check')} className="cursor-pointer hover:bg-white/5 rounded-xl">
+             <UserIcon className="mr-2 h-4 w-4 text-[#86868B]" />
+             <span>Scanner</span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSignOut}>
+          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-rose-400 hover:bg-rose-500/10 rounded-xl">
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <span>Sign out</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
   }
 
-  // Auth Dialog Trigger & Content
   return (
     <>
       <Dialog open={openAuthDialog} onOpenChange={setOpenAuthDialog}>
-        <Button onClick={() => setOpenAuthDialog(true)} className={cn(isMobile ? 'w-full' : 'hidden md:flex', 'bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg shadow-primary/30')}>
-          Login / Sign Up
+        <Button
+          onClick={() => setOpenAuthDialog(true)}
+          className={cn(
+            isMobile ? 'w-full' : 'hidden md:inline-flex',
+            'bg-[#F5F5F7] hover:bg-white text-[#000000] rounded-full text-xs font-semibold px-4 py-2 transition-all duration-150 active:scale-[0.98]'
+          )}
+        >
+          Sign in
         </Button>
-        <DialogContent className="max-w-md">
-            <DialogHeader>
-                <DialogTitle className="text-center text-2xl">Welcome to EatInformed</DialogTitle>
-                <DialogDescription className="text-center">
-                    Sign in or create an account to get started.
-                </DialogDescription>
-            </DialogHeader>
-            <AuthForm onAuthSuccess={() => {
-                setOpenAuthDialog(false);
-                router.push('/check');
-            }} />
+        <DialogContent className="max-w-md bg-[#161618] border-white/10 text-[#F5F5F7] rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-semibold tracking-tight">EatInformed</DialogTitle>
+            <DialogDescription className="text-center text-xs text-[#86868B]">
+              Sign in or create an account for persistent nutrition history.
+            </DialogDescription>
+          </DialogHeader>
+          <AuthForm onAuthSuccess={() => {
+            setOpenAuthDialog(false);
+            router.push('/check');
+          }} />
         </DialogContent>
       </Dialog>
     </>
   );
 };
 
-
 export default function Navbar() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      setIsScrolled(currentScrollY > 50);
-
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-
-      setLastScrollY(currentScrollY);
+      setIsScrolled(window.scrollY > 20);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header
-      className={cn(
-        "fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-in-out w-[95%] max-w-screen-xl",
-        isVisible ? "translate-y-0 opacity-100" : "-translate-y-[150%] opacity-0"
-      )}
-    >
+    <header className="sticky top-0 z-50 w-full transition-all duration-200">
       <div
         className={cn(
-          "flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-300",
+          'w-full transition-all duration-200',
           isScrolled
-            ? "bg-background/90 backdrop-blur-xl border-border/40 shadow-2xl shadow-primary/10"
-            : "bg-background/40 backdrop-blur-md border-border/20 shadow-lg"
+            ? 'bg-black/75 backdrop-blur-xl border-b border-white/[0.08] shadow-sm'
+            : 'bg-transparent border-b border-transparent'
         )}
       >
-        <Link href="/" className="flex items-center space-x-2 transform transition-transform duration-200 hover:scale-105" aria-label="EatInformed Home">
-          <EatInformedLogo width={32} height={32} />
-           <span className="font-bold text-lg hidden sm:inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">EatInformed</span>
-        </Link>
+        <div className="container mx-auto px-6 h-14 flex items-center justify-between max-w-6xl">
+          <Link href="/" className="flex items-center space-x-2.5 group" aria-label="EatInformed Home">
+            <EatInformedLogo width={24} height={24} />
+            <span className="font-semibold text-sm tracking-tight text-[#F5F5F7] group-hover:text-white transition-colors">
+              EatInformed
+            </span>
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-2 lg:gap-6 text-sm font-medium">
-          {navItems.map((item, index) => {
-             const isActive = pathname === item.href;
-             return (
-               <Link
-                 key={item.href}
-                 href={item.href}
-                 className={cn(
-                   "relative text-foreground/80 hover:text-foreground transition-all duration-300 group px-3 py-1 rounded-lg hover:bg-foreground/5 transform hover:scale-110",
-                   index % 2 === 0 ? "hover:rotate-1 hover:skew-x-1" : "hover:-rotate-1 hover:-skew-x-1",
-                   isActive && "text-primary font-semibold bg-primary/10"
-                 )}
-               >
-                 {item.label}
-                 <span className={cn(
-                   "absolute -bottom-1 left-1/2 transform -translate-x-1/2 h-0.5 bg-primary transition-all duration-200",
-                   isActive ? "w-4" : "w-0 group-hover:w-4"
-                 )}></span>
-               </Link>
-             );
-          })}
-        </nav>
+          <nav className="hidden md:flex items-center space-x-7 text-xs font-medium">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'transition-colors duration-150',
+                    isActive
+                      ? 'text-[#F5F5F7] font-semibold'
+                      : 'text-[#86868B] hover:text-[#F5F5F7]'
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        <div className="flex items-center space-x-2">
-          <AuthButton />
-          
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Open menu" className="rounded-xl">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-background/95 backdrop-blur-lg p-0 border-l border-white/10 shadow-2xl">
-                <div className="flex flex-col h-full">
-                  <div className="p-6">
-                    <Link href="/" className="flex items-center space-x-2 mb-8" aria-label="EatInformed Home">
+          <div className="flex items-center space-x-3">
+            <AuthButton />
+
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Open menu" className="rounded-full h-8 w-8 text-[#86868B] hover:text-white">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px] bg-[#161618] border-l border-white/[0.08] p-6 text-[#F5F5F7]">
+                  <div className="flex flex-col h-full">
+                    <Link href="/" className="flex items-center space-x-2.5 mb-8" aria-label="EatInformed Home">
                       <SheetClose asChild>
-                          <EatInformedLogo width={32} height={32} />
+                        <div className="flex items-center space-x-2">
+                          <EatInformedLogo width={24} height={24} />
+                          <span className="font-semibold text-sm text-[#F5F5F7]">EatInformed</span>
+                        </div>
                       </SheetClose>
-                      <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">EatInformed</span>
                     </Link>
-                    <div className="flex flex-col space-y-2">
-                      {navItems.map(item => (
+
+                    <div className="flex flex-col space-y-4">
+                      {navItems.map((item) => (
                         <SheetClose asChild key={`mobile-${item.href}`}>
-                            <Link
-                              href={item.href}
-                              className={cn(
-                                "block rounded-xl p-3 transition-colors hover:bg-white/5 text-base relative overflow-hidden group",
-                                pathname === item.href ? "bg-primary/10 text-primary font-medium" : "text-foreground/80"
-                              )}
-                            >
-                              <span className="relative z-10">{item.label}</span>
-                              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300"></div>
-                            </Link>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              'text-sm font-medium py-1 transition-colors',
+                              pathname === item.href ? 'text-[#30D158]' : 'text-[#86868B] hover:text-[#F5F5F7]'
+                            )}
+                          >
+                            {item.label}
+                          </Link>
                         </SheetClose>
                       ))}
                     </div>
+
+                    <div className="mt-auto pt-6 border-t border-white/[0.08]">
+                      <AuthButton isMobile={true} />
+                    </div>
                   </div>
-                  <div className="mt-auto p-6">
-                     <AuthButton isMobile={true} />
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </div>

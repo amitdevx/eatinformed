@@ -4,117 +4,97 @@
 
 @layer base {
   :root {
-    /* Pure Black & Dark Shades Theme */
-    --background: 0 0% 0%; /* Pure black */
-    --foreground: 0 0% 98%; /* Almost white for text */
-    
-    --card: 0 0% 4%; /* Very dark gray */
-    --card-foreground: 0 0% 98%;
-    
-    --popover: 0 0% 4%;
-    --popover-foreground: 0 0% 98%;
-    
-    --primary: 142.1 70.6% 45.3%; /* Existing green */
-    --primary-foreground: 0 0% 0%; /* Black text on green */
-    
-    --secondary: 0 0% 9%; /* Darker gray */
-    --secondary-foreground: 0 0% 98%;
-    
-    --muted: 0 0% 9%;
-    --muted-foreground: 0 0% 65%;
-    
-    --accent: 142.1 70.6% 45.3%; /* Use green for accent */
+    /* Apple Minimal Dark System Palette */
+    --background: 0 0% 0%; /* #000000 Pure Black */
+    --foreground: 240 5% 96%; /* #F5F5F7 Apple Primary Text */
+
+    --card: 240 4% 9%; /* #161618 Apple System Gray 6 Dark */
+    --card-foreground: 240 5% 96%;
+
+    --popover: 240 4% 9%;
+    --popover-foreground: 240 5% 96%;
+
+    --primary: 142 69% 50%; /* #30D158 Apple iOS System Green */
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 240 3% 13%; /* #222225 Apple Secondary Surface */
+    --secondary-foreground: 240 5% 96%;
+
+    --muted: 240 3% 13%;
+    --muted-foreground: 240 2% 54%; /* #86868B Apple Muted Text */
+
+    --accent: 142 69% 50%;
     --accent-foreground: 0 0% 0%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    
-    --border: 0 0% 12%; /* Dark gray borders */
-    --input: 0 0% 12%;
-    --ring: 142.1 70.6% 45.3%;
-    
-    --radius: 1rem; /* More rounded corners for modern feel */
+
+    --destructive: 0 84% 60%; /* #FF453A Apple System Red */
+    --destructive-foreground: 240 5% 96%;
+
+    --border: 240 4% 16%; /* rgba(255, 255, 255, 0.08) Hairline Border */
+    --input: 240 4% 16%;
+    --ring: 142 69% 50%;
+
+    --radius: 1.25rem; /* 20px Apple Smooth Squircle */
 
     /* Chart Colors */
-    --chart-1: 142.1 70.6% 45.3%;
-    --chart-2: 0 0% 30%;
-    --chart-3: 0 0% 50%;
-    --chart-4: 0 0% 70%;
-    --chart-5: 0 0% 90%;
+    --chart-1: 142 69% 50%; /* Green */
+    --chart-2: 211 100% 60%; /* Blue */
+    --chart-3: 38 100% 50%; /* Orange */
+    --chart-4: 0 84% 60%; /* Red */
+    --chart-5: 280 65% 60%; /* Purple */
 
     /* Sidebar */
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 142.1 70.6% 45.3%;
+    --sidebar-background: 240 4% 9%;
+    --sidebar-foreground: 240 5% 96%;
+    --sidebar-primary: 142 69% 50%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 142.1 70.6% 45.3%;
+    --sidebar-accent: 240 3% 13%;
+    --sidebar-accent-foreground: 240 5% 96%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 142 69% 50%;
   }
 
   .dark {
-    /* Same as :root for pure black theme */
     --background: 0 0% 0%;
-    --foreground: 0 0% 98%;
-    
-    --card: 0 0% 4%;
-    --card-foreground: 0 0% 98%;
-    
-    --popover: 0 0% 4%;
-    --popover-foreground: 0 0% 98%;
-    
-    --primary: 142.1 70.6% 45.3%;
+    --foreground: 240 5% 96%;
+    --card: 240 4% 9%;
+    --card-foreground: 240 5% 96%;
+    --popover: 240 4% 9%;
+    --popover-foreground: 240 5% 96%;
+    --primary: 142 69% 50%;
     --primary-foreground: 0 0% 0%;
-    
-    --secondary: 0 0% 9%;
-    --secondary-foreground: 0 0% 98%;
-    
-    --muted: 0 0% 9%;
-    --muted-foreground: 0 0% 65%;
-    
-    --accent: 142.1 70.6% 45.3%;
+    --secondary: 240 3% 13%;
+    --secondary-foreground: 240 5% 96%;
+    --muted: 240 3% 13%;
+    --muted-foreground: 240 2% 54%;
+    --accent: 142 69% 50%;
     --accent-foreground: 0 0% 0%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
-    --ring: 142.1 70.6% 45.3%;
-
-    --chart-1: 142.1 70.6% 45.3%;
-    --chart-2: 0 0% 30%;
-    --chart-3: 0 0% 50%;
-    --chart-4: 0 0% 70%;
-    --chart-5: 0 0% 90%;
-
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 142.1 70.6% 45.3%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 142.1 70.6% 45.3%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 240 5% 96%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 142 69% 50%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground font-body antialiased selection:bg-primary/30 selection:text-primary-foreground;
-    position: relative;
-    overflow-x: hidden;
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
+/* Subtle Apple Radial Ambient Glow */
+.apple-radial-glow {
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(48, 209, 88, 0.12), transparent);
+}
 
-@keyframes drift {
-  0% { transform: translateY(-20vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(120vh) rotate(720deg); opacity: 0;}
+.apple-card-glass {
+  background: rgba(22, 22, 24, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }

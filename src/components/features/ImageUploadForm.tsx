@@ -653,7 +653,7 @@ export function CheckPageClient() {
                     scan.rating >= 2.5 ? "bg-amber-500/10 text-amber-400 border-amber-500/30" :
                     "bg-red-500/10 text-red-400 border-red-500/30"
                   )}>
-                    ★ {scan.rating.toFixed(1)}
+                    {scan.rating.toFixed(1)} / 5
                   </span>
                 </div>
               </button>

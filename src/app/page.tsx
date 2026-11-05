@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UploadCloud, Activity, ShieldCheck, ScanLine, Star, Zap } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScanLine, ArrowRight, ShieldCheck, Zap, Layers, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AuthForm } from '@/components/features/AuthForm';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+
+const springTransition = { type: 'spring' as const, stiffness: 280, damping: 28 };
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -23,200 +24,242 @@ export default function HomePage() {
       setOpenAuthDialog(true);
     }
   };
-  
+
   return (
-    <div className="flex flex-col items-center space-y-32 overflow-hidden pb-20">
+    <div className="flex flex-col items-center space-y-28 md:space-y-36 pb-24">
       {/* Hero Section */}
-      <section className="w-full pt-20 md:pt-32 lg:pt-40 text-center relative z-10">
-        <div className="container px-4 md:px-6 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col items-center space-y-8"
-          >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-tight drop-shadow-lg">
-              Transform Your Nutrition with{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-400 to-accent">
-                AI Power
-              </span>
-            </h1>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="max-w-[700px] text-muted-foreground text-lg md:text-2xl drop-shadow-md"
-            >
-              Upload a food label for instant AI analysis of ingredients, health, and dietary suitability. Make smarter choices, effortlessly.
-            </motion.p>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, duration: 0.5, type: "spring" }}
-              className="flex flex-col sm:flex-row gap-4 mt-8"
-            >
-              <Dialog open={openAuthDialog} onOpenChange={setOpenAuthDialog}>
-                 <Button onClick={handleCheckProductClick} size="lg" className="rounded-full text-lg py-7 px-8 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
-                    <ScanLine className="mr-2 h-6 w-6" />
-                    Check a Product
-                </Button>
-                <DialogContent className="max-w-md bg-card/90 backdrop-blur-xl border-border">
-                    <DialogHeader>
-                        <DialogTitle className="text-center text-2xl">Welcome to EatInformed</DialogTitle>
-                        <DialogDescription className="text-center">
-                            Sign in or create an account to get started.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <AuthForm onAuthSuccess={() => {
-                        setOpenAuthDialog(false);
-                        router.push('/check');
-                    }} />
-                </DialogContent>
-              </Dialog>
-              <Button asChild variant="outline" size="lg" className="rounded-full text-lg py-7 px-8 hover:bg-white/5 hover:scale-105 transition-all duration-300 border-white/10">
-                <Link href="#how-it-works">
-                  Learn More
-                </Link>
-              </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="w-full py-12 md:py-24 relative z-10">
-         <div className="container px-4 md:px-6">
-           <motion.div 
-             initial={{ opacity: 0, y: 30 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             transition={{ duration: 0.6 }}
-             className="flex flex-col items-center justify-center space-y-4 text-center mb-16"
-           >
-            <div className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm text-primary font-semibold border border-primary/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]">Key Features</div>
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">Why You&apos;ll Love EatInformed</h2>
-            <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
-              We provide the tools you need for food clarity.
-            </p>
-          </motion.div>
-          <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3">
-             <FeatureCard
-              icon={<Zap className="h-8 w-8 text-primary" />}
-              title="Instant Analysis"
-              description="Get results in seconds. Our AI quickly processes label images to give you immediate health insights."
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={<ShieldCheck className="h-8 w-8 text-primary" />}
-              title="Safety & Allergens"
-              description="We flag controversial ingredients and clearly list potential allergens so you can eat with confidence."
-              delay={0.2}
-            />
-             <FeatureCard
-              icon={<Star className="h-8 w-8 text-primary" />}
-              title="Simple Health Score"
-              description="Our easy-to-understand 1-5 rating helps you quickly assess a product's overall healthiness."
-              delay={0.3}
-            />
-          </div>
-         </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="w-full py-16 md:py-32 bg-secondary/30 rounded-[3rem] relative z-10 border border-white/5 backdrop-blur-sm">
-        <div className="container px-4 md:px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col items-center justify-center space-y-4 text-center"
-          >
-            <div className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm text-primary font-semibold border border-primary/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]">How It Works</div>
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">Simple Steps to Food Clarity</h2>
-            <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Discovering what&apos;s in your food has never been easier.
-            </p>
-          </motion.div>
-          <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 lg:gap-16 mt-16">
-            <FeatureCard
-              icon={<UploadCloud className="h-8 w-8 text-primary" />}
-              title="1. Upload Photo"
-              description="Snap a picture of the food package's ingredient list and nutritional label. Clear photos work best!"
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={<Activity className="h-8 w-8 text-primary" />}
-              title="2. AI Analysis"
-              description="Our advanced AI uses OCR to read the label, then cross-references ingredients with our extensive database."
-              delay={0.2}
-            />
-            <FeatureCard
-              icon={<ShieldCheck className="h-8 w-8 text-primary" />}
-              title="3. Get Results"
-              description="Receive a health rating, pros & cons, and warnings about harmful or banned ingredients."
-              delay={0.3}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="w-full py-12 md:py-24 relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="container grid items-center justify-center gap-4 px-4 text-center md:px-6"
+      <section className="w-full pt-16 md:pt-24 text-center relative z-10 max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center space-y-6"
         >
-          <div className="space-y-4">
-             <div className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm text-primary font-semibold border border-primary/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]">Pricing</div>
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight font-headline">
-              Completely Free, For Everyone
-            </h2>
-            <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed">
-              Our mission is to make nutritional information accessible. EatInformed is free to use, supported by non-intrusive ads on the results page.
-            </p>
+          {/* Eyebrow badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[#86868B] text-xs font-medium tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#30D158]" />
+            Clinical Nutrition Intelligence
           </div>
-           <div className="mx-auto w-full max-w-sm space-y-2 mt-8">
-               <Button onClick={handleCheckProductClick} size="lg" className="w-full shadow-lg shadow-primary/20 hover:shadow-primary/40 rounded-full py-7 text-lg hover:scale-105 transition-all duration-300">
-                  <ScanLine className="mr-2 h-6 w-6" />
-                  Start Scanning Now
+
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-[#F5F5F7] leading-[1.08]">
+            Food clarity.
+            <br />
+            <span className="text-[#86868B]">Down to the molecule.</span>
+          </h1>
+
+          <p className="max-w-xl text-[#86868B] text-base md:text-xl font-normal leading-relaxed">
+            Scan any ingredient list or nutrition panel for instant food processing classification, chemical additive screening, and clinical health ratings.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
+            <Dialog open={openAuthDialog} onOpenChange={setOpenAuthDialog}>
+              <Button
+                onClick={handleCheckProductClick}
+                size="lg"
+                className="rounded-full bg-[#F5F5F7] hover:bg-white text-[#000000] text-sm font-semibold px-7 py-3.5 transition-all active:scale-[0.98] shadow-sm"
+              >
+                <ScanLine className="mr-2 h-4 w-4" />
+                Scan a Product
               </Button>
+              <DialogContent className="max-w-md bg-[#161618] border-white/10 text-[#F5F5F7] rounded-3xl p-6">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-xl font-semibold tracking-tight">EatInformed</DialogTitle>
+                  <DialogDescription className="text-center text-xs text-[#86868B]">
+                    Sign in or continue as guest to start scanning food labels.
+                  </DialogDescription>
+                </DialogHeader>
+                <AuthForm onAuthSuccess={() => {
+                  setOpenAuthDialog(false);
+                  router.push('/check');
+                }} />
+              </DialogContent>
+            </Dialog>
+
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-[#F5F5F7] border border-white/10 text-sm font-medium px-7 py-3.5 transition-all active:scale-[0.98]"
+            >
+              <Link href="#pillars">
+                Explore the Standard
+              </Link>
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Apple Hardware-Inspired Glass Scanner Mockup */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-16 md:mt-20 mx-auto max-w-3xl"
+        >
+          <div className="relative rounded-3xl border border-white/[0.08] bg-[#161618]/60 backdrop-blur-2xl p-6 md:p-8 shadow-2xl overflow-hidden text-left">
+            {/* Subtle top indicator bar */}
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 mb-6">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+              </div>
+              <span className="text-xs font-mono text-[#86868B]">LIVE OCR INFERENCE - 768PX ENGINE</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+              <div className="md:col-span-2 space-y-3">
+                <div className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#30D158]/15 text-[#30D158] border border-[#30D158]/30">
+                  NOVA 1: Whole Food
+                </div>
+                <h3 className="text-2xl font-semibold text-[#F5F5F7]">Plain Greek Yogurt</h3>
+                <p className="text-xs text-[#86868B] leading-relaxed">
+                  Cultured Pasteurized Nonfat Milk, Live Active Probiotic Bacterial Cultures (S. Thermophilus, L. Bulgaricus).
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <span className="px-2.5 py-1 rounded-md bg-white/[0.05] text-[11px] text-[#F5F5F7] border border-white/[0.08]">
+                    17g Protein
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-white/[0.05] text-[11px] text-[#F5F5F7] border border-white/[0.08]">
+                    0g Added Sugar
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-white/[0.05] text-[11px] text-[#F5F5F7] border border-white/[0.08]">
+                    Zero Additives
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-5 flex flex-col items-center justify-center text-center">
+                <span className="text-xs text-[#86868B] uppercase tracking-wider font-semibold">Health Score</span>
+                <span className="text-4xl font-bold text-[#30D158] my-1">4.8</span>
+                <span className="text-[11px] text-[#86868B]">out of 5.0 rating</span>
+              </div>
+            </div>
           </div>
         </motion.div>
       </section>
-    </div>
-  );
-}
 
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  delay?: number;
-}
-
-function FeatureCard({ icon, title, description, delay = 0 }: FeatureCardProps) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-      className="group relative p-8 rounded-3xl bg-secondary/40 border border-white/5 backdrop-blur-md shadow-xl hover:bg-secondary/60 hover:border-primary/30 transition-all duration-300"
-    >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col items-center text-center sm:items-start sm:text-left gap-6">
-            <div className="bg-background/80 p-4 rounded-2xl border border-white/5 shadow-inner group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                {icon}
-            </div>
-            <div>
-                <h3 className="text-2xl font-bold mb-3">{title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{description}</p>
-            </div>
+      {/* The 3 Pillars Section */}
+      <section id="pillars" className="w-full max-w-5xl mx-auto px-4">
+        <div className="text-center space-y-3 mb-14">
+          <span className="text-xs font-semibold tracking-widest uppercase text-[#30D158]">Three Pillars</span>
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[#F5F5F7]">
+            Built on scientific standards.
+          </h2>
+          <p className="text-sm md:text-base text-[#86868B] max-w-lg mx-auto">
+            Not opinion. EatInformed evaluates foods against verified clinical processing classifications.
+          </p>
         </div>
-    </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div
+            whileHover={{ y: -2 }}
+            transition={springTransition}
+            className="rounded-3xl border border-white/[0.08] bg-[#161618]/70 backdrop-blur-xl p-7 flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-[#30D158]">
+                <Layers className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#F5F5F7]">The NOVA Standard</h3>
+              <p className="text-xs md:text-sm text-[#86868B] leading-relaxed">
+                Classifies items from Group 1 (unprocessed whole foods) to Group 4 (ultra-processed formulations with industrial emulsifiers).
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -2 }}
+            transition={springTransition}
+            className="rounded-3xl border border-white/[0.08] bg-[#161618]/70 backdrop-blur-xl p-7 flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-amber-400">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#F5F5F7]">Additive Screening</h3>
+              <p className="text-xs md:text-sm text-[#86868B] leading-relaxed">
+                Cross-references synthetic dyes, high-fructose syrups, and controversial preservatives flagged by food safety agencies.
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ y: -2 }}
+            transition={springTransition}
+            className="rounded-3xl border border-white/[0.08] bg-[#161618]/70 backdrop-blur-xl p-7 flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-sky-400">
+                <Zap className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#F5F5F7]">Nutrient Precision</h3>
+              <p className="text-xs md:text-sm text-[#86868B] leading-relaxed">
+                Transcribes exact per-serving and per-100g nutrient panels to uncover hidden sugars, sodium density, and trans fats.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Interactive Sample Benchmark Section */}
+      <section className="w-full max-w-5xl mx-auto px-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <h3 className="text-2xl font-semibold text-[#F5F5F7] tracking-tight">Try instant examples.</h3>
+            <p className="text-xs text-[#86868B]">Compare products across the food processing spectrum.</p>
+          </div>
+          <Link
+            href="/check"
+            className="inline-flex items-center text-xs font-semibold text-[#30D158] hover:text-[#30D158]/80 transition-colors"
+          >
+            Launch full scanner <ArrowRight className="ml-1 h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <Link href="/check" className="group">
+            <div className="rounded-3xl border border-white/[0.08] bg-[#161618]/60 p-6 hover:border-white/[0.18] transition-all duration-200">
+              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mb-3">
+                NOVA 1: Clean Food
+              </span>
+              <h4 className="text-base font-semibold text-[#F5F5F7] group-hover:text-white">Greek Yogurt</h4>
+              <p className="text-xs text-[#86868B] mt-1 mb-4">Chobani Plain Non-Fat</p>
+              <div className="flex justify-between items-center text-xs pt-3 border-t border-white/[0.08]">
+                <span className="text-[#86868B]">Rating</span>
+                <span className="font-semibold text-[#30D158]">4.8 / 5.0</span>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/check" className="group">
+            <div className="rounded-3xl border border-white/[0.08] bg-[#161618]/60 p-6 hover:border-white/[0.18] transition-all duration-200">
+              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 mb-3">
+                NOVA 3: Processed
+              </span>
+              <h4 className="text-base font-semibold text-[#F5F5F7] group-hover:text-white">Honey Granola</h4>
+              <p className="text-xs text-[#86868B] mt-1 mb-4">KIND Healthy Grains</p>
+              <div className="flex justify-between items-center text-xs pt-3 border-t border-white/[0.08]">
+                <span className="text-[#86868B]">Rating</span>
+                <span className="font-semibold text-amber-400">3.6 / 5.0</span>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/check" className="group">
+            <div className="rounded-3xl border border-white/[0.08] bg-[#161618]/60 p-6 hover:border-white/[0.18] transition-all duration-200">
+              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 mb-3">
+                NOVA 4: Ultra-Processed
+              </span>
+              <h4 className="text-base font-semibold text-[#F5F5F7] group-hover:text-white">Classic Chips</h4>
+              <p className="text-xs text-[#86868B] mt-1 mb-4">Lays Salted</p>
+              <div className="flex justify-between items-center text-xs pt-3 border-t border-white/[0.08]">
+                <span className="text-[#86868B]">Rating</span>
+                <span className="font-semibold text-rose-400">1.9 / 5.0</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+    </div>
   );
 }
