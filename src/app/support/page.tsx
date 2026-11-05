@@ -1,48 +1,102 @@
-import { LifeBuoy, Mail, MessageCircle, HelpCircle } from "lucide-react";
+import { HelpCircle, Github, FileCode, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function SupportPage() {
   return (
-    <div className="min-h-screen bg-background pt-32 pb-20">
-      <div className="container mx-auto px-4 max-w-4xl text-center">
-        <h1 className="text-5xl font-bold text-white mb-6">Support Center</h1>
-        <p className="text-xl text-gray-300 mb-16">
-          We&apos;re here to help. Reach out to us if you have any questions or issues.
+    <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="container mx-auto px-4 max-w-3xl text-center">
+        <h1 className="text-4xl sm:text-5xl font-semibold text-foreground tracking-tight mb-4">
+          Support & FAQ
+        </h1>
+        <p className="text-base text-muted-foreground mb-12 max-w-lg mx-auto">
+          EatInformed is an open source food product analysis tool. Find answers to common questions or contribute on GitHub.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-          <div className="bg-card/40 border border-border/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors">
-            <Mail className="w-10 h-10 text-primary mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Email Support</h3>
-            <p className="text-gray-400 mb-6">Send us an email and we&apos;ll get back to you within 24 hours.</p>
-            <Button variant="outline" className="border-gray-600 text-white w-full">support@eatinformed.com</Button>
+        {/* Real community support channels */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-14 text-left">
+          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground">
+                <Github className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">GitHub Issues</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Report a scanning bug, suggest a new food standard, or track feature requests directly on our repository.
+              </p>
+            </div>
+            <div className="pt-5">
+              <a
+                href="https://github.com/amitdevx/eatinformed/issues"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full inline-block"
+              >
+                <Button variant="outline" className="w-full rounded-full text-xs font-semibold">
+                  Open an Issue on GitHub
+                </Button>
+              </a>
+            </div>
           </div>
 
-          <div className="bg-card/40 border border-border/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors">
-            <MessageCircle className="w-10 h-10 text-primary mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Live Chat</h3>
-            <p className="text-gray-400 mb-6">Chat with our support team in real-time during business hours.</p>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">Start Chat</Button>
+          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-foreground">
+                <FileCode className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Open Source Project</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Explore the codebase, inspect the vision extraction prompts, and review our classification benchmarks.
+              </p>
+            </div>
+            <div className="pt-5">
+              <a
+                href="https://github.com/amitdevx/eatinformed"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full inline-block"
+              >
+                <Button variant="outline" className="w-full rounded-full text-xs font-semibold">
+                  View Repository
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="text-left bg-card/30 border border-border/30 rounded-2xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <HelpCircle className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl font-bold text-white">Frequently Asked Questions</h2>
+        {/* Real Transparent FAQ */}
+        <div className="text-left bg-card border border-border rounded-3xl p-6 sm:p-8">
+          <div className="flex items-center gap-2.5 mb-6">
+            <HelpCircle className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold text-foreground tracking-tight">Frequently Asked Questions</h2>
           </div>
           <div className="space-y-6">
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-2">How accurate is the OCR extraction?</h4>
-              <p className="text-gray-400">We use state of the art Vision models, which achieve over 98% accuracy even on curved or partially obscured food labels.</p>
+            <div className="space-y-1.5">
+              <h4 className="text-sm font-semibold text-foreground">How does label extraction work?</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                When you snap a food packaging photo, our vision engine transcribes ingredients and nutrition tables into structured data. It categorizes nutrients by serving and per 100g.
+              </p>
             </div>
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-2">Is my health profile data secure?</h4>
-              <p className="text-gray-400">Yes, your health profile is encrypted at rest and is only used temporarily during inference to compute your specific health score.</p>
+
+            <div className="space-y-1.5 border-t border-border pt-5">
+              <h4 className="text-sm font-semibold text-foreground">What is the NOVA classification system?</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                The NOVA standard was created by researchers at the University of Sao Paulo. It groups foods into four categories: Unprocessed whole foods (Group 1), Processed culinary ingredients (Group 2), Processed foods (Group 3), and Ultra-processed formulations (Group 4).
+              </p>
             </div>
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-2">Can I use EatInformed offline?</h4>
-              <p className="text-gray-400">Currently, an internet connection is required as the AI analysis runs on our secure cloud infrastructure powered by advanced inference APIs.</p>
+
+            <div className="space-y-1.5 border-t border-border pt-5">
+              <h4 className="text-sm font-semibold text-foreground">Is my scan data private?</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Yes. Your scan history is saved locally in your own browser or mobile secure storage. We do not sell scan data or track your grocery habits.
+              </p>
+            </div>
+
+            <div className="space-y-1.5 border-t border-border pt-5">
+              <h4 className="text-sm font-semibold text-foreground">Is EatInformed free to use?</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Yes. EatInformed is 100% free with no subscriptions, no paywalls, and no third-party advertisements.
+              </p>
             </div>
           </div>
         </div>

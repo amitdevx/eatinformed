@@ -181,7 +181,7 @@ export default function ProfileScreen() {
             <View style={styles.techTextContainer}>
               <Text style={styles.techTitle}>OCR & Label Extraction</Text>
               <Text style={styles.techSubtitle}>
-                Meta Llama 3.2 11B Vision Instruct via NVIDIA NIM
+                NVIDIA Nemotron 3.5 Super VL (120B) via NVIDIA NIM
               </Text>
             </View>
           </View>
@@ -191,7 +191,7 @@ export default function ProfileScreen() {
             <View style={styles.techTextContainer}>
               <Text style={styles.techTitle}>Nutritional Reasoning</Text>
               <Text style={styles.techSubtitle}>
-                DeepSeek V4 Pro Clinical Nutrition Model
+                NVIDIA Nemotron 3.5 Lightning (30B) Reasoning Model
               </Text>
             </View>
           </View>
@@ -211,7 +211,7 @@ export default function ProfileScreen() {
       {/* App Version Info */}
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>EatInformed Android App v1.0.0</Text>
-        <Text style={styles.versionSubtext}>Production-conscious AI Food Nutrition</Text>
+        <Text style={styles.versionSubtext}>Food Product Analysis & Nutrition Intelligence</Text>
       </View>
     </Screen>
   );

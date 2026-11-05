@@ -3,8 +3,8 @@
  */
 
 // Base URL for the application - use environment variable or fallback to default
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://eatinformed.amitdivekar.qzz.io';
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://eatinformed.amitdevx.tech';
 
 // Site metadata
 export const SITE_NAME = 'EatInformed';
-export const SITE_DESCRIPTION = 'Transform your nutrition with AI power. Upload a food label for instant analysis of ingredients, health, and dietary suitability.';
+export const SITE_DESCRIPTION = 'Instant food product analysis. Snap or upload any food label to decode ingredients, nutrition facts, and NOVA processing levels.';

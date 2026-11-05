@@ -52,14 +52,14 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.eyebrowContainer}>
           <View style={styles.eyebrowDot} />
-          <Text style={styles.eyebrowText}>Clinical Food Intelligence</Text>
+          <Text style={styles.eyebrowText}>Food Product Intelligence</Text>
         </View>
         <Text style={styles.heroTitle}>
           Food clarity.{'\n'}
-          <Text style={styles.heroSubtitle}>Down to the molecule.</Text>
+          <Text style={styles.heroSubtitle}>For what you eat.</Text>
         </Text>
         <Text style={styles.heroDescription}>
-          Scan any ingredient list or nutrition panel for instant NOVA processing classification, chemical additive screening, and clinical health scores.
+          Scan any ingredient list or nutrition panel for instant NOVA processing classification, chemical additive screening, and health scores.
         </Text>
       </View>
 

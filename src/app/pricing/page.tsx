@@ -1,65 +1,61 @@
 import Link from "next/link";
-import { Check, Zap, Star } from "lucide-react";
+import { Check, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PricingPage() {
+  const freeFeatures = [
+    "Unlimited food label scans",
+    "Complete NOVA food processing classification",
+    "Ingredient deconstruction & additive screening",
+    "Structured nutrition facts transcription",
+    "Local persistent scan history",
+    "Zero third-party advertisements",
+    "Open source and transparent",
+  ];
+
   return (
-    <div className="min-h-screen bg-background pt-32 pb-20">
-      <div className="container mx-auto px-4 max-w-6xl text-center">
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">Simple, Transparent Pricing</h1>
-        <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-20">
-          Start for free, upgrade when you need more detailed insights and extended scan history.
+    <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="container mx-auto px-4 max-w-3xl text-center">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-foreground tracking-tight mb-4 leading-tight">
+          Free and open.
+          <br />
+          <span className="text-muted-foreground">For everyone.</span>
+        </h1>
+        <p className="text-base text-muted-foreground max-w-lg mx-auto mb-14">
+          No subscriptions. No locked features. No credit cards. Food transparency should be accessible to all.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
-          {/* Free Plan */}
-          <div className="bg-card/30 backdrop-blur-sm border border-border/30 rounded-3xl p-8 flex flex-col">
-            <div className="flex items-center gap-3 mb-4">
-              <Zap className="text-gray-400 w-6 h-6" />
-              <h2 className="text-2xl font-bold text-white">Basic</h2>
+        <div className="bg-card border border-border rounded-3xl p-8 sm:p-10 text-left max-w-xl mx-auto shadow-sm">
+          <div className="flex items-center justify-between border-b border-border pb-6 mb-6">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">All Access</span>
+              <h2 className="text-2xl font-semibold text-foreground mt-0.5">EatInformed Community</h2>
             </div>
-            <p className="text-gray-400 mb-6 border-b border-border/30 pb-6">Perfect for occasional label checks and standard health profiling.</p>
-            <div className="mb-8">
-              <span className="text-5xl font-bold text-white">$0</span>
-              <span className="text-gray-500">/month</span>
+            <div className="text-right">
+              <span className="text-4xl font-bold text-foreground">$0</span>
+              <span className="text-xs text-muted-foreground block">forever</span>
             </div>
-            <ul className="space-y-4 mb-8 flex-1">
-              {["5 scans per day", "Basic AI label extraction", "Standard health analysis", "1 active health profile"].map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-300">
-                  <Check className="w-5 h-5 text-primary shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <Link href="/check" className="w-full">
-              <Button variant="outline" className="w-full border-gray-600 text-white hover:bg-white/10">Start Scanning Free</Button>
-            </Link>
           </div>
 
-          {/* Pro Plan */}
-          <div className="bg-primary/5 backdrop-blur-sm border border-primary/30 rounded-3xl p-8 flex flex-col relative shadow-2xl shadow-primary/10">
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-              Coming Soon
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <Star className="text-primary w-6 h-6" />
-              <h2 className="text-2xl font-bold text-white">Pro</h2>
-            </div>
-            <p className="text-gray-400 mb-6 border-b border-border/30 pb-6">For advanced nutritional tracking and extended personal scan archives.</p>
-            <div className="mb-8">
-              <span className="text-5xl font-bold text-white">$9</span>
-              <span className="text-gray-500">/month</span>
-            </div>
-            <ul className="space-y-4 mb-8 flex-1">
-              {["Unlimited scans", "Personalized Health Goal Matching", "Scan history and trend analysis", "Export to PDF & CSV", "Priority support"].map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-300">
-                  <Check className="w-5 h-5 text-primary shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <Button disabled className="w-full bg-primary/40 text-primary-foreground cursor-not-allowed">Pro Tier — Coming Soon</Button>
-          </div>
+          <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+            Full access to our optical vision parser, NOVA categorization models, and nutrition breakdown tools at zero cost.
+          </p>
+
+          <ul className="space-y-3 mb-8">
+            {freeFeatures.map((feature, i) => (
+              <li key={i} className="flex items-center gap-3 text-xs sm:text-sm text-foreground">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Link href="/check" className="w-full block">
+            <Button size="lg" className="w-full rounded-full bg-foreground hover:bg-foreground/90 text-background text-sm font-semibold py-3 transition-all active:scale-[0.98]">
+              Start Scanning Free
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
