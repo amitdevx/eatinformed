@@ -30,24 +30,20 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center py-12 px-4 relative z-10">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
-      <div className="w-full max-w-md transform transition-all duration-500 hover:scale-[1.01]">
-        <div className="mb-8 flex justify-center">
-          <Link href="/" className="flex flex-col items-center gap-4 group">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-xl group-hover:scale-110 group-hover:border-primary/30 transition-all duration-300">
-              <EatInformedLogo width={48} height={48} />
-            </div>
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">EatInformed</h1>
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-center">
+          <Link href="/" className="flex flex-col items-center gap-2 group" aria-label="EatInformed Home">
+            <EatInformedLogo width={36} height={36} />
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">EatInformed</h1>
           </Link>
         </div>
         
-        <Card className="bg-background/60 backdrop-blur-2xl border-border/30 shadow-2xl shadow-primary/5 rounded-3xl overflow-hidden relative">
-          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-          <CardHeader className="text-center space-y-2 pb-6 pt-8">
-            <CardTitle className="text-3xl font-bold tracking-tight">Welcome Back</CardTitle>
-            <CardDescription className="text-base text-muted-foreground">Sign in to your account to continue</CardDescription>
+        <Card className="bg-card border-border shadow-sm rounded-3xl p-6 sm:p-8">
+          <CardHeader className="text-center space-y-1.5 pb-6 pt-2">
+            <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">Welcome Back</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">Sign in to your account to continue</CardDescription>
           </CardHeader>
-          <CardContent className="pb-8">
+          <CardContent className="p-0">
               <AuthForm initialTab="login" onAuthSuccess={() => router.push('/check')} />
           </CardContent>
         </Card>

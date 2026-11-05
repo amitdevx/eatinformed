@@ -1,9 +1,11 @@
-// EatInformed Apple Minimal Design System Palette
-// Pure Black OLED backdrop with iOS System Green accent and clean dark surfaces
+// EatInformed Apple Minimal Design System Palette - Web & Mobile Synchronized
+// Full support for both Apple Dark Mode (OLED) and Apple Light Mode
 
-export const colors = {
+import { useColorScheme } from 'react-native';
+
+export const darkColors = {
   // Brand
-  primary: '#30D158', // Apple iOS System Green
+  primary: '#30D158', // Apple iOS System Green (Dark)
   primaryDark: '#248A3D',
   primaryLight: '#34C759',
   primaryMuted: 'rgba(48, 209, 88, 0.12)',
@@ -51,41 +53,100 @@ export const colors = {
   nova4Border: 'rgba(255, 69, 58, 0.25)',
 };
 
-export const getNovaColor = (novaGroup?: number) => {
+export const lightColors = {
+  // Brand
+  primary: '#34C759', // Apple iOS System Green (Light)
+  primaryDark: '#248A3D',
+  primaryLight: '#30D158',
+  primaryMuted: 'rgba(52, 199, 89, 0.12)',
+
+  // Background and Surfaces
+  background: '#F5F5F7', // Apple Light Gray Base
+  surface: '#FFFFFF', // Apple Pure White Surface
+  surfaceRaised: '#E5E5EA', // Apple System Gray 4
+  surfaceHighlight: '#D1D1D6',
+
+  // Borders
+  border: 'rgba(0, 0, 0, 0.08)',
+  borderStrong: 'rgba(0, 0, 0, 0.16)',
+
+  // Typography
+  text: '#1D1D1F', // Apple Primary Dark Slate
+  textSecondary: '#86868B', // Apple Muted Gray
+  textMuted: '#6E6E73',
+
+  // Semantic
+  success: '#34C759',
+  successLight: 'rgba(52, 199, 89, 0.12)',
+  danger: '#FF3B30',
+  dangerLight: 'rgba(255, 59, 48, 0.12)',
+  warning: '#FF9500',
+  warningLight: 'rgba(255, 149, 0, 0.12)',
+  info: '#007AFF',
+  infoLight: 'rgba(0, 122, 255, 0.12)',
+
+  // NOVA Food Processing Classification System
+  nova1: '#248A3D',
+  nova1Bg: 'rgba(52, 199, 89, 0.12)',
+  nova1Border: 'rgba(52, 199, 89, 0.25)',
+
+  nova2: '#007AFF',
+  nova2Bg: 'rgba(0, 122, 255, 0.12)',
+  nova2Border: 'rgba(0, 122, 255, 0.25)',
+
+  nova3: '#C97700',
+  nova3Bg: 'rgba(255, 149, 0, 0.12)',
+  nova3Border: 'rgba(255, 149, 0, 0.25)',
+
+  nova4: '#D70015',
+  nova4Bg: 'rgba(255, 59, 48, 0.12)',
+  nova4Border: 'rgba(255, 59, 48, 0.25)',
+};
+
+// Default export uses dark colors, with compatibility helper
+export const colors = darkColors;
+
+export const useAppThemeColors = () => {
+  const scheme = useColorScheme();
+  return scheme === 'light' ? lightColors : darkColors;
+};
+
+export const getNovaColor = (novaGroup?: number, isLight = false) => {
+  const c = isLight ? lightColors : darkColors;
   switch (novaGroup) {
     case 1:
       return {
-        text: colors.nova1,
-        bg: colors.nova1Bg,
-        border: colors.nova1Border,
+        text: c.nova1,
+        bg: c.nova1Bg,
+        border: c.nova1Border,
         label: 'NOVA 1: Whole Food',
       };
     case 2:
       return {
-        text: colors.nova2,
-        bg: colors.nova2Bg,
-        border: colors.nova2Border,
+        text: c.nova2,
+        bg: c.nova2Bg,
+        border: c.nova2Border,
         label: 'NOVA 2: Culinary Base',
       };
     case 3:
       return {
-        text: colors.nova3,
-        bg: colors.nova3Bg,
-        border: colors.nova3Border,
+        text: c.nova3,
+        bg: c.nova3Bg,
+        border: c.nova3Border,
         label: 'NOVA 3: Processed Food',
       };
     case 4:
       return {
-        text: colors.nova4,
-        bg: colors.nova4Bg,
-        border: colors.nova4Border,
+        text: c.nova4,
+        bg: c.nova4Bg,
+        border: c.nova4Border,
         label: 'NOVA 4: Ultra-Processed',
       };
     default:
       return {
-        text: colors.textSecondary,
-        bg: colors.surfaceRaised,
-        border: colors.border,
+        text: c.textSecondary,
+        bg: c.surfaceRaised,
+        border: c.border,
         label: 'NOVA Classification',
       };
   }

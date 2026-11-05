@@ -5,12 +5,55 @@ import Link from "next/link";
 import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+function AnimatedText({
+  text,
+  className,
+  delay = 0,
+}: {
+  text: string;
+  className?: string;
+  delay?: number;
+}) {
+  const characters = Array.from(text);
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.025, delayChildren: delay },
+    },
+  };
+  const child = {
+    hidden: { opacity: 0, y: 6 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring" as const, damping: 22, stiffness: 380 },
+    },
+  };
+
+  return (
+    <motion.span
+      variants={container}
+      initial="hidden"
+      animate="visible"
+      className={cn("inline-block", className)}
+    >
+      {characters.map((char, index) => (
+        <motion.span key={`${char}-${index}`} variants={child} className="inline-block">
+          {char === " " ? "\u00A0" : char}
+        </motion.span>
+      ))}
+    </motion.span>
+  );
+}
 
 const priceSequence = [
-  { price: "$100", headline: "Nutrition data shouldn't cost $100.", subtitle: "Or require expensive subscription tiers." },
-  { price: "$50", headline: "Not $50 a year.", subtitle: "No locked health metrics or paywalls." },
-  { price: "$10", headline: "Not even $10 a month.", subtitle: "Zero recurring charges." },
-  { price: "$0", headline: "Free and open. For everyone.", subtitle: "Food transparency should be accessible to all." },
+  { price: "$100", label: "Paid Tier", caption: "Per month" },
+  { price: "$50", label: "Discounted", caption: "Per month" },
+  { price: "$10", label: "Subscription", caption: "Per month" },
+  { price: "$0", label: "EatInformed", caption: "forever" },
 ];
 
 export default function PricingPage() {
@@ -20,7 +63,7 @@ export default function PricingPage() {
     if (seqIndex < priceSequence.length - 1) {
       const timer = setTimeout(() => {
         setSeqIndex((prev) => prev + 1);
-      }, 700);
+      }, 550);
       return () => clearTimeout(timer);
     }
   }, [seqIndex]);
@@ -41,36 +84,42 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background pt-16 md:pt-24 pb-20">
       <div className="container mx-auto px-4 max-w-3xl text-center">
-        {/* Animated Headline */}
+        {/* Animated Headline with character by character effect */}
         <div className="min-h-[120px] flex flex-col items-center justify-center mb-6">
-          <AnimatePresence mode="wait">
-            <motion.h1
-              key={current.headline}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-semibold text-foreground tracking-tight leading-tight"
-            >
-              {current.headline}
-            </motion.h1>
-          </AnimatePresence>
-
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={current.subtitle}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-base text-muted-foreground mt-3 max-w-md mx-auto"
-            >
-              {current.subtitle}
-            </motion.p>
-          </AnimatePresence>
+          {isFinal ? (
+            <div>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-foreground tracking-tight leading-tight">
+                <AnimatedText text="Free and open." delay={0.05} />
+                <br />
+                <span className="text-muted-foreground">
+                  <AnimatedText text="For everyone." delay={0.4} />
+                </span>
+              </h1>
+              <p className="text-base text-muted-foreground mt-3 max-w-md mx-auto">
+                <AnimatedText text="Food transparency should be accessible to all." delay={0.7} />
+              </p>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current.price}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+              >
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-foreground tracking-tight leading-tight">
+                  Pricing: {current.price}
+                </h1>
+                <p className="text-base text-muted-foreground mt-3">
+                  Transitioning to community standard...
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
 
-        {/* Pricing Card with Morphing Number */}
+        {/* Pricing Card with Character Effect and Morphing Number */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -79,8 +128,12 @@ export default function PricingPage() {
         >
           <div className="flex items-center justify-between border-b border-border pb-6 mb-6">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">All Capabilities</span>
-              <h2 className="text-2xl font-semibold text-foreground mt-0.5">EatInformed</h2>
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary block">
+                {isFinal ? <AnimatedText text="All Capabilities" delay={0.8} /> : "Capabilities"}
+              </span>
+              <h2 className="text-2xl font-semibold text-foreground mt-0.5">
+                {isFinal ? <AnimatedText text="EatInformed" delay={0.9} /> : current.label}
+              </h2>
             </div>
             <div className="text-right">
               <AnimatePresence mode="wait">
@@ -96,7 +149,7 @@ export default function PricingPage() {
                 </motion.span>
               </AnimatePresence>
               <span className="text-xs text-muted-foreground block mt-0.5">
-                {isFinal ? "forever" : "per month"}
+                {isFinal ? <AnimatedText text="forever" delay={1.0} /> : current.caption}
               </span>
             </div>
           </div>
