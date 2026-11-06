@@ -1,19 +1,23 @@
-
 import OpenAI from 'openai';
 
 let nimClientInstance: OpenAI | null = null;
 
 export const getNimClient = (): OpenAI | null => {
-  if (!nimClientInstance && process.env.NVIDIA_API_KEY) {
+  const apiKey = process.env.NVIDIA_API_KEY?.trim();
+  if (!nimClientInstance && apiKey) {
     nimClientInstance = new OpenAI({
-      apiKey: process.env.NVIDIA_API_KEY,
+      apiKey,
       baseURL: (process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/+$/, ''),
-      timeout: 120 * 1000,
+      timeout: 90 * 1000,
+      maxRetries: 2,
     });
   }
   return nimClientInstance;
 };
 
+export const isNimConfigured = (): boolean => Boolean(getNimClient());
+
+// ponytail: backwards-compatible proxy that delegates to getNimClient()
 export const nimClient = new Proxy({} as any, {
   get(_target, prop) {
     const client = getNimClient();
@@ -27,20 +31,60 @@ export const nimClient = new Proxy({} as any, {
 });
 
 /**
- * Expert utility to extract, repair, and parse JSON from LLM responses.
- * Handles markdown code fences, trailing commas, control characters,
- * and other common LLM output quirks.
- * Throws an error with context if JSON cannot be recovered.
+ * Calls NVIDIA NIM chat completions with automatic model fallback on 404/429/5xx.
+ */
+export async function callNimWithFallback(
+  models: string[],
+  messages: any[],
+  options: { max_tokens?: number; temperature?: number; top_p?: number } = {}
+): Promise<string> {
+  const client = getNimClient();
+  if (!client) {
+    throw new Error('AI System Offline: NVIDIA_API_KEY is not configured on the server.');
+  }
+
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      const response = await client.chat.completions.create({
+        model,
+        messages,
+        max_tokens: options.max_tokens ?? 4000,
+        temperature: options.temperature ?? 0.05,
+        top_p: options.top_p ?? 0.9,
+      });
+
+      const choice = response.choices?.[0]?.message as any;
+      // ponytail: only fall back to reasoning_content if it actually contains a JSON object
+      const content =
+        choice?.content?.trim() ||
+        (choice?.reasoning_content?.includes('{') ? choice.reasoning_content : null);
+
+      if (content) return content;
+      throw new Error(`Empty response from model ${model}`);
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`NIM model "${model}" failed (${err?.status || err?.message}), trying fallback...`);
+    }
+  }
+  throw lastError || new Error('All configured NVIDIA NIM models failed.');
+}
+
+/**
+ * Robust utility to extract, repair, and parse JSON from LLM responses.
+ * Handles markdown code fences, think tags, trailing commas, control characters,
+ * and truncated tail closure via LIFO stack.
  */
 export const parseNIMResponse = (content: string | null): any => {
   if (!content || content.trim().length === 0) {
     throw new Error('AI returned an empty response.');
   }
 
-  let cleaned = content.trim();
+  // Strip <think>...</think> blocks from reasoning models before searching for JSON
+  let cleaned = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
-  // Stage 1: If there are markdown code fences, check from the LAST fence backwards
-  const allFences = Array.from(cleaned.matchAll(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/g));
+  // Stage 1: Extract from markdown code fences if present
+  const allFences = Array.from(cleaned.matchAll(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/gi));
   if (allFences.length > 0) {
     for (let i = allFences.length - 1; i >= 0; i--) {
       const candidate = allFences[i][1].trim();
@@ -53,82 +97,67 @@ export const parseNIMResponse = (content: string | null): any => {
     }
   }
 
-  // Stage 2: Locate the outermost JSON object
-  const firstBrace = cleaned.lastIndexOf('\n{') !== -1 ? cleaned.lastIndexOf('\n{') + 1 : cleaned.indexOf('{');
+  // Stage 2: Always use the FIRST opening brace '{'
+  const firstBrace = cleaned.indexOf('{');
+  if (firstBrace === -1) {
+    throw new Error(`AI response does not contain valid JSON: "${cleaned.substring(0, 120)}..."`);
+  }
+
+  // Fast path: try outermost braces if balanced
   const lastBrace = cleaned.lastIndexOf('}');
-
-  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
-    throw new Error(
-      `AI response does not contain a JSON object. ` +
-      `Response starts with: "${cleaned.substring(0, 120)}..."`
-    );
+  if (lastBrace > firstBrace) {
+    const candidate = cleaned.substring(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Continue to repair pipeline
+    }
   }
 
-  let jsonCandidate = cleaned.substring(firstBrace, lastBrace + 1);
+  // Stage 3: LIFO character repair on uncompleted/malformed JSON
+  let toRepair = cleaned.substring(firstBrace);
 
-  // Stage 3: Attempt standard parse first (fast path)
-  try {
-    return JSON.parse(jsonCandidate);
-  } catch (_firstError) {
-    // Continue to repair stages
+  toRepair = toRepair
+    .replace(/(?<=[,{\[\]\d"true"false"null}])\s*\/\/[^\n]*/g, '')
+    .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (m) =>
+      m.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
+    )
+    .replace(/,\s*([\]}])/g, '$1')
+    .replace(/,\s*,+/g, ',')
+    .replace(/([{\[])\s*,/g, '$1')
+    .replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
+
+  // ponytail: LIFO Stack Tracker for exact reverse order bracket/brace closing (Trap B Fix)
+  const stack: ('}' | ']')[] = [];
+  let inString = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < toRepair.length; i++) {
+    const char = toRepair[i];
+    if (char === '"' && !isEscaped) {
+      inString = !inString;
+    } else if (!inString) {
+      if (char === '{') stack.push('}');
+      else if (char === '[') stack.push(']');
+      else if (char === '}' || char === ']') {
+        if (stack.length > 0 && stack[stack.length - 1] === char) {
+          stack.pop();
+        }
+      }
+    }
+    isEscaped = char === '\\' && !isEscaped;
   }
 
-  // Stage 4: Multi-stage repair pipeline
-  let repaired = jsonCandidate;
+  if (inString) toRepair += '"';
+  while (stack.length > 0) {
+    toRepair += stack.pop();
+  }
 
   try {
-    // 4a: Remove single-line JS comments (// ...) that are NOT inside strings.
-    // We do this carefully by only removing comments at the end of lines.
-    repaired = repaired.replace(/(?<=[,{\[\]\d"true"false"null}])\s*\/\/[^\n]*/g, '');
-
-    // 4b: Replace unescaped control characters inside strings (newlines, tabs)
-    // LLMs sometimes put literal newlines in JSON string values
-    repaired = repaired.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
-      return match
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r')
-        .replace(/\t/g, '\\t');
-    });
-
-    // 4c: Fix trailing commas in arrays: [..."item",] → [..."item"]
-    repaired = repaired.replace(/,\s*]/g, ']');
-
-    // 4d: Fix trailing commas in objects: {..."key": "val",} → {..."key": "val"}
-    repaired = repaired.replace(/,\s*}/g, '}');
-
-    // 4e: Fix double/multiple commas: ,, → ,
-    repaired = repaired.replace(/,\s*,+/g, ',');
-
-    // 4f: Fix leading commas after opening braces/brackets: {, or [,
-    repaired = repaired.replace(/([{\[])\s*,/g, '$1');
-
-    // 4g: Remove any BOM or zero-width characters
-    repaired = repaired.replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
-
-    // ponytail: auto-close truncated JSON strings and braces
-    const quotes = (repaired.match(/(?<!\\)"/g) || []).length;
-    if (quotes % 2 !== 0) {
-      repaired += '"';
-    }
-    const openBrackets = (repaired.match(/\[/g) || []).length;
-    const closeBrackets = (repaired.match(/\]/g) || []).length;
-    if (openBrackets > closeBrackets) {
-      repaired += ']'.repeat(openBrackets - closeBrackets);
-    }
-    const openBraces = (repaired.match(/\{/g) || []).length;
-    const closeBraces = (repaired.match(/\}/g) || []).length;
-    if (openBraces > closeBraces) {
-      repaired += '}'.repeat(openBraces - closeBraces);
-    }
-
-    return JSON.parse(repaired);
+    return JSON.parse(toRepair);
   } catch (innerError: any) {
-    // Provide a detailed error for debugging
-    const snippet = jsonCandidate.substring(0, 300);
     throw new Error(
-      `Failed to parse AI response as JSON after repair. ` +
-      `Parse error: ${innerError.message}. ` +
-      `JSON starts with: "${snippet}..."`
+      `Failed to parse AI response as JSON after repair. ${innerError.message}. Preview: "${toRepair.substring(0, 180)}..."`
     );
   }
 };

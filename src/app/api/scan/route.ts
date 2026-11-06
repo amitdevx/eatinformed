@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sharp from 'sharp';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 
 export const maxDuration = 60;
@@ -10,21 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
 };
-
-async function optimizeImageForAI(dataUri: string): Promise<string> {
-  try {
-    const base64Data = dataUri.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
-    const optimizedBuffer = await sharp(buffer)
-      .resize(768, 768, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    return `data:image/jpeg;base64,${optimizedBuffer.toString('base64')}`;
-  } catch (err) {
-    console.warn('Image optimization skipped, using original:', err);
-    return dataUri;
-  }
-}
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -84,8 +68,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const optimizedImage = await optimizeImageForAI(image);
-    const result = await analyzeProduct(optimizedImage);
+    // ponytail: analyzeProduct optimizes image once internally; avoid duplicate Sharp resize
+    const result = await analyzeProduct(image);
     return NextResponse.json(result, {
       status: 200,
       headers: corsHeaders,

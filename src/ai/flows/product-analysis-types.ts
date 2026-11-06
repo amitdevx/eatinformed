@@ -1,39 +1,42 @@
-
 import { z } from 'zod';
 
+// ponytail: safely coerce nulls from LLM outputs to empty string or undefined
+const nullToEmptyString = z.string().nullable().optional().transform((v) => v ?? '');
+const nullToUndefinedString = z.string().nullable().optional().transform((v) => v ?? undefined);
+
 export const ProductAnalysisOutputSchema = z.object({
-  productName: z.string().optional().default(''),
-  brand: z.string().optional().default(''),
-  novaGroup: z.coerce.number().min(1).max(4).optional().default(4),
-  ingredients: z.array(z.string()).default([]),
+  productName: nullToEmptyString,
+  brand: nullToEmptyString,
+  novaGroup: z.coerce.number().min(1).max(4).nullable().optional().transform((v) => v ?? 4),
+  ingredients: z.array(z.string()).nullable().optional().transform((v) => v ?? []),
   nutrition: z.object({
-    rawText: z.string().default(''),
-    servingSizeLabel: z.string().optional(),
+    rawText: nullToEmptyString,
+    servingSizeLabel: nullToUndefinedString,
     nutrients: z.array(z.object({
       nutrient: z.string(),
-      perServing: z.string().optional(),
-      per100mL: z.string().optional(),
-    })).optional().default([]),
-  }).default({ rawText: '', nutrients: [] }),
-  rating: z.coerce.number().min(0).max(5).default(0),
-  pros: z.array(z.string()).default([]),
-  cons: z.array(z.string()).default([]),
-  warnings: z.array(z.string()).default([]),
+      perServing: nullToUndefinedString,
+      per100mL: nullToUndefinedString,
+    })).nullable().optional().transform((v) => v ?? []),
+  }).nullable().optional().transform((v) => v ?? { rawText: '', servingSizeLabel: undefined, nutrients: [] }),
+  rating: z.coerce.number().min(0).max(5).nullable().optional().transform((v) => v ?? 0),
+  pros: z.array(z.string()).nullable().optional().transform((v) => v ?? []),
+  cons: z.array(z.string()).nullable().optional().transform((v) => v ?? []),
+  warnings: z.array(z.string()).nullable().optional().transform((v) => v ?? []),
   ingredientAnalysis: z.array(z.object({
     ingredient: z.string(),
-    description: z.string().default(''),
-    purpose: z.string().default(''),
-    isAllergen: z.coerce.boolean().default(false),
-    isControversial: z.coerce.boolean().default(false),
-  })).default([]),
+    description: nullToEmptyString,
+    purpose: nullToEmptyString,
+    isAllergen: z.coerce.boolean().nullable().optional().transform((v) => v ?? false),
+    isControversial: z.coerce.boolean().nullable().optional().transform((v) => v ?? false),
+  })).nullable().optional().transform((v) => v ?? []),
   dietaryInfo: z.object({
-    allergens: z.array(z.string()).default([]),
-    suitability: z.array(z.string()).default([]),
-    isVegetarian: z.coerce.boolean().default(false),
-    isVegan: z.coerce.boolean().default(false),
-    isGlutenFree: z.coerce.boolean().default(false),
-    summary: z.string().default(''),
-  }).default({
+    allergens: z.array(z.string()).nullable().optional().transform((v) => v ?? []),
+    suitability: z.array(z.string()).nullable().optional().transform((v) => v ?? []),
+    isVegetarian: z.coerce.boolean().nullable().optional().transform((v) => v ?? false),
+    isVegan: z.coerce.boolean().nullable().optional().transform((v) => v ?? false),
+    isGlutenFree: z.coerce.boolean().nullable().optional().transform((v) => v ?? false),
+    summary: nullToEmptyString,
+  }).nullable().optional().transform((v) => v ?? {
     allergens: [],
     suitability: [],
     isVegetarian: false,
