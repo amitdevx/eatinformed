@@ -26,6 +26,7 @@ import { useTheme, ThemeMode } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
+import { EatInformedLogo } from '../components/EatInformedLogo';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
   );
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const checkBackend = async () => {
@@ -52,9 +54,11 @@ export default function ProfileScreen() {
       getUserSession().then((session) => {
         if (session && session.isLoggedIn) {
           setIsLoggedIn(true);
+          setIsAnonymous(Boolean(session.isAnonymous));
           setUserEmail(session.email);
         } else {
           setIsLoggedIn(false);
+          setIsAnonymous(false);
           setUserEmail(null);
         }
       });
@@ -62,7 +66,7 @@ export default function ProfileScreen() {
   );
 
   const handleAuthAction = () => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !isAnonymous) {
       Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -71,6 +75,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             await clearUserSession();
             setIsLoggedIn(false);
+            setIsAnonymous(false);
             setUserEmail(null);
           },
         },
@@ -109,25 +114,29 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                <User size={28} color={colors.primary} />
+                {isLoggedIn && !isAnonymous ? (
+                  <User size={24} color={colors.primary} />
+                ) : (
+                  <EatInformedLogo size={24} />
+                )}
               </View>
               <View style={styles.userInfo}>
                 <Text style={[styles.userName, { color: colors.text }]}>
-                  {isLoggedIn
+                  {isLoggedIn && !isAnonymous
                     ? userEmail?.split('@')[0] || 'User'
                     : 'Guest Explorer'}
                 </Text>
                 <Text
                   style={[styles.userEmail, { color: colors.textSecondary }]}
                 >
-                  {isLoggedIn
+                  {isLoggedIn && !isAnonymous
                     ? userEmail
-                    : 'Local guest session · Free unlimited scanning'}
+                    : 'Guest session · Free unlimited scanning'}
                 </Text>
                 <View style={{ marginTop: 6 }}>
                   <Badge
-                    label={isLoggedIn ? 'Registered Member' : 'Guest Mode'}
-                    variant={isLoggedIn ? 'primary' : 'default'}
+                    label={isLoggedIn && !isAnonymous ? 'Registered Member' : 'Guest Mode'}
+                    variant={isLoggedIn && !isAnonymous ? 'primary' : 'default'}
                     size="sm"
                   />
                 </View>
@@ -135,12 +144,12 @@ export default function ProfileScreen() {
             </View>
 
             <Button
-              title={isLoggedIn ? 'Sign Out' : 'Sign In / Create Account'}
+              title={isLoggedIn && !isAnonymous ? 'Sign Out' : 'Sign In / Create Account'}
               onPress={handleAuthAction}
-              variant={isLoggedIn ? 'danger' : 'primary'}
+              variant={isLoggedIn && !isAnonymous ? 'danger' : 'primary'}
               size="md"
               icon={
-                isLoggedIn ? (
+                isLoggedIn && !isAnonymous ? (
                   <LogOut size={16} color={colors.dangerText} />
                 ) : (
                   <LogIn size={16} color={colors.onPrimary} />

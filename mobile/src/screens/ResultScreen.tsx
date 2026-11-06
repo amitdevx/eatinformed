@@ -25,7 +25,6 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
-import { saveScanToHistory } from '../lib/history';
 import { RootStackParamList } from '../navigation/types';
 
 type RouteProps = RouteProp<RootStackParamList, 'Result'>;
@@ -41,11 +40,7 @@ export default function ResultScreen() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
-  useEffect(() => {
-    if (data && data.status === 'success') {
-      saveScanToHistory(data, imageUri);
-    }
-  }, [data, imageUri]);
+  // ponytail: scan is already saved upon capture in ScanScreen; no duplicate save on mount here
 
   const productName = data.productName || 'Food Product';
   const brand = data.brand || '';

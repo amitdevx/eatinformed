@@ -4,10 +4,12 @@ import {
   Text,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ArrowLeft, Sparkles, Lock, Mail } from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
@@ -15,11 +17,35 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
-import { saveUserSession } from '../lib/auth';
+import { saveUserSession, signInWithGoogle, authenticateWithBackend, signInAsGuest } from '../lib/auth';
 import { RootStackParamList } from '../navigation/types';
+import { EatInformedLogo } from '../components/EatInformedLogo';
 
 type RouteProps = RouteProp<RootStackParamList, 'Auth'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+function GoogleIcon({ size = 20 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <Path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <Path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <Path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </Svg>
+  );
+}
 
 export default function AuthScreen() {
   const route = useRoute<RouteProps>();
@@ -31,6 +57,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
@@ -39,11 +66,20 @@ export default function AuthScreen() {
       return;
     }
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      await saveUserSession(email.trim());
+      await authenticateWithBackend(
+        email.trim(),
+        password,
+        activeTab === 'login' ? 'signIn' : 'signUp'
+      );
       navigation.goBack();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Authentication failed.');
@@ -52,8 +88,32 @@ export default function AuthScreen() {
     }
   };
 
-  const handleContinueGuest = () => {
-    navigation.goBack();
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+
+    try {
+      await signInWithGoogle();
+      navigation.goBack();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleContinueGuest = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await signInAsGuest();
+      navigation.goBack();
+    } catch {
+      navigation.goBack();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -74,18 +134,8 @@ export default function AuthScreen() {
 
       <FadeInView delay={40} style={styles.header}>
         <View style={styles.logoRow}>
-          <View
-            style={[
-              styles.logoBadge,
-              {
-                backgroundColor: colors.primaryMuted,
-                borderColor: colors.primaryBorder,
-              },
-            ]}
-          >
-            <Sparkles size={16} color={colors.primary} />
-          </View>
-          <Text style={[styles.brandTitle, { color: colors.primary }]}>
+          <EatInformedLogo size={32} />
+          <Text style={[styles.brandTitle, { color: colors.text, marginLeft: spacing.sm }]}>
             EatInformed
           </Text>
         </View>
@@ -133,6 +183,39 @@ export default function AuthScreen() {
                 </Text>
               </View>
             ) : null}
+
+            {/* Google Sign-In Button */}
+            <Button
+              title="Continue with Google"
+              onPress={handleGoogleSignIn}
+              variant="secondary"
+              size="md"
+              loading={isGoogleLoading}
+              disabled={isLoading}
+              icon={<GoogleIcon size={18} />}
+              style={styles.authOptionButton}
+            />
+
+            <Button
+              title="Continue as Guest"
+              onPress={handleContinueGuest}
+              variant="secondary"
+              size="md"
+              disabled={isGoogleLoading || isLoading}
+              style={styles.authOptionButton}
+            />
+
+            <View style={styles.dividerRow}>
+              <View
+                style={[styles.divider, { backgroundColor: colors.separator }]}
+              />
+              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
+                {activeTab === 'login' ? 'OR WITH EMAIL' : 'OR REGISTER WITH EMAIL'}
+              </Text>
+              <View
+                style={[styles.divider, { backgroundColor: colors.separator }]}
+              />
+            </View>
 
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>
@@ -202,25 +285,6 @@ export default function AuthScreen() {
               loading={isLoading}
               style={styles.submitButton}
             />
-
-            <View style={styles.dividerRow}>
-              <View
-                style={[styles.divider, { backgroundColor: colors.separator }]}
-              />
-              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
-                OR
-              </Text>
-              <View
-                style={[styles.divider, { backgroundColor: colors.separator }]}
-              />
-            </View>
-
-            <Button
-              title="Continue as Guest"
-              onPress={handleContinueGuest}
-              variant="secondary"
-              size="md"
-            />
           </CardContent>
         </Card>
       </FadeInView>
@@ -286,6 +350,10 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeights.medium,
     lineHeight: 18,
   },
+  authOptionButton: {
+    width: '100%',
+    marginBottom: spacing.sm,
+  },
   inputGroup: {
     marginBottom: spacing.base,
   },
@@ -316,7 +384,7 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.base,
+    marginVertical: spacing.md,
   },
   divider: {
     flex: 1,

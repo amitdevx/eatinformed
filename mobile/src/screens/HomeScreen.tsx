@@ -22,6 +22,7 @@ import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { SAMPLE_PRODUCTS, SampleProduct } from '../lib/sample-products';
 import { RootStackParamList } from '../navigation/types';
+import { EatInformedLogo } from '../components/EatInformedLogo';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -58,15 +59,8 @@ export default function HomeScreen() {
       <FadeInView delay={0} style={styles.header}>
         <View style={styles.topRow}>
           <View style={styles.brandRow}>
-            <View
-              style={[
-                styles.brandBadge,
-                { backgroundColor: colors.primaryMuted, borderColor: colors.primaryBorder },
-              ]}
-            >
-              <Sparkles size={14} color={colors.primary} />
-            </View>
-            <Text style={[styles.brandTitle, { color: colors.text }]}>EatInformed</Text>
+            <EatInformedLogo size={24} />
+            <Text style={[styles.brandTitle, { color: colors.text, marginLeft: spacing.sm }]}>EatInformed</Text>
           </View>
 
           <PressableScale

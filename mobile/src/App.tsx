@@ -24,6 +24,7 @@ import GuideScreen from './screens/GuideScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ResultScreen from './screens/ResultScreen';
 import AuthScreen from './screens/AuthScreen';
+import { getUserSession } from './lib/auth';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -156,6 +157,11 @@ function TabNavigator() {
 
 function MainApp() {
   const { colors, isDark } = useTheme();
+
+  // ponytail: restore active user session & auth token on cold app start
+  useEffect(() => {
+    getUserSession().catch(() => {});
+  }, []);
 
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),

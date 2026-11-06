@@ -99,7 +99,7 @@ export default function ScanScreen() {
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.85,
+        quality: 0.65, // ponytail: compress to stay well under Vercel body size limits and speed up mobile uploads
         base64: true,
         skipProcessing: false,
       });
@@ -120,7 +120,7 @@ export default function ScanScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
-        quality: 0.85,
+        quality: 0.65, // ponytail: keep under 1.5MB to avoid payload rejection
         base64: true,
       });
 

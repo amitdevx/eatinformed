@@ -73,7 +73,7 @@ export function NovaBadge({
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: 'flex-start',
+    justifyContent: 'center',
   },
   badge: {
     flexDirection: 'row',

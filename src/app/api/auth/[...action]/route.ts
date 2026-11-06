@@ -1,4 +1,3 @@
-
 import { adminAuth } from '@/lib/firebase-admin';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -24,11 +23,102 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const { action } = await context.params;
   const currentAction = action?.[0];
 
+  // ponytail: support mobile and web client authentication
+  if (currentAction === 'mobile') {
+    try {
+      const body = await request.json();
+      const { email, password, type = 'signIn' } = body;
+      const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
+
+      if (type === 'guest') {
+        if (apiKey) {
+          try {
+            const fbRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ returnSecureToken: true }),
+            });
+            const fbData = await fbRes.json();
+            if (fbRes.ok && fbData.idToken) {
+              const token = adminAuth
+                ? await adminAuth.createSessionCookie(fbData.idToken, { expiresIn: 60 * 60 * 24 * 14 * 1000 }).catch(() => fbData.idToken)
+                : fbData.idToken;
+              return NextResponse.json({
+                status: 'success',
+                token,
+                user: { email: 'guest@eatinformed.local', name: 'Guest Explorer', isAnonymous: true },
+              });
+            }
+          } catch (e) {
+            console.warn('Firebase guest creation failed, using local session:', e);
+          }
+        }
+
+        return NextResponse.json({
+          status: 'success',
+          token: `guest_token_${Date.now()}`,
+          user: { email: 'guest@eatinformed.local', name: 'Guest Explorer', isAnonymous: true },
+        });
+      }
+
+      if (!email || !password) {
+        return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      }
+      if (password.length < 6) {
+        return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+      }
+
+      if (apiKey) {
+        const endpoint = type === 'signUp'
+          ? `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`
+          : `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
+
+        const fbRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, returnSecureToken: true }),
+        });
+        const fbData = await fbRes.json();
+        if (!fbRes.ok) {
+          const rawMsg = fbData.error?.message || 'Authentication failed';
+          const cleanMsg = rawMsg.replace(/_/g, ' ').toLowerCase();
+          return NextResponse.json(
+            { error: cleanMsg.charAt(0).toUpperCase() + cleanMsg.slice(1) },
+            { status: 400 }
+          );
+        }
+
+        const token = adminAuth
+          ? await adminAuth.createSessionCookie(fbData.idToken, { expiresIn: 60 * 60 * 24 * 14 * 1000 }).catch(() => fbData.idToken)
+          : fbData.idToken;
+
+        return NextResponse.json({
+          status: 'success',
+          token,
+          user: {
+            email: fbData.email || email,
+            name: fbData.displayName || email.split('@')[0],
+            isAnonymous: false,
+          },
+        });
+      }
+
+      // Development fallback when Firebase is not initialized
+      return NextResponse.json({
+        status: 'success',
+        token: `auth_token_${Date.now()}`,
+        user: { email, name: email.split('@')[0], isAnonymous: false },
+      });
+    } catch (err: unknown) {
+      console.error('Mobile auth error:', err);
+      return NextResponse.json({ error: err instanceof Error ? err.message : 'Authentication failed' }, { status: 500 });
+    }
+  }
+
   if (!adminAuth) {
     return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
   }
 
-  // ponytail: route explicitly by action instead of treating all POSTs as login
   if (currentAction === 'login') {
     try {
       const { idToken } = await request.json();
@@ -45,7 +135,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const cookieStore = await cookies();
       cookieStore.set(options.name, options.value, options);
 
-      return NextResponse.json({ status: 'success' }, { status: 200 });
+      return NextResponse.json({ status: 'success', token: sessionCookie }, { status: 200 });
     } catch (error: unknown) {
       console.error('Session login error:', error);
       let errorMessage = 'An unexpected error occurred.';
@@ -72,7 +162,6 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   const { action } = await context.params;
   const currentAction = action?.[0];
 
-  // ponytail: only logout on explicit logout action, never on arbitrary GET/prefetch
   if (currentAction === 'logout') {
     return handleLogout();
   }
@@ -100,7 +189,7 @@ async function handleLogout() {
 
     return NextResponse.json({ status: 'success' }, { status: 200 });
   } catch (error) {
-    console.error('Session logout error:', error);
-    return NextResponse.json({ error: 'Failed to log out.' }, { status: 500 });
+    console.error('Logout error:', error);
+    return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
   }
 }
