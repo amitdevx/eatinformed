@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="428" height="960" viewBox="0 0 428 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect id="Background" width="428" height="960" fill="#F5F5F7" />
+
+  <!-- Header -->
+  <g id="Header" transform="translate(24, 44)">
+    <text x="0" y="24" font-size="28" font-weight="800" fill="#1D1D1F" letter-spacing="-0.5">Scan History</text>
+    <text x="0" y="48" font-size="13" font-weight="400" fill="#86868B">2 saved reports on local device</text>
+
+    <!-- Clear All Button -->
+    <g id="Button_Clear_All" transform="translate(290, 8)">
+      <rect width="90" height="30" rx="8" fill="rgba(255, 59, 48, 0.12)" stroke="rgba(255, 59, 48, 0.3)" stroke-width="1" />
+      <text x="45" y="19" font-size="11" font-weight="600" fill="#D70015" text-anchor="middle">Clear All</text>
+    </g>
+  </g>
+
+  <!-- History Item 1: Tokyo Kitchen Ramen -->
+  <g id="History_Item_Ramen" transform="translate(24, 115)">
+    <rect width="380" height="110" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="12" font-size="11" font-weight="700" fill="#34C759">TOKYO KITCHEN</text>
+      <text x="0" y="32" font-size="15" font-weight="600" fill="#1D1D1F">Instant Ramen Noodles</text>
+
+      <!-- Delete Trash Icon -->
+      <g transform="translate(320, 0)">
+        <circle cx="10" cy="10" r="12" fill="#E5E5EA" />
+        <path d="M6 7h8M7 7v7a1 1 0 001 1h4a1 1 0 001-1V7" stroke="#86868B" stroke-width="1.2" fill="none" />
+      </g>
+
+      <!-- Meta Row -->
+      <g transform="translate(0, 48)">
+        <rect width="70" height="20" rx="5" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+        <text x="35" y="14" font-size="10" font-weight="700" fill="#D70015" text-anchor="middle">2.0 / 5.0</text>
+
+        <g transform="translate(80, 0)">
+          <rect width="140" height="20" rx="10" fill="rgba(255, 59, 48, 0.12)" stroke="rgba(255, 59, 48, 0.3)" stroke-width="1" />
+          <circle cx="8" cy="10" r="3" fill="#D70015" />
+          <text x="16" y="14" font-size="9" font-weight="700" fill="#D70015">NOVA 4: Ultra-Processed</text>
+        </g>
+
+        <text x="335" y="14" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="end">Nov 6, 6:26 AM</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- History Item 2: Dark Chocolate Almonds -->
+  <g id="History_Item_Almonds" transform="translate(24, 240)">
+    <rect width="380" height="110" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="12" font-size="11" font-weight="700" fill="#34C759">NUTRIHARVEST</text>
+      <text x="0" y="32" font-size="15" font-weight="600" fill="#1D1D1F">Dark Chocolate Almonds</text>
+
+      <g transform="translate(320, 0)">
+        <circle cx="10" cy="10" r="12" fill="#E5E5EA" />
+        <path d="M6 7h8M7 7v7a1 1 0 001 1h4a1 1 0 001-1V7" stroke="#86868B" stroke-width="1.2" fill="none" />
+      </g>
+
+      <g transform="translate(0, 48)">
+        <rect width="70" height="20" rx="5" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+        <text x="35" y="14" font-size="10" font-weight="700" fill="#C97700" text-anchor="middle">3.0 / 5.0</text>
+
+        <g transform="translate(80, 0)">
+          <rect width="136" height="20" rx="10" fill="rgba(255, 149, 0, 0.12)" stroke="rgba(255, 149, 0, 0.3)" stroke-width="1" />
+          <circle cx="8" cy="10" r="3" fill="#C97700" />
+          <text x="16" y="14" font-size="9" font-weight="700" fill="#C97700">NOVA 3: Processed Food</text>
+        </g>
+
+        <text x="335" y="14" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="end">Nov 5, 9:00 AM</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom Navigation Bar -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#34C759" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#34C759" fill-opacity="1.0" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#34C759" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>

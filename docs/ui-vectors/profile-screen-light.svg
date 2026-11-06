@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="428" height="960" viewBox="0 0 428 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect id="Background" width="428" height="960" fill="#F5F5F7" />
+
+  <g id="Header" transform="translate(24, 44)">
+    <text x="0" y="24" font-size="28" font-weight="800" fill="#1D1D1F" letter-spacing="-0.5">Account &amp; System</text>
+  </g>
+
+  <!-- User Card -->
+  <g id="Card_User" transform="translate(24, 95)">
+    <rect width="380" height="154" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <circle cx="28" cy="28" r="28" fill="rgba(52, 199, 89, 0.12)" />
+      <circle cx="28" cy="22" r="9" fill="#34C759" />
+      <path d="M14 44c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#34C759" />
+
+      <text x="68" y="24" font-size="16" font-weight="700" fill="#1D1D1F">amit</text>
+      <text x="68" y="42" font-size="12" font-weight="400" fill="#86868B">amit@eatinformed.tech</text>
+      
+      <rect x="68" y="52" width="116" height="20" rx="10" fill="rgba(52, 199, 89, 0.12)" stroke="rgba(52, 199, 89, 0.3)" stroke-width="1" />
+      <text x="126" y="66" font-size="10" font-weight="700" fill="#34C759" text-anchor="middle">Registered Member</text>
+
+      <!-- Sign Out Button -->
+      <g transform="translate(0, 84)">
+        <rect width="340" height="40" rx="20" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+        <text x="170" y="25" font-size="13" font-weight="600" fill="#D70015" text-anchor="middle">Sign Out</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Appearance Card -->
+  <g id="Card_Appearance" transform="translate(24, 265)">
+    <rect width="380" height="126" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">Appearance</text>
+      <text x="0" y="32" font-size="11" font-weight="400" fill="#86868B">Match device settings or choose a preferred theme</text>
+
+      <!-- Segmented Switcher -->
+      <g transform="translate(0, 46)">
+        <rect width="340" height="38" rx="12" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+        <!-- Selected segment -->
+        <rect x="4" y="4" width="108" height="30" rx="8" fill="#D1D1D6" />
+        <text x="58" y="23" font-size="12" font-weight="600" fill="#1D1D1F" text-anchor="middle">System</text>
+        <text x="170" y="23" font-size="12" font-weight="400" fill="#86868B" text-anchor="middle">Light</text>
+        <text x="282" y="23" font-size="12" font-weight="400" fill="#86868B" text-anchor="middle">Dark</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Backend Health Status Card -->
+  <g id="Card_Backend_Status" transform="translate(24, 407)">
+    <rect width="380" height="116" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">Backend AI Status</text>
+      <text x="0" y="32" font-size="11" font-weight="400" fill="#86868B">Connection to EatInformed Vision &amp; Reasoning API</text>
+
+      <g transform="translate(0, 48)">
+        <circle cx="6" cy="10" r="4" fill="#34C759" />
+        <text x="18" y="14" font-size="13" font-weight="600" fill="#1D1D1F">API Online and Responsive</text>
+        
+        <rect x="270" y="0" width="70" height="26" rx="8" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+        <text x="305" y="17" font-size="11" font-weight="600" fill="#86868B" text-anchor="middle">Check</text>
+      </g>
+      <text x="0" y="90" font-size="11" font-weight="400" fill="#6E6E73">Server is online and responding at eatinformed.amitdevx.tech</text>
+    </g>
+  </g>
+
+  <!-- AI Architecture Card -->
+  <g id="Card_Tech_Specs" transform="translate(24, 539)">
+    <rect width="380" height="150" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">AI Engine Architecture</text>
+      
+      <g transform="translate(0, 32)">
+        <text x="0" y="12" font-size="12" font-weight="600" fill="#1D1D1F">OCR &amp; Label Extraction</text>
+        <text x="0" y="28" font-size="11" font-weight="400" fill="#86868B">NVIDIA Nemotron 3.5 Super VL (120B) via NVIDIA NIM</text>
+      </g>
+
+      <g transform="translate(0, 78)">
+        <text x="0" y="12" font-size="12" font-weight="600" fill="#1D1D1F">Nutritional Reasoning</text>
+        <text x="0" y="28" font-size="11" font-weight="400" fill="#86868B">NVIDIA Nemotron 3.5 Lightning (30B) Reasoning Model</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- App Version Footer -->
+  <g id="App_Version_Footer" transform="translate(214, 730)">
+    <text x="0" y="0" font-size="11" font-weight="700" fill="#6E6E73" text-anchor="middle">EatInformed Android App v1.0.0</text>
+    <text x="0" y="18" font-size="10" font-weight="400" fill="rgba(0, 0, 0, 0.16)" text-anchor="middle">Food Product Analysis &amp; Nutrition Intelligence</text>
+  </g>
+
+  <!-- Bottom Navigation Bar -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#34C759" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#34C759" fill-opacity="1.0" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#34C759" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>

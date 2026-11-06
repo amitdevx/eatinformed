@@ -1,0 +1,887 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2380" height="1320" viewBox="0 0 2380 1320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="2380" height="1320" fill="#1C1C1E" />
+
+  <!-- Canvas Label -->
+  <text x="48" y="44" font-size="20" font-weight="800" fill="#F5F5F7">EatInformed Mobile App DARK MODE: Complete Artboards Suite</text>
+  <text x="48" y="68" font-size="13" font-weight="400" fill="#86868B">Fully editable vector screens for UI editors (Lunacy, Figma, Sketch). No system bars, pure long screens.</text>
+
+  <!-- Artboard 1: Home Screen -->
+  <g id="Artboard_Home" transform="translate(48, 90)">
+    <text x="0" y="-12" font-size="14" font-weight="700" fill="#30D158">1. HOME SCREEN</text>
+    
+<svg width="428" height="1040" viewBox="0 0 428 1040" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect id="Background" width="428" height="1040" fill="#000000" />
+
+  <!-- App Header Section -->
+  <g id="Header" transform="translate(24, 40)">
+    <!-- Top Branding Row -->
+    <g id="Brand_Row">
+      <!-- Leaf Logo Icon -->
+      <circle cx="12" cy="12" r="12" fill="rgba(48, 209, 88, 0.15)" />
+      <path d="M12 4C7 9 6 15 12 21C18 15 17 9 12 4Z" fill="#30D158" />
+      <circle cx="10" cy="11" r="4" stroke="#F5F5F7" stroke-width="1.5" fill="none" />
+      <line x1="13" y1="14" x2="17" y2="18" stroke="#F5F5F7" stroke-width="1.5" stroke-linecap="round" />
+      <text x="32" y="17" font-size="16" font-weight="700" fill="#F5F5F7" letter-spacing="-0.3">EatInformed</text>
+      
+      <!-- Theme Toggle Pill Button -->
+      <g id="Theme_Toggle" transform="translate(344, 0)">
+        <rect width="36" height="36" rx="18" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <circle cx="18" cy="18" r="6" fill="#86868B" />
+      </g>
+    </g>
+
+    <!-- Hero Title & Copy -->
+    <g id="Hero_Titles" transform="translate(0, 52)">
+      <text x="0" y="32" font-size="34" font-weight="800" fill="#F5F5F7" letter-spacing="-0.8">Food clarity.</text>
+      <text x="0" y="70" font-size="34" font-weight="800" fill="#86868B" letter-spacing="-0.8">For what you eat.</text>
+      <text x="0" y="104" font-size="13" font-weight="400" fill="#86868B" width="380">
+        <tspan x="0" dy="0">Scan any ingredient list or nutrition panel for instant</tspan>
+        <tspan x="0" dy="18">NOVA food processing groups and health scores.</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Section 1: Main CTA Card -->
+  <g id="Card_Quick_Scan" transform="translate(24, 215)">
+    <rect width="380" height="186" rx="20" fill="#161618" stroke="rgba(48, 209, 88, 0.3)" stroke-width="1.5" />
+    
+    <g transform="translate(20, 20)">
+      <circle cx="20" cy="20" r="20" fill="rgba(48, 209, 88, 0.15)" />
+      <path d="M14 14h3M14 14v3M26 14h-3M26 14v3M14 26h3M14 26v-3M26 26h-3M26 26v-3" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="20" x2="28" y2="20" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" />
+      
+      <text x="52" y="17" font-size="16" font-weight="600" fill="#F5F5F7">Scan a Product Label</text>
+      <text x="52" y="34" font-size="12" font-weight="400" fill="#86868B">Camera capture or photo library upload</text>
+    </g>
+
+    <!-- Scan Button -->
+    <g id="Button_Scan" transform="translate(20, 78)">
+      <rect width="340" height="48" rx="24" fill="#30D158" />
+      <text x="170" y="29" font-size="14" font-weight="600" fill="#000000" text-anchor="middle">Scan Food Label</text>
+    </g>
+
+    <!-- Quick Navigation Row -->
+    <g id="Quick_Nav_Row" transform="translate(20, 136)">
+      <!-- History Button -->
+      <g id="Quick_History">
+        <rect width="106" height="34" rx="10" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="53" y="21" font-size="11" font-weight="500" fill="#86868B" text-anchor="middle">History</text>
+      </g>
+      <!-- NOVA Guide Button -->
+      <g id="Quick_Guide" transform="translate(117, 0)">
+        <rect width="106" height="34" rx="10" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="53" y="21" font-size="11" font-weight="500" fill="#86868B" text-anchor="middle">NOVA Guide</text>
+      </g>
+      <!-- Account Button -->
+      <g id="Quick_Account" transform="translate(234, 0)">
+        <rect width="106" height="34" rx="10" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="53" y="21" font-size="11" font-weight="500" fill="#86868B" text-anchor="middle">Account</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Section 2: Sample Products Header -->
+  <g id="Section_Samples_Header" transform="translate(24, 425)">
+    <text x="0" y="16" font-size="18" font-weight="700" fill="#F5F5F7" letter-spacing="-0.3">Try Instant Samples</text>
+    <text x="0" y="34" font-size="12" font-weight="400" fill="#86868B">Compare products across the food processing spectrum</text>
+  </g>
+
+  <!-- Sample Card 1: Greek Yogurt (NOVA 1) -->
+  <g id="Sample_Card_Yogurt" transform="translate(24, 475)">
+    <rect width="380" height="98" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <text x="20" y="30" font-size="15" font-weight="600" fill="#F5F5F7">Greek Yogurt</text>
+    <text x="20" y="48" font-size="12" font-weight="400" fill="#86868B">Chobani Plain Non-Fat</text>
+    <!-- Arrow -->
+    <path d="M350 32l5 5-5 5" stroke="#86868B" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <!-- Meta row -->
+    <g transform="translate(20, 64)">
+      <!-- Score pill -->
+      <rect width="84" height="22" rx="6" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <text x="42" y="15" font-size="11" font-weight="700" fill="#30D158" text-anchor="middle">4.8 / 5.0</text>
+      <!-- NOVA 1 pill -->
+      <g transform="translate(94, 0)">
+        <rect width="154" height="22" rx="11" fill="rgba(48, 209, 88, 0.15)" stroke="rgba(48, 209, 88, 0.3)" stroke-width="1" />
+        <circle cx="10" cy="11" r="3" fill="#30D158" />
+        <text x="18" y="15" font-size="10" font-weight="700" fill="#30D158">NOVA 1: Whole Food</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Sample Card 2: Granola (NOVA 3) -->
+  <g id="Sample_Card_Granola" transform="translate(24, 585)">
+    <rect width="380" height="98" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <text x="20" y="30" font-size="15" font-weight="600" fill="#F5F5F7">Oats and Honey Granola</text>
+    <text x="20" y="48" font-size="12" font-weight="400" fill="#86868B">KIND Healthy Grains</text>
+    <path d="M350 32l5 5-5 5" stroke="#86868B" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <g transform="translate(20, 64)">
+      <rect width="84" height="22" rx="6" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <text x="42" y="15" font-size="11" font-weight="700" fill="#FF9F0A" text-anchor="middle">3.6 / 5.0</text>
+      <g transform="translate(94, 0)">
+        <rect width="166" height="22" rx="11" fill="rgba(255, 159, 10, 0.15)" stroke="rgba(255, 159, 10, 0.3)" stroke-width="1" />
+        <circle cx="10" cy="11" r="3" fill="#FF9F0A" />
+        <text x="18" y="15" font-size="10" font-weight="700" fill="#FF9F0A">NOVA 3: Processed Food</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Sample Card 3: Potato Chips (NOVA 4) -->
+  <g id="Sample_Card_Chips" transform="translate(24, 695)">
+    <rect width="380" height="98" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <text x="20" y="30" font-size="15" font-weight="600" fill="#F5F5F7">Classic Potato Chips</text>
+    <text x="20" y="48" font-size="12" font-weight="400" fill="#86868B">Lays Classic</text>
+    <path d="M350 32l5 5-5 5" stroke="#86868B" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <g transform="translate(20, 64)">
+      <rect width="84" height="22" rx="6" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <text x="42" y="15" font-size="11" font-weight="700" fill="#FF453A" text-anchor="middle">1.9 / 5.0</text>
+      <g transform="translate(94, 0)">
+        <rect width="170" height="22" rx="11" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
+        <circle cx="10" cy="11" r="3" fill="#FF453A" />
+        <text x="18" y="15" font-size="10" font-weight="700" fill="#FF453A">NOVA 4: Ultra-Processed</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Section 3: Educational NOVA Banner -->
+  <g id="Card_NOVA_Banner" transform="translate(24, 805)">
+    <rect width="380" height="96" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(18, 18)">
+      <rect width="36" height="36" rx="10" fill="#1C1C1E" />
+      <path d="M12 14h12v10H12z" stroke="#0A84FF" stroke-width="1.8" fill="none" />
+      <text x="48" y="16" font-size="14" font-weight="600" fill="#F5F5F7">The NOVA Standard</text>
+      <text x="48" y="34" font-size="11" font-weight="400" fill="#86868B">
+        <tspan x="48" dy="0">International benchmark classifying foods by the</tspan>
+        <tspan x="48" dy="16">extent and purpose of industrial processing.</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Bottom Navigation Bar (Fixed in Viewport) -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#30D158" fill-opacity="1.0" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#30D158" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#30D158" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#000000" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>
+
+  </g>
+
+  <!-- Artboard 2: Result Screen -->
+  <g id="Artboard_Result" transform="translate(524, 90)">
+    <text x="0" y="-12" font-size="14" font-weight="700" fill="#30D158">2. RESULT SCREEN</text>
+    
+<svg width="428" height="1260" viewBox="0 0 428 1260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect id="Background" width="428" height="1260" fill="#000000" />
+
+  <!-- Top Navigation Bar -->
+  <g id="Top_Navigation_Bar" transform="translate(24, 44)">
+    <!-- Back Button -->
+    <g id="Button_Back">
+      <rect width="40" height="40" rx="12" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <path d="M23 14l-6 6 6 6" stroke="#F5F5F7" stroke-width="2" stroke-linecap="round" fill="none" />
+    </g>
+    <!-- Share Button -->
+    <g id="Button_Share" transform="translate(340, 0)">
+      <rect width="40" height="40" rx="12" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <path d="M16 20h8M20 14l4 6-4 6" stroke="#F5F5F7" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+
+  <!-- Product Title Header -->
+  <g id="Product_Header" transform="translate(24, 104)">
+    <text x="0" y="14" font-size="12" font-weight="700" fill="#30D158" letter-spacing="1.2">CHOBANI</text>
+    <text x="0" y="44" font-size="26" font-weight="800" fill="#F5F5F7" letter-spacing="-0.5">Plain Greek Yogurt</text>
+    <text x="0" y="66" font-size="13" font-weight="400" fill="#86868B">0% Milkfat Non-Fat (170g Container)</text>
+  </g>
+
+  <!-- Summary Health Rating Card -->
+  <g id="Card_Health_Summary" transform="translate(24, 190)">
+    <rect width="380" height="136" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <!-- Health Rating Column -->
+      <text x="0" y="12" font-size="11" font-weight="600" fill="#86868B" text-transform="uppercase">Health Rating</text>
+      <!-- Score Pill -->
+      <g transform="translate(0, 20)">
+        <rect width="90" height="30" rx="8" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="45" y="20" font-size="15" font-weight="700" fill="#30D158" text-anchor="middle">4.8 / 5.0</text>
+      </g>
+      <!-- Stars row -->
+      <g transform="translate(100, 26)">
+        <circle cx="6" cy="6" r="5" fill="#EAB308" />
+        <circle cx="20" cy="6" r="5" fill="#EAB308" />
+        <circle cx="34" cy="6" r="5" fill="#EAB308" />
+        <circle cx="48" cy="6" r="5" fill="#EAB308" />
+        <circle cx="62" cy="6" r="5" fill="#EAB308" fill-opacity="0.3" />
+      </g>
+
+      <!-- NOVA Badge Column -->
+      <g transform="translate(180, 0)">
+        <rect width="160" height="26" rx="13" fill="rgba(48, 209, 88, 0.15)" stroke="rgba(48, 209, 88, 0.3)" stroke-width="1" />
+        <circle cx="12" cy="13" r="4" fill="#30D158" />
+        <text x="22" y="17" font-size="10" font-weight="700" fill="#30D158">NOVA 1: Whole Food</text>
+      </g>
+
+      <!-- Bottom Explanation Divider -->
+      <line x1="0" y1="64" x2="340" y2="64" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <text x="0" y="86" font-size="11" font-weight="400" fill="#86868B">
+        Unprocessed or minimally processed food. Clean whole food source.
+      </text>
+    </g>
+  </g>
+
+  <!-- Segmented Tab Switcher (Overview / Ingredients / Nutrition) -->
+  <g id="Segmented_Tabs" transform="translate(24, 344)">
+    <rect width="380" height="44" rx="14" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <!-- Active Tab Indicator: Overview -->
+    <rect x="4" y="4" width="120" height="36" rx="10" fill="#2C2C2E" />
+    <text x="64" y="26" font-size="12" font-weight="600" fill="#F5F5F7" text-anchor="middle">Overview</text>
+    <!-- Ingredients Tab -->
+    <text x="190" y="26" font-size="12" font-weight="500" fill="#86868B" text-anchor="middle">Ingredients (2)</text>
+    <!-- Nutrition Tab -->
+    <text x="316" y="26" font-size="12" font-weight="500" fill="#86868B" text-anchor="middle">Nutrition Facts</text>
+  </g>
+
+  <!-- Section 1: Health Benefits / Pros -->
+  <g id="Card_Benefits" transform="translate(24, 404)">
+    <rect width="380" height="150" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">Health Benefits</text>
+      
+      <!-- Bullet 1 -->
+      <g transform="translate(0, 30)">
+        <circle cx="8" cy="8" r="8" fill="rgba(48, 209, 88, 0.15)" />
+        <path d="M5 8l2 2 4-4" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" fill="none" />
+        <text x="24" y="12" font-size="12" font-weight="400" fill="#F5F5F7">High-quality protein density (17g per serving)</text>
+      </g>
+      <!-- Bullet 2 -->
+      <g transform="translate(0, 60)">
+        <circle cx="8" cy="8" r="8" fill="rgba(48, 209, 88, 0.15)" />
+        <path d="M5 8l2 2 4-4" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" fill="none" />
+        <text x="24" y="12" font-size="12" font-weight="400" fill="#F5F5F7">Active probiotic live cultures support gut microbiome</text>
+      </g>
+      <!-- Bullet 3 -->
+      <g transform="translate(0, 90)">
+        <circle cx="8" cy="8" r="8" fill="rgba(48, 209, 88, 0.15)" />
+        <path d="M5 8l2 2 4-4" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" fill="none" />
+        <text x="24" y="12" font-size="12" font-weight="400" fill="#F5F5F7">Zero added sugars, zero saturated fat, low sodium</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Section 2: Dietary & Allergen Profile -->
+  <g id="Card_Dietary" transform="translate(24, 570)">
+    <rect width="380" height="136" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">Dietary Profile &amp; Allergens</text>
+      
+      <!-- Pills row -->
+      <g transform="translate(0, 28)">
+        <rect width="84" height="26" rx="13" fill="rgba(48, 209, 88, 0.15)" stroke="rgba(48, 209, 88, 0.3)" stroke-width="1" />
+        <text x="42" y="17" font-size="11" font-weight="600" fill="#30D158" text-anchor="middle">Vegetarian</text>
+
+        <g transform="translate(92, 0)">
+          <rect width="90" height="26" rx="13" fill="rgba(10, 132, 255, 0.15)" stroke="rgba(10, 132, 255, 0.3)" stroke-width="1" />
+          <text x="45" y="17" font-size="11" font-weight="600" fill="#0A84FF" text-anchor="middle">Gluten-Free</text>
+        </g>
+
+        <g transform="translate(190, 0)">
+          <rect width="96" height="26" rx="13" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
+          <text x="48" y="17" font-size="11" font-weight="600" fill="#FF453A" text-anchor="middle">Milk / Dairy</text>
+        </g>
+      </g>
+
+      <line x1="0" y1="68" x2="340" y2="68" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      <text x="0" y="88" font-size="11" font-weight="400" fill="#86868B">
+        Nutrient-dense clean staple suitable for vegetarian and gluten-free diets.
+      </text>
+    </g>
+  </g>
+
+  <!-- Section 3: Nutritional Panel Table Preview -->
+  <g id="Card_Nutrition_Table" transform="translate(24, 722)">
+    <rect width="380" height="280" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">Nutritional Panel</text>
+      <text x="0" y="32" font-size="11" font-weight="400" fill="#86868B">Serving Size: 1 Container (170g)</text>
+
+      <!-- Table Header -->
+      <g transform="translate(0, 48)">
+        <rect width="340" height="26" rx="6" fill="#1C1C1E" />
+        <text x="12" y="17" font-size="11" font-weight="600" fill="#F5F5F7">Nutrient</text>
+        <text x="210" y="17" font-size="11" font-weight="600" fill="#F5F5F7" text-anchor="end">Per Serve</text>
+        <text x="328" y="17" font-size="11" font-weight="600" fill="#F5F5F7" text-anchor="end">Per 100g</text>
+      </g>
+
+      <!-- Table Rows -->
+      <!-- Row 1 -->
+      <g transform="translate(0, 84)">
+        <text x="12" y="14" font-size="12" font-weight="500" fill="#F5F5F7">Calories</text>
+        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">100 kcal</text>
+        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">59 kcal</text>
+        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      </g>
+      <!-- Row 2 -->
+      <g transform="translate(0, 116)">
+        <text x="12" y="14" font-size="12" font-weight="500" fill="#F5F5F7">Total Fat</text>
+        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">0g</text>
+        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">0g</text>
+        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      </g>
+      <!-- Row 3 -->
+      <g transform="translate(0, 148)">
+        <text x="12" y="14" font-size="12" font-weight="500" fill="#F5F5F7">Sodium</text>
+        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">65mg</text>
+        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">38mg</text>
+        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      </g>
+      <!-- Row 4 -->
+      <g transform="translate(0, 180)">
+        <text x="12" y="14" font-size="12" font-weight="500" fill="#F5F5F7">Protein</text>
+        <text x="210" y="14" font-size="12" font-weight="700" fill="#30D158" text-anchor="end">17g</text>
+        <text x="328" y="14" font-size="12" font-weight="700" fill="#30D158" text-anchor="end">10g</text>
+        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+      </g>
+      <!-- Row 5 -->
+      <g transform="translate(0, 212)">
+        <text x="12" y="14" font-size="12" font-weight="500" fill="#F5F5F7">Total Sugars</text>
+        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">4g</text>
+        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">2.4g</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom CTA Button -->
+  <g id="Button_Scan_Another" transform="translate(24, 1020)">
+    <rect width="380" height="52" rx="26" fill="#30D158" />
+    <text x="190" y="31" font-size="14" font-weight="600" fill="#000000" text-anchor="middle">Scan Another Label</text>
+  </g>
+
+  <!-- Bottom Tab Bar -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#30D158" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#000000" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>
+
+  </g>
+
+  <!-- Artboard 3: Guide Screen -->
+  <g id="Artboard_Guide" transform="translate(1000, 90)">
+    <text x="0" y="-12" font-size="14" font-weight="700" fill="#30D158">3. NOVA GUIDE SCREEN</text>
+    
+<svg width="428" height="1180" viewBox="0 0 428 1180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect id="Background" width="428" height="1180" fill="#000000" />
+
+  <!-- Header -->
+  <g id="Header" transform="translate(24, 44)">
+    <text x="0" y="24" font-size="28" font-weight="800" fill="#F5F5F7" letter-spacing="-0.5">Food Safety Guide</text>
+    <text x="0" y="50" font-size="13" font-weight="400" fill="#86868B">
+      Understand food processing, chemical additives, and health impacts.
+    </text>
+  </g>
+
+  <!-- NOVA Scale Description -->
+  <g id="NOVA_Intro" transform="translate(24, 120)">
+    <text x="0" y="16" font-size="18" font-weight="700" fill="#F5F5F7">The NOVA Classification</text>
+    <text x="0" y="34" font-size="12" font-weight="400" fill="#86868B">
+      Developed at the University of Sao Paulo, NOVA categorizes all foods by degree of processing.
+    </text>
+  </g>
+
+  <!-- NOVA 1 Card -->
+  <g id="Card_NOVA_1" transform="translate(24, 175)">
+    <rect width="380" height="150" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <rect width="160" height="24" rx="12" fill="rgba(48, 209, 88, 0.15)" stroke="rgba(48, 209, 88, 0.3)" stroke-width="1" />
+      <circle cx="12" cy="12" r="3.5" fill="#30D158" />
+      <text x="22" y="16" font-size="11" font-weight="700" fill="#30D158">Group 1: Whole Foods</text>
+      <text x="0" y="44" font-size="13" font-weight="600" fill="#F5F5F7">Unprocessed or Minimally Processed</text>
+      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
+        Whole grains, rolled oats, fresh fruits, vegetables, plain milk, eggs, and raw seeds.
+      </text>
+      <text x="0" y="96" font-size="11" font-weight="600" fill="#30D158">
+        Impact: Optimal nutrient density and highest health rating.
+      </text>
+    </g>
+  </g>
+
+  <!-- NOVA 2 Card -->
+  <g id="Card_NOVA_2" transform="translate(24, 340)">
+    <rect width="380" height="150" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <rect width="170" height="24" rx="12" fill="rgba(10, 132, 255, 0.15)" stroke="rgba(10, 132, 255, 0.3)" stroke-width="1" />
+      <circle cx="12" cy="12" r="3.5" fill="#0A84FF" />
+      <text x="22" y="16" font-size="11" font-weight="700" fill="#0A84FF">Group 2: Culinary Bases</text>
+      <text x="0" y="44" font-size="13" font-weight="600" fill="#F5F5F7">Processed Culinary Ingredients</text>
+      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
+        Substances derived from nature: olive oil, butter, table sugar, and sea salt.
+      </text>
+      <text x="0" y="96" font-size="11" font-weight="600" fill="#0A84FF">
+        Impact: Safe when used in balanced home cooking.
+      </text>
+    </g>
+  </g>
+
+  <!-- NOVA 3 Card -->
+  <g id="Card_NOVA_3" transform="translate(24, 505)">
+    <rect width="380" height="150" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <rect width="176" height="24" rx="12" fill="rgba(255, 159, 10, 0.15)" stroke="rgba(255, 159, 10, 0.3)" stroke-width="1" />
+      <circle cx="12" cy="12" r="3.5" fill="#FF9F0A" />
+      <text x="22" y="16" font-size="11" font-weight="700" fill="#FF9F0A">Group 3: Processed Foods</text>
+      <text x="0" y="44" font-size="13" font-weight="600" fill="#F5F5F7">Simple Processed Formulations</text>
+      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
+        Foods made by adding salt, sugar, or oil to whole foods (e.g. canned beans, cheeses).
+      </text>
+      <text x="0" y="96" font-size="11" font-weight="600" fill="#FF9F0A">
+        Impact: Balanced; monitor sodium and added sugar totals.
+      </text>
+    </g>
+  </g>
+
+  <!-- NOVA 4 Card -->
+  <g id="Card_NOVA_4" transform="translate(24, 670)">
+    <rect width="380" height="150" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <rect width="190" height="24" rx="12" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
+      <circle cx="12" cy="12" r="3.5" fill="#FF453A" />
+      <text x="22" y="16" font-size="11" font-weight="700" fill="#FF453A">Group 4: Ultra-Processed</text>
+      <text x="0" y="44" font-size="13" font-weight="600" fill="#F5F5F7">Ultra-Processed Foods (UPFs)</text>
+      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
+        Industrial formulations with emulsifiers, colors, artificial sweeteners, and preservatives.
+      </text>
+      <text x="0" y="96" font-size="11" font-weight="600" fill="#FF453A">
+        Impact: Linked to metabolic disruption and inflammatory risk.
+      </text>
+    </g>
+  </g>
+
+  <!-- Additives Section Header -->
+  <g id="Section_Additives" transform="translate(24, 840)">
+    <text x="0" y="16" font-size="18" font-weight="700" fill="#F5F5F7">Concerning Additives</text>
+    <text x="0" y="34" font-size="12" font-weight="400" fill="#86868B">
+      Industrial substances frequently flagged in packaged consumer foods.
+    </text>
+  </g>
+
+  <!-- Additive Card 1: Emulsifiers -->
+  <g id="Card_Emulsifiers" transform="translate(24, 890)">
+    <rect width="380" height="96" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">Emulsifiers (Polysorbate 80, CMC)</text>
+      <text x="0" y="34" font-size="11" font-weight="400" fill="#86868B">
+        <tspan x="0" dy="0">Used to blend immiscible liquids and extend shelf life.</tspan>
+        <tspan x="0" dy="16">Studies suggest high intake can thin gut mucosal barriers.</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Additive Card 2: High Fructose Corn Syrup -->
+  <g id="Card_HFCS" transform="translate(24, 1000)">
+    <rect width="380" height="96" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">High-Fructose Corn Syrup (HFCS)</text>
+      <text x="0" y="34" font-size="11" font-weight="400" fill="#86868B">
+        <tspan x="0" dy="0">Industrial liquid sweetener with rapid hepatic uptake,</tspan>
+        <tspan x="0" dy="16">strongly associated with elevated triglycerides and fatty liver.</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Bottom Navigation Bar -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#30D158" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#000000" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#30D158" fill-opacity="1.0" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#30D158" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>
+
+  </g>
+
+  <!-- Artboard 4: History Screen -->
+  <g id="Artboard_History" transform="translate(1476, 90)">
+    <text x="0" y="-12" font-size="14" font-weight="700" fill="#30D158">4. HISTORY SCREEN</text>
+    
+<svg width="428" height="960" viewBox="0 0 428 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect id="Background" width="428" height="960" fill="#000000" />
+
+  <!-- Header -->
+  <g id="Header" transform="translate(24, 44)">
+    <text x="0" y="24" font-size="28" font-weight="800" fill="#F5F5F7" letter-spacing="-0.5">Scan History</text>
+    <text x="0" y="48" font-size="13" font-weight="400" fill="#86868B">2 saved reports on local device</text>
+
+    <!-- Clear All Button -->
+    <g id="Button_Clear_All" transform="translate(290, 8)">
+      <rect width="90" height="30" rx="8" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
+      <text x="45" y="19" font-size="11" font-weight="600" fill="#FF453A" text-anchor="middle">Clear All</text>
+    </g>
+  </g>
+
+  <!-- History Item 1: Tokyo Kitchen Ramen -->
+  <g id="History_Item_Ramen" transform="translate(24, 115)">
+    <rect width="380" height="110" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="12" font-size="11" font-weight="700" fill="#30D158">TOKYO KITCHEN</text>
+      <text x="0" y="32" font-size="15" font-weight="600" fill="#F5F5F7">Instant Ramen Noodles</text>
+
+      <!-- Delete Trash Icon -->
+      <g transform="translate(320, 0)">
+        <circle cx="10" cy="10" r="12" fill="#1C1C1E" />
+        <path d="M6 7h8M7 7v7a1 1 0 001 1h4a1 1 0 001-1V7" stroke="#86868B" stroke-width="1.2" fill="none" />
+      </g>
+
+      <!-- Meta Row -->
+      <g transform="translate(0, 48)">
+        <rect width="70" height="20" rx="5" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="35" y="14" font-size="10" font-weight="700" fill="#FF453A" text-anchor="middle">2.0 / 5.0</text>
+
+        <g transform="translate(80, 0)">
+          <rect width="140" height="20" rx="10" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
+          <circle cx="8" cy="10" r="3" fill="#FF453A" />
+          <text x="16" y="14" font-size="9" font-weight="700" fill="#FF453A">NOVA 4: Ultra-Processed</text>
+        </g>
+
+        <text x="335" y="14" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="end">Nov 6, 6:26 AM</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- History Item 2: Dark Chocolate Almonds -->
+  <g id="History_Item_Almonds" transform="translate(24, 240)">
+    <rect width="380" height="110" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="12" font-size="11" font-weight="700" fill="#30D158">NUTRIHARVEST</text>
+      <text x="0" y="32" font-size="15" font-weight="600" fill="#F5F5F7">Dark Chocolate Almonds</text>
+
+      <g transform="translate(320, 0)">
+        <circle cx="10" cy="10" r="12" fill="#1C1C1E" />
+        <path d="M6 7h8M7 7v7a1 1 0 001 1h4a1 1 0 001-1V7" stroke="#86868B" stroke-width="1.2" fill="none" />
+      </g>
+
+      <g transform="translate(0, 48)">
+        <rect width="70" height="20" rx="5" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="35" y="14" font-size="10" font-weight="700" fill="#FF9F0A" text-anchor="middle">3.0 / 5.0</text>
+
+        <g transform="translate(80, 0)">
+          <rect width="136" height="20" rx="10" fill="rgba(255, 159, 10, 0.15)" stroke="rgba(255, 159, 10, 0.3)" stroke-width="1" />
+          <circle cx="8" cy="10" r="3" fill="#FF9F0A" />
+          <text x="16" y="14" font-size="9" font-weight="700" fill="#FF9F0A">NOVA 3: Processed Food</text>
+        </g>
+
+        <text x="335" y="14" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="end">Nov 5, 9:00 AM</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom Navigation Bar -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#30D158" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#000000" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#30D158" fill-opacity="1.0" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#30D158" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>
+
+  </g>
+
+  <!-- Artboard 5: Profile Screen -->
+  <g id="Artboard_Profile" transform="translate(1952, 90)">
+    <text x="0" y="-12" font-size="14" font-weight="700" fill="#30D158">5. PROFILE &amp; THEME SCREEN</text>
+    
+<svg width="428" height="960" viewBox="0 0 428 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect id="Background" width="428" height="960" fill="#000000" />
+
+  <g id="Header" transform="translate(24, 44)">
+    <text x="0" y="24" font-size="28" font-weight="800" fill="#F5F5F7" letter-spacing="-0.5">Account &amp; System</text>
+  </g>
+
+  <!-- User Card -->
+  <g id="Card_User" transform="translate(24, 95)">
+    <rect width="380" height="154" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <circle cx="28" cy="28" r="28" fill="rgba(48, 209, 88, 0.15)" />
+      <circle cx="28" cy="22" r="9" fill="#30D158" />
+      <path d="M14 44c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#30D158" />
+
+      <text x="68" y="24" font-size="16" font-weight="700" fill="#F5F5F7">amit</text>
+      <text x="68" y="42" font-size="12" font-weight="400" fill="#86868B">amit@eatinformed.tech</text>
+      
+      <rect x="68" y="52" width="116" height="20" rx="10" fill="rgba(48, 209, 88, 0.15)" stroke="rgba(48, 209, 88, 0.3)" stroke-width="1" />
+      <text x="126" y="66" font-size="10" font-weight="700" fill="#30D158" text-anchor="middle">Registered Member</text>
+
+      <!-- Sign Out Button -->
+      <g transform="translate(0, 84)">
+        <rect width="340" height="40" rx="20" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="170" y="25" font-size="13" font-weight="600" fill="#FF453A" text-anchor="middle">Sign Out</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Appearance Card -->
+  <g id="Card_Appearance" transform="translate(24, 265)">
+    <rect width="380" height="126" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">Appearance</text>
+      <text x="0" y="32" font-size="11" font-weight="400" fill="#86868B">Match device settings or choose a preferred theme</text>
+
+      <!-- Segmented Switcher -->
+      <g transform="translate(0, 46)">
+        <rect width="340" height="38" rx="12" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <!-- Selected segment -->
+        <rect x="4" y="4" width="108" height="30" rx="8" fill="#2C2C2E" />
+        <text x="58" y="23" font-size="12" font-weight="600" fill="#F5F5F7" text-anchor="middle">System</text>
+        <text x="170" y="23" font-size="12" font-weight="400" fill="#86868B" text-anchor="middle">Light</text>
+        <text x="282" y="23" font-size="12" font-weight="400" fill="#86868B" text-anchor="middle">Dark</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Backend Health Status Card -->
+  <g id="Card_Backend_Status" transform="translate(24, 407)">
+    <rect width="380" height="116" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">Backend AI Status</text>
+      <text x="0" y="32" font-size="11" font-weight="400" fill="#86868B">Connection to EatInformed Vision &amp; Reasoning API</text>
+
+      <g transform="translate(0, 48)">
+        <circle cx="6" cy="10" r="4" fill="#30D158" />
+        <text x="18" y="14" font-size="13" font-weight="600" fill="#F5F5F7">API Online and Responsive</text>
+        
+        <rect x="270" y="0" width="70" height="26" rx="8" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+        <text x="305" y="17" font-size="11" font-weight="600" fill="#86868B" text-anchor="middle">Check</text>
+      </g>
+      <text x="0" y="90" font-size="11" font-weight="400" fill="#6E6E73">Server is online and responding at eatinformed.amitdevx.tech</text>
+    </g>
+  </g>
+
+  <!-- AI Architecture Card -->
+  <g id="Card_Tech_Specs" transform="translate(24, 539)">
+    <rect width="380" height="150" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-size="14" font-weight="600" fill="#F5F5F7">AI Engine Architecture</text>
+      
+      <g transform="translate(0, 32)">
+        <text x="0" y="12" font-size="12" font-weight="600" fill="#F5F5F7">OCR &amp; Label Extraction</text>
+        <text x="0" y="28" font-size="11" font-weight="400" fill="#86868B">NVIDIA Nemotron 3.5 Super VL (120B) via NVIDIA NIM</text>
+      </g>
+
+      <g transform="translate(0, 78)">
+        <text x="0" y="12" font-size="12" font-weight="600" fill="#F5F5F7">Nutritional Reasoning</text>
+        <text x="0" y="28" font-size="11" font-weight="400" fill="#86868B">NVIDIA Nemotron 3.5 Lightning (30B) Reasoning Model</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- App Version Footer -->
+  <g id="App_Version_Footer" transform="translate(214, 730)">
+    <text x="0" y="0" font-size="11" font-weight="700" fill="#6E6E73" text-anchor="middle">EatInformed Android App v1.0.0</text>
+    <text x="0" y="18" font-size="10" font-weight="400" fill="rgba(255, 255, 255, 0.16)" text-anchor="middle">Food Product Analysis &amp; Nutrition Intelligence</text>
+  </g>
+
+  <!-- Bottom Navigation Bar -->
+  
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
+    <!-- Tab Bar Surface -->
+    <rect width="428" height="84" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+
+    <g id="Tab_Home">
+      <!-- Icon indicator -->
+      <circle cx="43" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Home</text>
+    </g>
+
+    <g id="Tab_Scan" transform="translate(106, 10)">
+      <circle cx="22" cy="22" r="22" fill="#30D158" />
+      <!-- Scan Viewfinder Icon -->
+      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#000000" stroke-width="2" stroke-linecap="round" fill="none" />
+      <line x1="12" y1="22" x2="32" y2="22" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <g id="Tab_History">
+      <!-- Icon indicator -->
+      <circle cx="214" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">History</text>
+    </g>
+
+    <g id="Tab_Guide">
+      <!-- Icon indicator -->
+      <circle cx="300" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
+      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Guide</text>
+    </g>
+
+    <g id="Tab_Profile">
+      <!-- Icon indicator -->
+      <circle cx="385" cy="22" r="8" fill="#30D158" fill-opacity="1.0" />
+      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#30D158" text-anchor="middle">Profile</text>
+    </g>
+  </g>
+
+</svg>
+
+  </g>
+</svg>
