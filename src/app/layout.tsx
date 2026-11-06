@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -62,9 +63,15 @@ export default function RootLayout({
               <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-5xl">
                 <p>Copyright (c) {new Date().getFullYear()} EatInformed. Food product analysis and ingredient intelligence.</p>
                 <div className="flex gap-6">
-                  <span className="hover:text-foreground transition-colors cursor-pointer">Privacy</span>
-                  <span className="hover:text-foreground transition-colors cursor-pointer">Terms</span>
-                  <span className="hover:text-foreground transition-colors cursor-pointer">NOVA Standard</span>
+                  <Link href="/support#privacy" className="hover:text-foreground transition-colors">
+                    Privacy
+                  </Link>
+                  <Link href="/docs" className="hover:text-foreground transition-colors">
+                    Terms
+                  </Link>
+                  <Link href="/product#nova-standard" className="hover:text-foreground transition-colors">
+                    NOVA Standard
+                  </Link>
                   <a
                     href="https://github.com/amitdevx/eatinformed"
                     target="_blank"

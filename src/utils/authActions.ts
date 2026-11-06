@@ -10,8 +10,8 @@ export const createUserProfileDocument = async (user: User) => {
   const userRef = doc(firestore, "users", user.uid);
   const userData = {
     uid: user.uid,
-    email: user.email || "guest@eatinformed.local",
-    name: user.displayName || (user.isAnonymous ? "Guest User" : user.email?.split('@')[0]) || "New User",
+    email: user.email ?? null,
+    name: user.displayName || (user.isAnonymous ? "Guest User" : user.email?.split('@')[0]) || "User",
     createdAt: serverTimestamp(),
     isAnonymous: user.isAnonymous,
   };

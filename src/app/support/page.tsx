@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { HelpCircle, Github, FileCode, ChevronDown } from "lucide-react";
+import { HelpCircle, Github, FileCode, ChevronDown, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -148,6 +148,22 @@ export default function SupportPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Local-First Privacy Policy Card */}
+        <div id="privacy" className="text-left mt-12 bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground tracking-tight">Local-First Privacy Policy</h2>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-3 leading-relaxed">
+            <p>
+              EatInformed is built around a local-first privacy standard. Your scanned product images, history records, and dietary preferences are stored directly on your personal device (in your browser localStorage or phone Secure Storage).
+            </p>
+            <p>
+              Images sent for optical parsing are processed ephemerally in volatile memory strictly to extract ingredient text and compute NOVA classifications. We do not sell user data, train commercial advertising models on your dietary choices, or serve third-party tracker pixels.
+            </p>
+          </div>
         </div>
       </div>
     </div>

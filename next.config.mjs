@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const firebaseProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
 const nextConfig = {
   experimental: {
     serverActions: {
@@ -7,16 +9,6 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
   },
   async headers() {
     return [
@@ -35,12 +27,12 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    if (!firebaseProjectId) return [];
     return [
       {
-        // This captures all Firebase Auth internal paths
+        // Capture all Firebase Auth internal paths and proxy to configured Firebase project
         source: '/__/auth/:path*',
-        // Proxy requests to Firebase Auth backend
-        destination: 'https://nutriscan-1zg7u.firebaseapp.com/__/auth/:path*',
+        destination: `https://${firebaseProjectId}.firebaseapp.com/__/auth/:path*`,
       },
     ];
   },

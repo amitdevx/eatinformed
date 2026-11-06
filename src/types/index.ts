@@ -1,17 +1,28 @@
-// This file can be used for custom TypeScript types.
-// For example:
-// export interface UserProfile {
-//   id: string;
-//   name: string;
-//   dietaryPreferences?: string[];
-//   allergies?: string[];
-// }
+import type { ProductAnalysisOutput } from '@/ai/flows/product-analysis-types';
 
-// Currently, AI flow types are co-located with their definitions.
-// This file is a placeholder for additional app-wide types.
+export type { ProductAnalysisOutput };
 
-export interface User {
-  id: string;
+export interface NutrientItem {
+  nutrient: string;
+  perServing?: string;
+  per100mL?: string;
+}
+
+export interface UserProfile {
+  uid: string;
+  email: string | null;
   name: string;
-  displayName: string;
+  isAnonymous?: boolean;
+  createdAt?: unknown;
+}
+
+export interface HistoryItem {
+  id: string;
+  productName: string;
+  brand?: string;
+  rating: number;
+  novaGroup?: number;
+  timestamp: number;
+  data: ProductAnalysisOutput;
+  imagePreviewUrl?: string | null;
 }

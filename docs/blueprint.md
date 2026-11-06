@@ -1,21 +1,31 @@
-# **App Name**: NutriScan
+# **App Name**: EatInformed
 
-## Core Features:
+## 1. System Architecture
 
-- Login/Signup: User authentication via email/password or social media (Google, Apple).
-- Image Upload/Barcode Scan: Simple interface for uploading photos of packaged food labels or scanning barcodes.
-- Intelligent Ingredient Extraction: AI-powered OCR to extract ingredient lists and nutritional information from images of packaged food. This tool compares extracted ingredients against a database.
-- AI-Driven Health Assessment: Generative AI analyzes ingredient lists against a safety database, providing a 1-5 rating with pros, cons, and warnings about harmful ingredients.
-- Detailed Results Display: Clear display of health rating, nutritional information, pros/cons, and warnings on a results page.
-- Dietary Filters: Ability to customize displayed results based on individual dietary restrictions and preferences.
-- Social Sharing: Share results on social media platforms.
+EatInformed is a cross-platform food intelligence platform (Next.js 16 Web Application + React Native Expo Mobile App) powered by NVIDIA NIM foundation vision and reasoning models.
 
-## Style Guidelines:
+- **Vision AI Pipeline**: NVIDIA Nemotron-3.5-Super-VL (120B) single-pass optical extraction with automatic EXIF orientation normalization, image sharpening, and fallback to Nemotron-3.5-Lightning (30B).
+- **NOVA Classification Engine**: Automatic four-tier food processing classification (Group 1: Unprocessed Whole Foods to Group 4: Ultra-Processed Formulations) developed by the University of São Paulo.
+- **Nutrition Facts Normalization**: Structured transcription of macro and micronutrients with thousands-separator sanitization, kJ to kcal conversion, and per-serving/per-100g grouping.
+- **Additive & Allergen Screening**: Clinical cross-referencing of emulsifiers, cosmetic dyes, synthetic sweeteners, and common allergen warnings.
+- **Authentication & Sync**: Multi-provider authentication (Google OAuth, Email/Password, and Anonymous Guest Sessions) synchronized across Web and Mobile via Firebase Auth and Next.js session cookies.
+- **Local-First Storage**: User scan history stored directly on client devices (browser `localStorage` on Web, `@react-native-async-storage/async-storage` on Mobile) without third-party tracking.
 
-- Primary color: Fresh green (#77B355), inspired by health and natural food.
-- Background color: Very light green (#F0FAF0), to give a sense of cleanliness and freshness.
-- Accent color: Earthy brown (#A68B60), suggestive of natural, unprocessed ingredients.
-- Body and headline font: 'Inter', a grotesque-style sans-serif for its modern, neutral readability.
-- Simple, food-related icons to highlight key product attributes.
-- Card-based layout for easy scanning of ratings, nutritional data, and warnings.
-- Subtle transitions during image upload and results processing.
+---
+
+## 2. Design System Guidelines (Apple HIG Grounded)
+
+- **Aesthetic**: Minimal, non-templated Apple Human Interface Guidelines standard.
+- **Color Palette (Dark Mode - OLED)**:
+  - System Background: Pure Black `#000000`
+  - Level 1 Elevated Surface: `#161618`
+  - Level 2 Nested Controls: `#222226`
+  - Accent / Primary Action: Apple System Green Dark `#30D158`
+  - Text Primary / Secondary: `#F5F5F7` / `#AEAEB2` (WCAG AAA compliant)
+- **Color Palette (Light Mode)**:
+  - System Background: Apple Grouped Light `#F2F2F7`
+  - Card Surface: Pure White `#FFFFFF`
+  - Accent / Primary Action: Accessible Apple Green `#1E8E3E`
+  - Text Primary / Secondary: `#1C1C1E` / `#48484A`
+- **Typography**: Inter (Variable font, Apple dynamic type scale alignment).
+- **Spatial Geometry**: 20pt continuous squircles (`borderRadius: 20px`), hairline specular borders (`#26262A` / `#E5E5EA`), 44pt minimum touch targets.
