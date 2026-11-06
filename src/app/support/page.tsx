@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HelpCircle, Github, FileCode, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,14 +31,6 @@ const faqs = [
 
 export default function SupportPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-
-  // Auto-cycle through FAQ items smoothly every 30 seconds to showcase features
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setOpenIndex((prev) => (prev === null ? 0 : (prev + 1) % faqs.length));
-    }, 30000);
-    return () => clearInterval(timer);
-  }, []);
 
   return (
     <div className="min-h-screen bg-background pt-16 md:pt-24 pb-20">

@@ -140,10 +140,16 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
 
   const captureCardCanvas = async (): Promise<HTMLCanvasElement | null> => {
     if (!resultsCardRef.current) return null;
+    // ponytail: match theme background to prevent white-on-white export in dark mode
+    const computedBg = typeof window !== 'undefined' ? window.getComputedStyle(resultsCardRef.current).backgroundColor : '';
+    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+    const fallbackBg = isDark ? '#09090b' : '#ffffff';
+
     return await html2canvas(resultsCardRef.current, {
       useCORS: true,
       scale: 2,
       logging: false,
+      backgroundColor: computedBg && computedBg !== 'rgba(0, 0, 0, 0)' && computedBg !== 'transparent' ? computedBg : fallbackBg,
     });
   };
 

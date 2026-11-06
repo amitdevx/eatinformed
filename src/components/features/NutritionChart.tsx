@@ -38,27 +38,36 @@ const NUTRIENT_DEFS: NutrientDef[] = [
 ];
 
 function parseNutrientAmount(raw: string | undefined, def: NutrientDef): { amount: number; display: string } {
-  if (!raw || raw.toLowerCase() === 'n/a' || raw === 'nil' || raw === 'nd') {
+  if (!raw || /^(n\/a|nil|nd|-)$/i.test(raw.trim())) {
     return { amount: 0, display: '0 ' + def.baseUnit };
   }
 
-  const trimmed = raw.trim();
-  const normalized = trimmed.replace(/,/g, '.');
+  // ponytail: remove thousands-separator commas (e.g. "1,250mg" -> "1250mg") before converting decimal commas
+  const normalized = raw
+    .trim()
+    .replace(/(\d),(\d{3})\b/g, '$1$2')
+    .replace(/,/g, '.');
 
-  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
-  let num = 0;
-  if (rangeMatch) {
-    num = parseFloat(rangeMatch[2]);
-  } else {
-    const numMatch = normalized.match(/(\d+(?:\.\d+)?)/);
-    num = numMatch ? parseFloat(numMatch[1]) : 0;
+  // ponytail: if Energy has both kcal and kJ (e.g. "418 kJ / 100 kcal"), prefer the explicit kcal number
+  if (def.key === 'energy') {
+    const kcalMatch = normalized.match(/(\d+(?:\.\d+)?)\s*kcal\b/i);
+    if (kcalMatch) {
+      const kcal = Number(parseFloat(kcalMatch[1]).toFixed(1));
+      return { amount: kcal, display: `${kcal}kcal` };
+    }
+    const kjMatch = normalized.match(/(\d+(?:\.\d+)?)\s*kj\b/i);
+    if (kjMatch) {
+      const kcal = Number((parseFloat(kjMatch[1]) / 4.184).toFixed(1));
+      return { amount: kcal, display: `${kcal}kcal` };
+    }
   }
 
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+  const numMatch = normalized.match(/(\d+(?:\.\d+)?)/);
+  let num = rangeMatch ? parseFloat(rangeMatch[2]) : numMatch ? parseFloat(numMatch[1]) : 0;
   if (isNaN(num)) num = 0;
 
-  if (def.key === 'energy' && /kj\b/i.test(normalized)) {
-    num = Number((num / 4.184).toFixed(1));
-  } else if (def.key === 'sodium') {
+  if (def.key === 'sodium') {
     if (/\bg\b/i.test(normalized) && !/mg/i.test(normalized)) {
       num = num * 1000;
     } else if (/salt/i.test(normalized)) {

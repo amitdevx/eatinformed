@@ -5,27 +5,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { EatInformedLogo } from '@/components/icons/NutriScanLogo';
 import Link from 'next/link';
 
 export default function SignupPage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const isInitialMount = useRef(true);
 
-    useEffect(() => {
-        if (!loading && user) {
-            router.push('/check');
-        }
-    }, [user, loading, router]);
-
-    if (loading || user) {
-        return (
-            <div className="flex min-h-[calc(100vh-5rem)] w-full items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
+  // ponytail: only redirect if already authenticated on initial page load; never unmount AuthForm during active submission
+  useEffect(() => {
+    if (isInitialMount.current && !loading && user) {
+      router.push('/check');
     }
+    if (!loading) {
+      isInitialMount.current = false;
+    }
+  }, [user, loading, router]);
+
+  if (loading || (isInitialMount.current && user)) {
+    return (
+      <div className="flex min-h-[calc(100vh-5rem)] w-full items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center py-12 px-4 relative z-10">
@@ -43,7 +48,7 @@ export default function SignupPage() {
             <CardDescription className="text-xs text-muted-foreground">Join EatInformed for instant label scanning</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-              <AuthForm initialTab="signup" onAuthSuccess={() => router.push('/check')} />
+            <AuthForm initialTab="signup" onAuthSuccess={() => router.push('/check')} />
           </CardContent>
         </Card>
       </div>

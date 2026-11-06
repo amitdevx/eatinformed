@@ -44,12 +44,19 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const handleAuthSuccess = async (idToken: string) => {
-    // Call the API route to set the session cookie
-    await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    });
+    // ponytail: ensure session cookie endpoint completes before navigating
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        console.warn('Session cookie creation returned non-ok status; continuing with client auth.');
+      }
+    } catch (err) {
+      console.warn('Session cookie network error; continuing with client auth:', err);
+    }
     onAuthSuccess();
   };
 
@@ -149,24 +156,29 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
         </TabsList>
 
         <div className="space-y-4 pt-6">
-            <div className="grid grid-cols-1 gap-4">
-            <Button variant="outline" onClick={handleGoogleSignIn} disabled={isProcessing}>
+            <div className="grid grid-cols-1 gap-3">
+            <Button
+              variant="outline"
+              onClick={handleGoogleSignIn}
+              disabled={isProcessing}
+              className="w-full border-border hover:bg-muted text-foreground transition-colors justify-center font-medium"
+            >
                 {isProcessing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                    <GoogleIcon className="mr-2 h-5 w-5" />
+                    <GoogleIcon className="h-4 w-4" />
                 )}
-                Continue with Google
+                <span>Continue with Google</span>
             </Button>
             
             <Button 
               variant="outline" 
-              className="border-dashed border-border hover:bg-muted text-foreground transition-colors"
+              className="w-full border-dashed border-border hover:bg-muted text-foreground transition-colors justify-center font-medium"
               onClick={handleAnonymousSignIn} 
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <span className="text-xs sm:text-sm font-medium text-foreground">Continue as Guest</span>
               )}

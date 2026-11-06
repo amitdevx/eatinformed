@@ -54,6 +54,8 @@ export function CheckPageClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const activeTabRef = useRef('upload');
+
   // Load scan history from localStorage on initial client mount
   useEffect(() => {
     try {
@@ -80,8 +82,17 @@ export function CheckPageClient() {
         imagePreviewUrl: previewUrl,
       };
 
+      // ponytail: only deduplicate by name for specific branded items; never erase unnamed scans
+      const isGenericName = (name: string) =>
+        !name || /^(scanned food product|packaged food item|food product)$/i.test(name.trim());
+
       setRecentScans((prev) => {
-        const filtered = prev.filter((item) => item.productName !== newItem.productName);
+        const filtered = prev.filter((item) => {
+          if (isGenericName(newItem.productName)) {
+            return item.id !== newItem.id;
+          }
+          return item.productName.toLowerCase() !== newItem.productName.toLowerCase();
+        });
         const updated = [newItem, ...filtered].slice(0, 6);
         try {
           localStorage.setItem('eatinformed_history', JSON.stringify(updated));
@@ -148,6 +159,11 @@ export function CheckPageClient() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+      // ponytail: prevent camera hardware leak if user switched tabs while permission dialog was open
+      if (activeTabRef.current !== 'camera') {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -157,6 +173,10 @@ export function CheckPageClient() {
       console.warn('Failed to get rear camera, trying default camera:', err);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (activeTabRef.current !== 'camera') {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -175,6 +195,7 @@ export function CheckPageClient() {
   }, [toast]);
   
   const handleTabChange = useCallback((value: string) => {
+    activeTabRef.current = value;
     if (value === 'camera' && hasCameraPermission === null) {
       getCameraPermission();
     } else if (value !== 'camera' && streamRef.current) {
@@ -299,6 +320,8 @@ export function CheckPageClient() {
   };
 
   const handleScan = useCallback(async (photoDataUri: string) => {
+    // ponytail: release camera hardware stream immediately so it doesn't run in the background during scan
+    stopCameraStream();
     setIsLoading(true);
     setError(null);
     setAnalysisData(null);
@@ -307,10 +330,13 @@ export function CheckPageClient() {
       const result = await analyzeProduct(photoDataUri);
 
       if (result.status !== 'success') {
+        const detail = result.warnings?.[0] || result.nutrition?.rawText;
         if (result.status === 'unreadable') {
-          setError('The image was unreadable. Please upload or capture a clearer photo of the product label.');
+          setError(detail || 'The image was unreadable. Please upload or capture a clearer photo of the product label.');
         } else if (result.status === 'no_data') {
-          setError("We couldn't find any ingredient or nutrition text on the label. Please try a different image.");
+          setError(detail || "We couldn't find any ingredient or nutrition text on the label. Please try a different image.");
+        } else {
+          setError(detail || 'Analysis could not be completed for this image.');
         }
         setIsLoading(false);
         return;
@@ -330,7 +356,7 @@ export function CheckPageClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, saveToHistory]);
+  }, [toast, saveToHistory, stopCameraStream]);
   
   const handleReset = () => {
     stopCameraStream();
