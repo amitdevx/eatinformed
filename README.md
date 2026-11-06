@@ -303,7 +303,7 @@ eatinformed/
 
 ---
 
-## 🔧 Configuration Files
+##  Configuration Files
 
 ### Firebase Configuration (`src/lib/firebase.ts`)
 - Client-side Firebase initialization
@@ -334,7 +334,7 @@ eatinformed/
 
 ---
 
-## 🎯 API Routes & Endpoints
+##  API Routes & Endpoints
 
 ### Authentication APIs
 ```
@@ -369,7 +369,7 @@ POST /api/genkit/identify-allergens # Detect allergens in ingredients
 
 ---
 
-## 🔥 Firebase Services Used
+##  Firebase Services Used
 
 ### Authentication
 - **Email/Password Authentication**
@@ -393,7 +393,7 @@ POST /api/genkit/identify-allergens # Detect allergens in ingredients
 
 ---
 
-## 🤖 AI Integration Details
+##  AI Integration Details
 
 ### Google Gemini AI
 - **Model**: Gemini Pro Vision (multimodal)
@@ -419,7 +419,7 @@ POST /api/genkit/identify-allergens # Detect allergens in ingredients
 
 ---
 
-## 📊 Features in Detail
+##  Features in Detail
 
 ### Nutritional Analysis
 - Calorie breakdown (per serving and per 100g)
@@ -443,16 +443,16 @@ POST /api/genkit/identify-allergens # Detect allergens in ingredients
 - Preservative analysis
 
 ### Dietary Compliance Checker
-- ✅ Vegan-friendly verification
-- ✅ Vegetarian compatibility
-- ✅ Gluten-free confirmation
-- ✅ Keto/Low-carb suitability
-- ✅ Halal/Kosher compliance
-- ✅ Allergen warnings (nuts, dairy, soy, etc.)
+-  Vegan-friendly verification
+-  Vegetarian compatibility
+-  Gluten-free confirmation
+-  Keto/Low-carb suitability
+-  Halal/Kosher compliance
+-  Allergen warnings (nuts, dairy, soy, etc.)
 
 ---
 
-## 🎨 UI Components
+##  UI Components
 
 Built with **Radix UI** primitives for accessibility and **Tailwind CSS** for styling:
 
@@ -478,7 +478,7 @@ Built with **Radix UI** primitives for accessibility and **Tailwind CSS** for st
 
 ---
 
-## 🚀 Deployment
+##  Deployment
 
 ### Vercel (Recommended)
 ```bash
@@ -505,7 +505,7 @@ Ensure all environment variables are configured in your deployment platform:
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions make the open-source community thrive! Any contributions you make are **greatly appreciated**.
 
@@ -556,7 +556,7 @@ Contributions make the open-source community thrive! Any contributions you make 
 
 ---
 
-## 🐛 Known Issues & Limitations
+##  Known Issues & Limitations
 
 - Image analysis accuracy depends on photo quality
 - Some obscure ingredients may not be recognized
@@ -565,7 +565,7 @@ Contributions make the open-source community thrive! Any contributions you make 
 
 ---
 
-## 🗺️ Roadmap
+## ️ Roadmap
 
 - [ ] Multi-language support for international labels
 - [ ] Barcode scanning integration
@@ -579,13 +579,13 @@ Contributions make the open-source community thrive! Any contributions you make 
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - **[Google Gemini](https://deepmind.google/technologies/gemini/)** for powerful AI capabilities
 - **[Firebase](https://firebase.google.com/)** for backend infrastructure and authentication
@@ -596,20 +596,20 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 📞 Contact & Support
+##  Contact & Support
 
 **Admin** - [@uffamit](https://github.com/uffamit)
 
 **Project Link:** [https://github.com/uffamit/eatinformed](https://github.com/uffamit/eatinformed)
 
 ### Get Help
-- 🐛 [Report a Bug](https://github.com/uffamit/eatinformed/issues)
-- 💡 [Request a Feature](https://github.com/uffamit/eatinformed/issues)
-- 📖 [View Documentation](https://github.com/uffamit/eatinformed/tree/master/docs)
+-  [Report a Bug](https://github.com/uffamit/eatinformed/issues)
+-  [Request a Feature](https://github.com/uffamit/eatinformed/issues)
+-  [View Documentation](https://github.com/uffamit/eatinformed/tree/master/docs)
 
 ---
 
-## 📈 Stats
+##  Stats
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue)
 ![CSS](https://img.shields.io/badge/CSS-1.5%25-563d7c)
@@ -618,7 +618,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ---
 
 <p align="center">
-  <strong>Made with ❤️ for healthier food choices</strong>
+  <strong>Made with ️ for healthier food choices</strong>
   <br>
   <sub>Powered by Google Gemini AI & Firebase</sub>
 </p>

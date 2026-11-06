@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
   Dimensions,
   Alert,
+  Animated,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,7 +24,8 @@ import {
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
 import { LoadingState, ErrorState } from '../components/States';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { scanFoodLabel } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
@@ -32,7 +33,7 @@ import { RootStackParamList } from '../navigation/types';
 
 const { width } = Dimensions.get('window');
 const VIEWFINDER_WIDTH = width * 0.82;
-const VIEWFINDER_HEIGHT = width * 0.95;
+const VIEWFINDER_HEIGHT = width * 0.92;
 
 const LOADING_STEPS = [
   'Detecting packaging and label text with Vision AI...',
@@ -47,6 +48,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ScanScreen() {
   const navigation = useNavigation<NavigationProp>();
   const isFocused = useIsFocused();
+  const { colors } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
 
   const [facing, setFacing] = useState<'back' | 'front'>('back');
@@ -59,6 +61,27 @@ export default function ScanScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const cameraRef = useRef<any>(null);
+  const scanLineY = useRef(new Animated.Value(12)).current;
+
+  // Animated scanner laser inside viewfinder
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanLineY, {
+          toValue: VIEWFINDER_HEIGHT - 20,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanLineY, {
+          toValue: 12,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [scanLineY]);
 
   // Progressive step ticker during AI analysis
   useEffect(() => {
@@ -124,7 +147,10 @@ export default function ScanScreen() {
     try {
       const analysis = await scanFoodLabel(selectedImageBase64);
 
-      if (analysis.status !== 'success' && (!analysis.ingredients || analysis.ingredients.length === 0)) {
+      if (
+        analysis.status !== 'success' &&
+        (!analysis.ingredients || analysis.ingredients.length === 0)
+      ) {
         const errorDetail =
           analysis.warnings?.[0] ||
           analysis.nutrition?.rawText ||
@@ -136,16 +162,13 @@ export default function ScanScreen() {
         return;
       }
 
-      // Save successful scan to persistent history
       await saveScanToHistory(analysis, selectedImageUri);
 
-      // Navigate to detailed result screen
       navigation.navigate('Result', {
         data: analysis,
         imageUri: selectedImageUri,
       });
 
-      // Reset selection for next scan
       setSelectedImageUri(null);
       setSelectedImageBase64(null);
     } catch (err: unknown) {
@@ -176,6 +199,7 @@ export default function ScanScreen() {
         <LoadingState
           message="Analyzing Food Product"
           stepMessage={LOADING_STEPS[loadingStepIndex]}
+          progress={(loadingStepIndex + 1) / LOADING_STEPS.length}
         />
       </Screen>
     );
@@ -216,13 +240,23 @@ export default function ScanScreen() {
   if (selectedImageUri) {
     return (
       <Screen scrollable>
-        <View style={styles.previewContainer}>
-          <Text style={styles.previewTitle}>Confirm Food Label</Text>
-          <Text style={styles.previewSubtitle}>
-            Ensure the ingredients and nutrition table are legible
+        <FadeInView delay={0} style={styles.previewContainer}>
+          <Text style={[styles.previewTitle, { color: colors.text }]}>
+            Confirm Food Label
+          </Text>
+          <Text style={[styles.previewSubtitle, { color: colors.textSecondary }]}>
+            Ensure the ingredients list and nutrition facts table are legible
           </Text>
 
-          <View style={styles.previewImageWrapper}>
+          <View
+            style={[
+              styles.previewImageWrapper,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <Image
               source={{ uri: selectedImageUri }}
               style={styles.previewImage}
@@ -237,7 +271,7 @@ export default function ScanScreen() {
               onPress={handleAnalyze}
               variant="primary"
               size="lg"
-              icon={<Sparkles size={20} color="#000000" />}
+              icon={<Sparkles size={20} color={colors.onPrimary} />}
               style={styles.analyzeButton}
             />
             <Button
@@ -248,7 +282,7 @@ export default function ScanScreen() {
               icon={<RefreshCw size={18} color={colors.text} />}
             />
           </View>
-        </View>
+        </FadeInView>
       </Screen>
     );
   }
@@ -265,16 +299,25 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <Screen style={styles.centerContainer}>
-        <CameraIcon size={48} color={colors.textSecondary} style={{ marginBottom: spacing.base }} />
-        <Text style={styles.permissionTitle}>Camera Access Required</Text>
-        <Text style={styles.permissionSubtitle}>
-          EatInformed uses your camera to scan food labels, ingredients, and nutrition facts.
+        <View
+          style={[
+            styles.permissionIconCircle,
+            { backgroundColor: colors.primaryMuted, borderColor: colors.primaryBorder },
+          ]}
+        >
+          <CameraIcon size={34} color={colors.primary} />
+        </View>
+        <Text style={[styles.permissionTitle, { color: colors.text }]}>
+          Camera Access Required
+        </Text>
+        <Text style={[styles.permissionSubtitle, { color: colors.textSecondary }]}>
+          EatInformed uses your camera to scan food labels, ingredients, and nutrition tables in real time.
         </Text>
         <Button
           title="Enable Camera Access"
           onPress={requestPermission}
           variant="primary"
-          size="md"
+          size="lg"
           style={{ width: '100%', marginBottom: spacing.md }}
         />
         <Button
@@ -298,64 +341,78 @@ export default function ScanScreen() {
           facing={facing}
           enableTorch={torch}
         >
-          {/* Top Controls Overlay */}
+          {/* Top Translucent Glass Controls Overlay */}
           <View style={styles.topControls}>
-            <TouchableOpacity
+            <PressableScale
               style={styles.controlCircle}
               onPress={toggleTorch}
-              activeOpacity={0.8}
+              scaleTo={0.9}
+              accessibilityLabel="Toggle flashlight"
             >
               {torch ? (
-                <Zap size={22} color={colors.warning} />
+                <Zap size={20} color="#FBBF24" />
               ) : (
-                <ZapOff size={22} color="#FFFFFF" />
+                <ZapOff size={20} color="#FFFFFF" />
               )}
-            </TouchableOpacity>
+            </PressableScale>
 
             <View style={styles.headerPill}>
-              <Text style={styles.headerPillText}>Align Food Label</Text>
+              <Text style={styles.headerPillText}>ALIGN FOOD LABEL</Text>
             </View>
 
-            <TouchableOpacity
+            <PressableScale
               style={styles.controlCircle}
               onPress={toggleFacing}
-              activeOpacity={0.8}
+              scaleTo={0.9}
+              accessibilityLabel="Switch camera"
             >
-              <SwitchCamera size={22} color="#FFFFFF" />
-            </TouchableOpacity>
+              <SwitchCamera size={20} color="#FFFFFF" />
+            </PressableScale>
           </View>
 
-          {/* Viewfinder Target Area */}
+          {/* Viewfinder Target Area with Animated Scan Line */}
           <View style={styles.viewfinderContainer}>
             <View style={styles.viewfinderBox}>
               <View style={[styles.corner, styles.cornerTopLeft]} />
               <View style={[styles.corner, styles.cornerTopRight]} />
               <View style={[styles.corner, styles.cornerBottomLeft]} />
               <View style={[styles.corner, styles.cornerBottomRight]} />
+
+              <Animated.View
+                style={[
+                  styles.scanLaser,
+                  { transform: [{ translateY: scanLineY }] },
+                ]}
+              />
             </View>
-            <Text style={styles.viewfinderHint}>
-              Frame ingredient list or nutrition panel
-            </Text>
+            <View style={styles.viewfinderHintPill}>
+              <Text style={styles.viewfinderHint}>
+                Frame ingredients list or nutrition panel clearly
+              </Text>
+            </View>
           </View>
 
           {/* Bottom Shutter Controls */}
           <View style={styles.bottomControls}>
-            <TouchableOpacity
+            <PressableScale
               style={styles.galleryButton}
               onPress={handlePickFromGallery}
-              activeOpacity={0.8}
+              scaleTo={0.92}
             >
-              <ImageIcon size={26} color="#FFFFFF" />
-              <Text style={styles.galleryButtonText}>Gallery</Text>
-            </TouchableOpacity>
+              <View style={styles.galleryIconWrapper}>
+                <ImageIcon size={22} color="#FFFFFF" />
+              </View>
+              <Text style={styles.galleryButtonText}>Photos</Text>
+            </PressableScale>
 
-            <TouchableOpacity
+            <PressableScale
               style={styles.shutterButtonOuter}
               onPress={handleCapturePhoto}
-              activeOpacity={0.8}
+              scaleTo={0.92}
+              accessibilityLabel="Capture food label photo"
             >
               <View style={styles.shutterButtonInner} />
-            </TouchableOpacity>
+            </PressableScale>
 
             <View style={styles.placeholderButton} />
           </View>
@@ -379,32 +436,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
+    paddingTop: 54,
     paddingHorizontal: spacing.lg,
   },
   controlCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(22, 22, 24, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   headerPill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.base,
+    paddingVertical: 8,
     borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(22, 22, 24, 0.75)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   headerPillText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    fontSize: typography.fontSizes.caption2,
+    fontWeight: typography.fontWeights.bold,
+    color: '#F5F5F7',
+    letterSpacing: 0.8,
   },
   viewfinderContainer: {
     flex: 1,
@@ -414,111 +471,134 @@ const styles = StyleSheet.create({
   viewfinderBox: {
     width: VIEWFINDER_WIDTH,
     height: VIEWFINDER_HEIGHT,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     position: 'relative',
     backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   corner: {
     position: 'absolute',
-    width: 24,
-    height: 24,
-    borderColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderColor: '#30D158',
   },
   cornerTopLeft: {
     top: -1,
     left: -1,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderTopLeftRadius: borderRadius.md,
+    borderTopWidth: 3.5,
+    borderLeftWidth: 3.5,
+    borderTopLeftRadius: borderRadius.lg,
   },
   cornerTopRight: {
     top: -1,
     right: -1,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderTopRightRadius: borderRadius.md,
+    borderTopWidth: 3.5,
+    borderRightWidth: 3.5,
+    borderTopRightRadius: borderRadius.lg,
   },
   cornerBottomLeft: {
     bottom: -1,
     left: -1,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: borderRadius.md,
+    borderBottomWidth: 3.5,
+    borderLeftWidth: 3.5,
+    borderBottomLeftRadius: borderRadius.lg,
   },
   cornerBottomRight: {
     bottom: -1,
     right: -1,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: borderRadius.md,
+    borderBottomWidth: 3.5,
+    borderRightWidth: 3.5,
+    borderBottomRightRadius: borderRadius.lg,
+  },
+  scanLaser: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    height: 2,
+    backgroundColor: '#30D158',
+    opacity: 0.75,
+    borderRadius: 1,
+  },
+  viewfinderHintPill: {
+    marginTop: spacing.md,
+    backgroundColor: 'rgba(22, 22, 24, 0.78)',
+    paddingHorizontal: spacing.base,
+    paddingVertical: 7,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   viewfinderHint: {
     fontSize: typography.fontSizes.xs,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: spacing.md,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
+    fontWeight: typography.fontWeights.medium,
+    color: '#F5F5F7',
   },
   bottomControls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 40,
+    paddingBottom: 36,
     paddingHorizontal: spacing.xxl,
   },
   galleryButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 60,
+    width: 64,
+  },
+  galleryIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(22, 22, 24, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   galleryButtonText: {
-    fontSize: typography.fontSizes.xs,
-    color: '#FFFFFF',
-    marginTop: 4,
+    fontSize: typography.fontSizes.caption2,
+    fontWeight: typography.fontWeights.semibold,
+    color: '#F5F5F7',
+    marginTop: 5,
   },
   shutterButtonOuter: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 78,
+    height: 78,
+    borderRadius: 39,
     borderWidth: 4,
     borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
   },
   shutterButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: '#30D158',
   },
   placeholderButton: {
-    width: 60,
+    width: 64,
   },
   previewContainer: {
     paddingVertical: spacing.lg,
   },
   previewTitle: {
     fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text,
+    fontWeight: typography.fontWeights.black,
+    letterSpacing: -0.6,
   },
   previewSubtitle: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    marginTop: 2,
+    fontSize: typography.fontSizes.subhead,
+    marginTop: 3,
     marginBottom: spacing.base,
   },
   previewImageWrapper: {
     height: 380,
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: colors.border,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -534,18 +614,26 @@ const styles = StyleSheet.create({
   analyzeButton: {
     width: '100%',
   },
+  permissionIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.base,
+  },
   permissionTitle: {
     fontSize: typography.fontSizes.xl,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
     textAlign: 'center',
+    letterSpacing: -0.4,
     marginBottom: spacing.xs,
   },
   permissionSubtitle: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
+    fontSize: typography.fontSizes.subhead,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.lineHeights.subhead,
     marginBottom: spacing.xl,
   },
   actionRow: {

@@ -1,219 +1,316 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import {
-  BookOpen,
-  AlertTriangle,
-  CheckCircle,
-  HelpCircle,
-  Shield,
-} from 'lucide-react-native';
+import { BookOpen, AlertTriangle } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
+import { Card, CardHeader, CardContent } from '../components/Card';
 import { NovaBadge } from '../components/NovaBadge';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { getNovaColor } from '../theme/colors';
+import { FadeInView } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 const NOVA_GROUPS = [
   {
     group: 1,
     title: 'Unprocessed or Minimally Processed',
-    color: colors.nova1,
     description:
-      'Whole foods in their natural form or cleaned, chilled, ground, or dried without adding fat, sugar, or salt.',
-    examples: ['Fresh fruits & vegetables', 'Whole grains & rolled oats', 'Plain non-fat milk & eggs', 'Raw nuts and legumes'],
-    impact: 'Optimal nutrient density and highest health rating.',
+      'Whole foods in their natural form or cleaned, chilled, ground, or fermented without adding industrial fats, sugars, or salt.',
+    examples: [
+      'Fresh fruits & leafy vegetables',
+      'Whole grains & rolled oats',
+      'Plain non-fat yogurt, milk & eggs',
+      'Raw nuts, seeds, and legumes',
+    ],
+    impact: 'Optimal nutrient density, intact cellular matrix, and highest health score.',
   },
   {
     group: 2,
     title: 'Processed Culinary Ingredients',
-    color: colors.nova2,
     description:
-      'Substances extracted directly from nature used to season and cook Group 1 whole foods in culinary preparations.',
-    examples: ['Olive oil & vegetable oils', 'Butter and ghee', 'Table sugar and pure honey', 'Iodized table salt'],
-    impact: 'Safe when used in moderate cooking proportions.',
+      'Substances extracted directly from nature or Group 1 foods, used in kitchens to season and cook whole foods.',
+    examples: [
+      'Extra-virgin olive oil & cold-pressed oils',
+      'Unsalted butter and traditional ghee',
+      'Pure honey and maple syrup',
+      'Iodized sea salt and culinary starches',
+    ],
+    impact: 'Safe and beneficial when used in moderate home-cooking proportions.',
   },
   {
     group: 3,
     title: 'Processed Foods',
-    color: colors.nova3,
     description:
-      'Products made by adding Group 2 ingredients (salt, oil, sugar) to Group 1 foods to enhance taste or preservation.',
-    examples: ['Canned vegetables in brine', 'Simple cheeses (mozzarella, cheddar)', 'Freshly baked bakery bread', 'Salted nuts and canned tuna'],
-    impact: 'Healthy in balanced dietary patterns; watch sodium and sugar levels.',
+      'Products made by adding Group 2 culinary ingredients (salt, oil, sugar) to Group 1 foods for preservation or palatability.',
+    examples: [
+      'Canned legumes or vegetables in brine',
+      'Traditional cheeses (mozzarella, cheddar)',
+      'Freshly baked sourdough or artisan bread',
+      'Roasted salted nuts and canned fish',
+    ],
+    impact: 'Healthy in balanced dietary patterns; monitor sodium and added sugar.',
   },
   {
     group: 4,
     title: 'Ultra-Processed Foods (UPFs)',
-    color: colors.nova4,
     description:
-      'Industrial formulations typically containing five or more ingredients including additives, emulsifiers, artificial flavors, and colors.',
-    examples: ['Packaged sodas & energy drinks', 'Instant noodles & packaged chips', 'Mass-produced pre-packaged snacks', 'Processed reconstituted meat products'],
-    impact: 'Linked to metabolic syndrome, higher inflammation, and cardiovascular risk.',
+      'Industrial formulations typically containing five or more ingredients including emulsifiers, artificial flavors, synthetic dyes, and preservatives.',
+    examples: [
+      'Carbonated sodas & sweetened energy drinks',
+      'Instant flavored noodles & extruded chips',
+      'Mass-produced packaged confectionery',
+      'Reconstituted processed meat products',
+    ],
+    impact: 'Associated with metabolic disruption, gut barrier alteration, and overconsumption.',
+  },
+];
+
+const ADDITIVES = [
+  {
+    title: 'Emulsifiers (Polysorbate 80, CMC, Carrageenan)',
+    category: 'Texture Stabilizers',
+    detail:
+      'Used to blend immiscible liquids and extend shelf life. Clinical and preclinical studies suggest high intake can alter gut mucosal barriers and microbiome diversity.',
+  },
+  {
+    title: 'High-Fructose Corn Syrup (HFCS) & Maltodextrin',
+    category: 'Industrial Sweeteners & Fillers',
+    detail:
+      'Rapidly absorbed refined carbohydrates with high glycemic load, strongly linked to hepatic de novo lipogenesis, insulin resistance, and elevated triglycerides.',
+  },
+  {
+    title: 'Synthetic Azo Dyes (Red 40, Yellow 5, Yellow 6)',
+    category: 'Cosmetic Colorants',
+    detail:
+      'Petroleum-derived synthetic colorings used strictly for visual appeal and flagged by international food safety authorities for neurobehavioral sensitivity in children.',
   },
 ];
 
 export default function GuideScreen() {
+  const { colors, isDark } = useTheme();
+
   return (
     <Screen scrollable>
-      <View style={styles.header}>
+      <FadeInView delay={0} style={styles.header}>
         <View style={styles.titleRow}>
-          <BookOpen size={24} color={colors.primary} />
-          <Text style={styles.title}>Food Safety Guide</Text>
+          <View
+            style={[
+              styles.iconBadge,
+              {
+                backgroundColor: colors.primaryMuted,
+                borderColor: colors.primaryBorder,
+              },
+            ]}
+          >
+            <BookOpen size={20} color={colors.primary} />
+          </View>
+          <Text style={[styles.title, { color: colors.text }]}>
+            Food Safety Guide
+          </Text>
         </View>
-        <Text style={styles.subtitle}>
-          Learn how to decipher ingredients, detect ultra-processed additives, and choose healthier foods.
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Learn how to decipher food labels, identify ultra-processed additives, and choose nutrient-dense whole foods.
         </Text>
-      </View>
+      </FadeInView>
 
       {/* NOVA Section */}
-      <Text style={styles.sectionHeading}>The NOVA Food System</Text>
-      <Text style={styles.sectionSubtitle}>
-        Developed by researchers at the University of Sao Paulo, the NOVA system classifies foods by the extent and purpose of industrial processing.
-      </Text>
+      <FadeInView delay={50}>
+        <Text style={[styles.sectionHeading, { color: colors.text }]}>
+          The NOVA Classification
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+          Developed by nutrition researchers at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of processing.
+        </Text>
+      </FadeInView>
 
-      {NOVA_GROUPS.map((item) => (
-        <Card key={item.group} style={styles.novaCard}>
-          <CardContent>
-            <View style={styles.novaCardHeader}>
-              <NovaBadge novaGroup={item.group} size="md" />
-            </View>
-            <Text style={styles.groupTitle}>{item.title}</Text>
-            <Text style={styles.groupDescription}>{item.description}</Text>
-
-            <View style={styles.examplesContainer}>
-              <Text style={styles.examplesHeading}>Typical Examples:</Text>
-              {item.examples.map((ex, i) => (
-                <Text key={i} style={styles.exampleItem}>
-                  - {ex}
+      {NOVA_GROUPS.map((item, idx) => {
+        const novaMeta = getNovaColor(item.group, !isDark);
+        return (
+          <FadeInView key={item.group} delay={90 + idx * 50}>
+            <Card
+              style={[
+                styles.novaCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <CardContent>
+                <View style={styles.novaCardHeader}>
+                  <NovaBadge novaGroup={item.group} size="md" />
+                </View>
+                <Text style={[styles.groupTitle, { color: colors.text }]}>
+                  {item.title}
                 </Text>
-              ))}
-            </View>
+                <Text
+                  style={[
+                    styles.groupDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {item.description}
+                </Text>
 
-            <View style={styles.impactBox}>
-              <Text style={styles.impactText}>{item.impact}</Text>
-            </View>
-          </CardContent>
-        </Card>
-      ))}
+                <View
+                  style={[
+                    styles.examplesContainer,
+                    {
+                      backgroundColor: colors.surfaceRaised,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.examplesHeading,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    TYPICAL EXAMPLES
+                  </Text>
+                  {item.examples.map((ex, i) => (
+                    <Text
+                      key={i}
+                      style={[styles.exampleItem, { color: colors.text }]}
+                    >
+                      • {ex}
+                    </Text>
+                  ))}
+                </View>
+
+                <View
+                  style={[
+                    styles.impactBox,
+                    { borderTopColor: colors.separator },
+                  ]}
+                >
+                  <Text style={[styles.impactText, { color: novaMeta.text }]}>
+                    {item.impact}
+                  </Text>
+                </View>
+              </CardContent>
+            </Card>
+          </FadeInView>
+        );
+      })}
 
       {/* Additives Guide */}
-      <Text style={styles.sectionHeading}>Concerning Additives to Watch</Text>
+      <FadeInView delay={300}>
+        <Text style={[styles.sectionHeading, { color: colors.text }]}>
+          Concerning Additives to Watch
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+          Industrial compounds frequently flagged during EatInformed label screening.
+        </Text>
+      </FadeInView>
 
-      <Card style={styles.addonCard}>
-        <CardHeader title="Emulsifiers (e.g. Polysorbate 80, CMC)" />
-        <CardContent>
-          <Text style={styles.addonText}>
-            Used to stabilize processed textures and extend shelf-life. Scientific studies suggest excessive intake can alter the gut mucosal barrier and microbiome.
-          </Text>
-        </CardContent>
-      </Card>
-
-      <Card style={styles.addonCard}>
-        <CardHeader title="High-Fructose Corn Syrup (HFCS)" />
-        <CardContent>
-          <Text style={styles.addonText}>
-            Industrial liquid sweetener with rapid hepatic absorption, strongly linked to insulin resistance and non-alcoholic fatty liver disease.
-          </Text>
-        </CardContent>
-      </Card>
-
-      <Card style={styles.addonCard}>
-        <CardHeader title="Artificial Colors (Red 40, Yellow 5)" />
-        <CardContent>
-          <Text style={styles.addonText}>
-            Synthetic petroleum-derived colorants flagged in the EU for potential behavioral effects in sensitive children.
-          </Text>
-        </CardContent>
-      </Card>
+      {ADDITIVES.map((addon, idx) => (
+        <FadeInView key={idx} delay={340 + idx * 50}>
+          <Card style={styles.addonCard}>
+            <CardHeader
+              title={addon.title}
+              subtitle={addon.category}
+              rightElement={<AlertTriangle size={18} color={colors.warningText} />}
+            />
+            <CardContent>
+              <Text style={[styles.addonText, { color: colors.textSecondary }]}>
+                {addon.detail}
+              </Text>
+            </CardContent>
+          </Card>
+        </FadeInView>
+      ))}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.md,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xs + 2,
+  },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm + 2,
   },
   title: {
     fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text,
-    marginLeft: spacing.sm,
+    fontWeight: typography.fontWeights.black,
+    letterSpacing: -0.6,
   },
   subtitle: {
-    fontSize: typography.fontSizes.base,
-    color: colors.textSecondary,
-    lineHeight: 22,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: typography.lineHeights.subhead,
   },
   sectionHeading: {
     fontSize: typography.fontSizes.xl,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xs,
+    letterSpacing: -0.4,
+    marginTop: spacing.md,
+    marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: typography.lineHeights.sm,
     marginBottom: spacing.base,
   },
   novaCard: {
     marginBottom: spacing.base,
-    backgroundColor: colors.surfaceRaised,
   },
   novaCardHeader: {
     marginBottom: spacing.sm,
   },
   groupTitle: {
-    fontSize: typography.fontSizes.base,
+    fontSize: typography.fontSizes.md,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
-    marginBottom: spacing.xs,
+    letterSpacing: -0.3,
+    marginBottom: 4,
   },
   groupDescription: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: typography.lineHeights.subhead,
     marginBottom: spacing.md,
   },
   examplesContainer: {
-    backgroundColor: colors.surface,
     padding: spacing.md,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
     marginBottom: spacing.md,
   },
   examplesHeading: {
-    fontSize: typography.fontSizes.xs,
+    fontSize: typography.fontSizes.caption2,
     fontWeight: typography.fontWeights.bold,
-    color: colors.textSecondary,
-    marginBottom: 4,
+    letterSpacing: 0.6,
+    marginBottom: 6,
   },
   exampleItem: {
     fontSize: typography.fontSizes.sm,
-    color: colors.text,
     lineHeight: 20,
   },
   impactBox: {
-    paddingTop: spacing.sm,
+    paddingTop: spacing.sm + 2,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   impactText: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.primary,
+    lineHeight: 17,
   },
   addonCard: {
     marginBottom: spacing.md,
   },
   addonText: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: typography.lineHeights.subhead,
   },
 });

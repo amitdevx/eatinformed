@@ -1,232 +1,233 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="428" height="1260" viewBox="0 0 428 1260" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
-    </style>
-  </defs>
-
-  <rect id="Background" width="428" height="1260" fill="#F5F5F7" />
+<svg width="428" height="1340" viewBox="0 0 428 1340" xmlns="http://www.w3.org/2000/svg">
+  <rect id="Background" width="428" height="1340" fill="#F2F2F7" />
 
   <!-- Top Navigation Bar -->
-  <g id="Top_Navigation_Bar" transform="translate(24, 44)">
-    <!-- Back Button -->
+  <g id="Top_Navigation_Bar" transform="translate(24, 36)">
     <g id="Button_Back">
-      <rect width="40" height="40" rx="12" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      <path d="M23 14l-6 6 6 6" stroke="#1D1D1F" stroke-width="2" stroke-linecap="round" fill="none" />
+      <rect width="44" height="44" rx="14" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+      <path d="M25 16l-6 6 6 6" stroke="#1C1C1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     </g>
-    <!-- Share Button -->
-    <g id="Button_Share" transform="translate(340, 0)">
-      <rect width="40" height="40" rx="12" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      <path d="M16 20h8M20 14l4 6-4 6" stroke="#1D1D1F" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <text x="190" y="27" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#48484A" text-anchor="middle" letter-spacing="-0.2">Product Report</text>
+    <g id="Button_Share" transform="translate(336, 0)">
+      <rect width="44" height="44" rx="14" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+      <path d="M18 22h8M22 16l4 6-4 6" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     </g>
   </g>
 
   <!-- Product Title Header -->
-  <g id="Product_Header" transform="translate(24, 104)">
-    <text x="0" y="14" font-size="12" font-weight="700" fill="#34C759" letter-spacing="1.2">CHOBANI</text>
-    <text x="0" y="44" font-size="26" font-weight="800" fill="#1D1D1F" letter-spacing="-0.5">Plain Greek Yogurt</text>
-    <text x="0" y="66" font-size="13" font-weight="400" fill="#86868B">0% Milkfat Non-Fat (170g Container)</text>
+  <g id="Product_Header" transform="translate(24, 96)">
+    <text x="0" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1E8E3E" text-anchor="start" letter-spacing="1.0">CHOBANI</text>
+    <text x="0" y="42" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="28" font-weight="800" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.6">Plain Greek Yogurt</text>
+    <text x="0" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#48484A" text-anchor="start">0% Milkfat Non-Fat · 1 Container (170g)</text>
   </g>
 
   <!-- Summary Health Rating Card -->
-  <g id="Card_Health_Summary" transform="translate(24, 190)">
-    <rect width="380" height="136" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <!-- Health Rating Column -->
-      <text x="0" y="12" font-size="11" font-weight="600" fill="#86868B" text-transform="uppercase">Health Rating</text>
-      <!-- Score Pill -->
+  <g id="Card_Health_Summary" transform="translate(24, 178)">
+    <rect width="380" height="134" rx="20" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5" />
+    <g transform="translate(20, 18)">
+      <text x="0" y="12" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#48484A" text-anchor="start" letter-spacing="0.6">HEALTH SCORE</text>
       <g transform="translate(0, 20)">
-        <rect width="90" height="30" rx="8" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-        <text x="45" y="20" font-size="15" font-weight="700" fill="#34C759" text-anchor="middle">4.8 / 5.0</text>
+        <rect width="88" height="30" rx="8" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+        <text x="44" y="20" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#166534" text-anchor="middle">4.8 / 5.0</text>
       </g>
-      <!-- Stars row -->
-      <g transform="translate(100, 26)">
-        <circle cx="6" cy="6" r="5" fill="#EAB308" />
-        <circle cx="20" cy="6" r="5" fill="#EAB308" />
-        <circle cx="34" cy="6" r="5" fill="#EAB308" />
-        <circle cx="48" cy="6" r="5" fill="#EAB308" />
-        <circle cx="62" cy="6" r="5" fill="#EAB308" fill-opacity="0.3" />
-      </g>
-
-      <!-- NOVA Badge Column -->
-      <g transform="translate(180, 0)">
-        <rect width="160" height="26" rx="13" fill="rgba(52, 199, 89, 0.12)" stroke="rgba(52, 199, 89, 0.3)" stroke-width="1" />
-        <circle cx="12" cy="13" r="4" fill="#248A3D" />
-        <text x="22" y="17" font-size="10" font-weight="700" fill="#248A3D">NOVA 1: Whole Food</text>
+      <g transform="translate(98, 28)">
+        <polygon points="6,0 7.8,4 12,4.5 8.8,7.4 9.7,11.6 6,9.4 2.3,11.6 3.2,7.4 0,4.5 4.2,4" fill="#D97706" />
+<polygon points="21,0 22.8,4 27,4.5 23.8,7.4 24.7,11.6 21,9.4 17.3,11.6 18.2,7.4 15,4.5 19.2,4" fill="#D97706" />
+<polygon points="36,0 37.8,4 42,4.5 38.8,7.4 39.7,11.6 36,9.4 32.3,11.6 33.2,7.4 30,4.5 34.2,4" fill="#D97706" />
+<polygon points="51,0 52.8,4 57,4.5 53.8,7.4 54.7,11.6 51,9.4 47.3,11.6 48.2,7.4 45,4.5 49.2,4" fill="#D97706" />
+<polygon points="66,0 67.8,4 72,4.5 68.8,7.4 69.7,11.6 66,9.4 62.3,11.6 63.2,7.4 60,4.5 64.2,4" fill="#D97706" fill-opacity="0.55" />
       </g>
 
-      <!-- Bottom Explanation Divider -->
-      <line x1="0" y1="64" x2="340" y2="64" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      <text x="0" y="86" font-size="11" font-weight="400" fill="#86868B">
-        Unprocessed or minimally processed food. Clean whole food source.
-      </text>
+      <g transform="translate(184, 18)">
+        <rect width="156" height="28" rx="14" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+        <circle cx="12" cy="14" r="4" fill="#1E8E3E" />
+        <text x="22" y="18" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#166534" text-anchor="start">NOVA 1: Whole Food</text>
+      </g>
+
+      <line x1="0" y1="64" x2="340" y2="64" stroke="#EBEBF0" stroke-width="1" />
+      <text x="0" y="86" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#48484A" text-anchor="start">Unprocessed or minimally processed clean whole-food source.</text>
     </g>
   </g>
 
-  <!-- Segmented Tab Switcher (Overview / Ingredients / Nutrition) -->
-  <g id="Segmented_Tabs" transform="translate(24, 344)">
-    <rect width="380" height="44" rx="14" fill="#E5E5EA" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <!-- Active Tab Indicator: Overview -->
-    <rect x="4" y="4" width="120" height="36" rx="10" fill="#D1D1D6" />
-    <text x="64" y="26" font-size="12" font-weight="600" fill="#1D1D1F" text-anchor="middle">Overview</text>
-    <!-- Ingredients Tab -->
-    <text x="190" y="26" font-size="12" font-weight="500" fill="#86868B" text-anchor="middle">Ingredients (2)</text>
-    <!-- Nutrition Tab -->
-    <text x="316" y="26" font-size="12" font-weight="500" fill="#86868B" text-anchor="middle">Nutrition Facts</text>
+  <!-- Apple iOS Segmented Tab Switcher -->
+  <g id="Segmented_Tabs" transform="translate(24, 326)">
+    <rect width="380" height="44" rx="14" fill="#F2F2F7" stroke="#E5E5EA" stroke-width="1" />
+    <rect x="4" y="4" width="122" height="36" rx="10" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <text x="65" y="26" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1C1C1E" text-anchor="middle">Overview</text>
+    <text x="190" y="26" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="500" fill="#48484A" text-anchor="middle">Ingredients (2)</text>
+    <text x="315" y="26" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="500" fill="#48484A" text-anchor="middle">Nutrition Facts</text>
   </g>
 
   <!-- Section 1: Health Benefits / Pros -->
-  <g id="Card_Benefits" transform="translate(24, 404)">
-    <rect width="380" height="150" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+  <g id="Card_Benefits" transform="translate(24, 384)">
+    <rect width="380" height="142" rx="20" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1" />
     <g transform="translate(20, 20)">
-      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">Health Benefits</text>
-      
-      <!-- Bullet 1 -->
+      <text x="0" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.3">Health Benefits &amp; Pros</text>
+
       <g transform="translate(0, 30)">
-        <circle cx="8" cy="8" r="8" fill="rgba(52, 199, 89, 0.12)" />
-        <path d="M5 8l2 2 4-4" stroke="#34C759" stroke-width="1.8" stroke-linecap="round" fill="none" />
-        <text x="24" y="12" font-size="12" font-weight="400" fill="#1D1D1F">High-quality protein density (17g per serving)</text>
+        <circle cx="9" cy="9" r="9" fill="#E8F8ED" />
+        <path d="M5.5 9l2.2 2.2 4.8-4.8" stroke="#166534" stroke-width="1.8" stroke-linecap="round" fill="none" />
+        <text x="26" y="13" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1C1C1E" text-anchor="start">High-quality protein density (17g per 170g serving)</text>
       </g>
-      <!-- Bullet 2 -->
-      <g transform="translate(0, 60)">
-        <circle cx="8" cy="8" r="8" fill="rgba(52, 199, 89, 0.12)" />
-        <path d="M5 8l2 2 4-4" stroke="#34C759" stroke-width="1.8" stroke-linecap="round" fill="none" />
-        <text x="24" y="12" font-size="12" font-weight="400" fill="#1D1D1F">Active probiotic live cultures support gut microbiome</text>
+      <g transform="translate(0, 58)">
+        <circle cx="9" cy="9" r="9" fill="#E8F8ED" />
+        <path d="M5.5 9l2.2 2.2 4.8-4.8" stroke="#166534" stroke-width="1.8" stroke-linecap="round" fill="none" />
+        <text x="26" y="13" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1C1C1E" text-anchor="start">Active probiotic cultures support gut microbiome health</text>
       </g>
-      <!-- Bullet 3 -->
-      <g transform="translate(0, 90)">
-        <circle cx="8" cy="8" r="8" fill="rgba(52, 199, 89, 0.12)" />
-        <path d="M5 8l2 2 4-4" stroke="#34C759" stroke-width="1.8" stroke-linecap="round" fill="none" />
-        <text x="24" y="12" font-size="12" font-weight="400" fill="#1D1D1F">Zero added sugars, zero saturated fat, low sodium</text>
+      <g transform="translate(0, 86)">
+        <circle cx="9" cy="9" r="9" fill="#E8F8ED" />
+        <path d="M5.5 9l2.2 2.2 4.8-4.8" stroke="#166534" stroke-width="1.8" stroke-linecap="round" fill="none" />
+        <text x="26" y="13" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#1C1C1E" text-anchor="start">Zero added sugars, zero saturated fat, and low sodium</text>
       </g>
     </g>
   </g>
 
   <!-- Section 2: Dietary & Allergen Profile -->
-  <g id="Card_Dietary" transform="translate(24, 570)">
-    <rect width="380" height="136" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+  <g id="Card_Dietary" transform="translate(24, 540)">
+    <rect width="380" height="128" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
     <g transform="translate(20, 20)">
-      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">Dietary Profile &amp; Allergens</text>
-      
-      <!-- Pills row -->
+      <text x="0" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.3">Dietary &amp; Allergen Profile</text>
+
       <g transform="translate(0, 28)">
-        <rect width="84" height="26" rx="13" fill="rgba(52, 199, 89, 0.12)" stroke="rgba(52, 199, 89, 0.3)" stroke-width="1" />
-        <text x="42" y="17" font-size="11" font-weight="600" fill="#34C759" text-anchor="middle">Vegetarian</text>
+        <rect width="88" height="26" rx="13" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+        <text x="44" y="17" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#166534" text-anchor="middle">Vegetarian</text>
 
-        <g transform="translate(92, 0)">
-          <rect width="90" height="26" rx="13" fill="rgba(0, 122, 255, 0.12)" stroke="rgba(0, 122, 255, 0.3)" stroke-width="1" />
-          <text x="45" y="17" font-size="11" font-weight="600" fill="#007AFF" text-anchor="middle">Gluten-Free</text>
+        <g transform="translate(96, 0)">
+          <rect width="94" height="26" rx="13" fill="#EBF5FF" stroke="#BAE6FD" stroke-width="1" />
+          <text x="47" y="17" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#0055B3" text-anchor="middle">Gluten-Free</text>
         </g>
 
-        <g transform="translate(190, 0)">
-          <rect width="96" height="26" rx="13" fill="rgba(255, 59, 48, 0.12)" stroke="rgba(255, 59, 48, 0.3)" stroke-width="1" />
-          <text x="48" y="17" font-size="11" font-weight="600" fill="#D70015" text-anchor="middle">Milk / Dairy</text>
+        <g transform="translate(198, 0)">
+          <rect width="128" height="26" rx="13" fill="#FFEBEE" stroke="#FECDD3" stroke-width="1" />
+          <text x="64" y="17" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#C41224" text-anchor="middle">Allergen: Milk / Dairy</text>
         </g>
       </g>
 
-      <line x1="0" y1="68" x2="340" y2="68" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      <text x="0" y="88" font-size="11" font-weight="400" fill="#86868B">
-        Nutrient-dense clean staple suitable for vegetarian and gluten-free diets.
-      </text>
+      <line x1="0" y1="66" x2="340" y2="66" stroke="#EBEBF0" stroke-width="1" />
+      <text x="0" y="86" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#48484A" text-anchor="start">Nutrient-dense staple suitable for vegetarian &amp; gluten-free diets.</text>
     </g>
   </g>
 
-  <!-- Section 3: Nutritional Panel Table Preview -->
-  <g id="Card_Nutrition_Table" transform="translate(24, 722)">
-    <rect width="380" height="280" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+  <!-- Section 3: Ingredient Deconstruction Preview -->
+  <g id="Card_Ingredient_Deconstruction" transform="translate(24, 682)">
+    <rect width="380" height="148" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
     <g transform="translate(20, 20)">
-      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">Nutritional Panel</text>
-      <text x="0" y="32" font-size="11" font-weight="400" fill="#86868B">Serving Size: 1 Container (170g)</text>
+      <text x="0" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.3">Ingredient Deconstruction (2)</text>
 
-      <!-- Table Header -->
-      <g transform="translate(0, 48)">
-        <rect width="340" height="26" rx="6" fill="#E5E5EA" />
-        <text x="12" y="17" font-size="11" font-weight="600" fill="#1D1D1F">Nutrient</text>
-        <text x="210" y="17" font-size="11" font-weight="600" fill="#1D1D1F" text-anchor="end">Per Serve</text>
-        <text x="328" y="17" font-size="11" font-weight="600" fill="#1D1D1F" text-anchor="end">Per 100g</text>
+      <g transform="translate(0, 28)">
+        <rect width="340" height="42" rx="10" fill="#F2F2F7" stroke="#E5E5EA" stroke-width="1" />
+        <text x="12" y="17" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1C1C1E" text-anchor="start">1. Cultured Pasteurized Nonfat Milk</text>
+        <text x="12" y="33" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#48484A" text-anchor="start">Role: Primary protein &amp; calcium base</text>
+        <rect x="268" y="9" width="60" height="22" rx="11" fill="#FFEBEE" stroke="#FECDD3" stroke-width="1" />
+        <text x="298" y="24" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#C41224" text-anchor="middle">Dairy</text>
       </g>
 
-      <!-- Table Rows -->
-      <!-- Row 1 -->
-      <g transform="translate(0, 84)">
-        <text x="12" y="14" font-size="12" font-weight="500" fill="#1D1D1F">Calories</text>
-        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">100 kcal</text>
-        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">59 kcal</text>
-        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      </g>
-      <!-- Row 2 -->
-      <g transform="translate(0, 116)">
-        <text x="12" y="14" font-size="12" font-weight="500" fill="#1D1D1F">Total Fat</text>
-        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">0g</text>
-        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">0g</text>
-        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      </g>
-      <!-- Row 3 -->
-      <g transform="translate(0, 148)">
-        <text x="12" y="14" font-size="12" font-weight="500" fill="#1D1D1F">Sodium</text>
-        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">65mg</text>
-        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">38mg</text>
-        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      </g>
-      <!-- Row 4 -->
-      <g transform="translate(0, 180)">
-        <text x="12" y="14" font-size="12" font-weight="500" fill="#1D1D1F">Protein</text>
-        <text x="210" y="14" font-size="12" font-weight="700" fill="#34C759" text-anchor="end">17g</text>
-        <text x="328" y="14" font-size="12" font-weight="700" fill="#34C759" text-anchor="end">10g</text>
-        <line x1="0" y1="24" x2="340" y2="24" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-      </g>
-      <!-- Row 5 -->
-      <g transform="translate(0, 212)">
-        <text x="12" y="14" font-size="12" font-weight="500" fill="#1D1D1F">Total Sugars</text>
-        <text x="210" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">4g</text>
-        <text x="328" y="14" font-size="12" font-weight="400" fill="#86868B" text-anchor="end">2.4g</text>
+      <g transform="translate(0, 76)">
+        <rect width="340" height="42" rx="10" fill="#F2F2F7" stroke="#E5E5EA" stroke-width="1" />
+        <text x="12" y="17" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1C1C1E" text-anchor="start">2. Live &amp; Active Probiotic Cultures</text>
+        <text x="12" y="33" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#48484A" text-anchor="start">Role: Gut microbiome &amp; natural fermentation</text>
+        <rect x="268" y="9" width="60" height="22" rx="11" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+        <text x="298" y="24" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#166534" text-anchor="middle">Clean</text>
       </g>
     </g>
   </g>
 
-  <!-- Bottom CTA Button -->
-  <g id="Button_Scan_Another" transform="translate(24, 1020)">
-    <rect width="380" height="52" rx="26" fill="#34C759" />
-    <text x="190" y="31" font-size="14" font-weight="600" fill="#FFFFFF" text-anchor="middle">Scan Another Label</text>
+  <!-- Section 4: Nutritional Panel Table -->
+  <g id="Card_Nutrition_Table" transform="translate(24, 844)">
+    <rect width="380" height="248" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.3">Nutritional Panel</text>
+      <text x="0" y="32" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Serving Size: 1 Container (170g)</text>
+
+      <g transform="translate(0, 44)">
+        <rect width="340" height="28" rx="8" fill="#F2F2F7" stroke="#E5E5EA" stroke-width="1" />
+        <text x="12" y="18" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1C1C1E" text-anchor="start">Nutrient</text>
+        <text x="220" y="18" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1C1C1E" text-anchor="end">Per Serve</text>
+        <text x="328" y="18" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1C1C1E" text-anchor="end">Per 100g</text>
+      </g>
+
+      <g transform="translate(0, 82)">
+        <text x="12" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#1C1C1E" text-anchor="start">Calories</text>
+        <text x="220" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#48484A" text-anchor="end">100 kcal</text>
+        <text x="328" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#48484A" text-anchor="end">59 kcal</text>
+        <line x1="0" y1="22" x2="340" y2="22" stroke="#EBEBF0" stroke-width="1" />
+      </g>
+      <g transform="translate(0, 112)">
+        <text x="12" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#1C1C1E" text-anchor="start">Total Fat</text>
+        <text x="220" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#48484A" text-anchor="end">0g</text>
+        <text x="328" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#48484A" text-anchor="end">0g</text>
+        <line x1="0" y1="22" x2="340" y2="22" stroke="#EBEBF0" stroke-width="1" />
+      </g>
+      <g transform="translate(0, 142)">
+        <text x="12" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#1C1C1E" text-anchor="start">Sodium</text>
+        <text x="220" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#48484A" text-anchor="end">65mg</text>
+        <text x="328" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#48484A" text-anchor="end">38mg</text>
+        <line x1="0" y1="22" x2="340" y2="22" stroke="#EBEBF0" stroke-width="1" />
+      </g>
+      <g transform="translate(0, 172)">
+        <text x="12" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#166534" text-anchor="start">Protein (34% DV)</text>
+        <text x="220" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#166534" text-anchor="end">17g</text>
+        <text x="328" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#166534" text-anchor="end">10g</text>
+        <line x1="0" y1="22" x2="340" y2="22" stroke="#EBEBF0" stroke-width="1" />
+      </g>
+      <g transform="translate(0, 202)">
+        <text x="12" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#1C1C1E" text-anchor="start">Total Sugars</text>
+        <text x="220" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#48484A" text-anchor="end">4g</text>
+        <text x="328" y="14" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#48484A" text-anchor="end">2.4g</text>
+      </g>
+    </g>
   </g>
 
-  <!-- Bottom Tab Bar -->
+  <!-- Bottom CTA Button (Fits cleanly above Tab Bar y=1256) -->
+  <g id="Button_Scan_Another" transform="translate(24, 1112)">
+    <rect width="380" height="52" rx="26" fill="#1E8E3E" />
+    <text x="190" y="31" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.2">Scan Another Label</text>
+  </g>
+
   
-  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
-    <!-- Tab Bar Surface -->
-    <rect width="428" height="84" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+  <!-- Bottom Navigation Bar (Docked at Bottom y=1256) -->
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 1256)">
+    <rect width="428" height="84" fill="#FFFFFF" />
+    <line x1="0" y1="0" x2="428" y2="0" stroke="#E5E5EA" stroke-width="1" />
 
-    <g id="Tab_Home">
-      <!-- Icon indicator -->
-      <circle cx="43" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Home</text>
+    <!-- Tab 1: Home (x=48) -->
+    <g id="Tab_Home" transform="translate(48, 12)">
+      <path d="M-9 9L0 1L9 9V19A1.5 1.5 0 0 1 7.5 20.5H-7.5A1.5 1.5 0 0 1 -9 19V9Z" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M-3 20.5V13H3V20.5" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Home</text>
     </g>
 
-    <g id="Tab_Scan" transform="translate(106, 10)">
-      <circle cx="22" cy="22" r="22" fill="#34C759" />
-      <!-- Scan Viewfinder Icon -->
-      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none" />
-      <line x1="12" y1="22" x2="32" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+    <!-- Tab 2: Scan (x=131) -->
+    <g id="Tab_Scan" transform="translate(131, 10)">
+      <rect x="-22" y="-2" width="44" height="28" rx="14" fill="#1E8E3E" stroke="#1E8E3E" stroke-width="1" />
+      <path d="M-7 6h4M-7 6v4M7 6h-4M7 6v4M-7 18h4M-7 18v-4M7 18h-4M7 18v-4" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" fill="none" />
+      <line x1="-9" y1="12" x2="9" y2="12" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" />
+      <text x="0" y="40" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1E8E3E" text-anchor="middle">Scan</text>
     </g>
 
-    <g id="Tab_History">
-      <!-- Icon indicator -->
-      <circle cx="214" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">History</text>
+    <!-- Tab 3: History (x=214) -->
+    <g id="Tab_History" transform="translate(214, 12)">
+      <circle cx="0" cy="11" r="9" stroke="#636366" stroke-width="2" fill="none" />
+      <path d="M0 6V11L3.5 13" stroke="#636366" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">History</text>
     </g>
 
-    <g id="Tab_Guide">
-      <!-- Icon indicator -->
-      <circle cx="300" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Guide</text>
+    <!-- Tab 4: Guide (x=297) -->
+    <g id="Tab_Guide" transform="translate(297, 12)">
+      <path d="M-9 4C-5 3 -2 4 0 6C2 4 5 3 9 4V18C5 17 2 18 0 20C-2 18 -5 17 -9 18V4Z" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <line x1="0" y1="6" x2="0" y2="20" stroke="#636366" stroke-width="2" stroke-linecap="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Guide</text>
     </g>
 
-    <g id="Tab_Profile">
-      <!-- Icon indicator -->
-      <circle cx="385" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Profile</text>
+    <!-- Tab 5: Profile (x=380) -->
+    <g id="Tab_Profile" transform="translate(380, 12)">
+      <circle cx="0" cy="7" r="4.5" stroke="#636366" stroke-width="2" fill="none" />
+      <path d="M-8 20C-8 15.5 -4.5 13 0 13C4.5 13 8 15.5 8 20" stroke="#636366" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Profile</text>
     </g>
+
+    <!-- iOS Home Indicator Pill -->
+    <rect x="147" y="71" width="134" height="5" rx="2.5" fill="#1C1C1E" fill-opacity="0.22" />
   </g>
-
 </svg>

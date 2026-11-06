@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Share,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
@@ -15,19 +14,17 @@ import {
   AlertTriangle,
   Share2,
   RefreshCw,
-  Check,
-  Shield,
-  Layers,
-  Utensils,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
+import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
-import { colors } from '../theme/colors';
-import { borderRadius, spacing, typography } from '../theme/tokens';
+import { SegmentedControl } from '../components/SegmentedControl';
+import { useTheme } from '../theme/ThemeContext';
+import { FadeInView, PressableScale } from '../theme/animations';
+import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { saveScanToHistory } from '../lib/history';
 import { RootStackParamList } from '../navigation/types';
 
@@ -39,6 +36,7 @@ type ActiveTab = 'overview' | 'ingredients' | 'nutrition';
 export default function ResultScreen() {
   const route = useRoute<RouteProps>();
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
   const { data, imageUri } = route.params;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
@@ -72,92 +70,117 @@ export default function ResultScreen() {
   return (
     <Screen scrollable>
       {/* Top Navigation Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
+      <FadeInView delay={0} style={styles.topBar}>
+        <PressableScale
+          style={[
+            styles.navIconButton,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
           onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          activeOpacity={0.8}
+          scaleTo={0.92}
+          accessibilityLabel="Go back"
         >
           <ArrowLeft size={20} color={colors.text} />
-        </TouchableOpacity>
+        </PressableScale>
 
-        <TouchableOpacity
-          style={styles.shareButton}
+        <PressableScale
+          style={[
+            styles.navIconButton,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
           onPress={handleShare}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          activeOpacity={0.8}
+          scaleTo={0.92}
+          accessibilityLabel="Share report"
         >
-          <Share2 size={20} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+          <Share2 size={19} color={colors.text} />
+        </PressableScale>
+      </FadeInView>
 
       {/* Product Title Section */}
-      <View style={styles.productHeader}>
-        {brand ? <Text style={styles.brandText}>{brand.toUpperCase()}</Text> : null}
-        <Text style={styles.productTitle}>{productName}</Text>
-      </View>
+      <FadeInView delay={40} style={styles.productHeader}>
+        {brand ? (
+          <Text style={[styles.brandText, { color: colors.primary }]}>
+            {brand.toUpperCase()}
+          </Text>
+        ) : null}
+        <Text style={[styles.productTitle, { color: colors.text }]}>
+          {productName}
+        </Text>
+      </FadeInView>
 
-      {/* Main Health Rating Card */}
-      <Card style={styles.summaryCard}>
-        <CardContent>
-          <View style={styles.ratingRow}>
-            <View>
-              <Text style={styles.ratingLabel}>Health Rating</Text>
-              <RatingStars rating={rating} size="lg" />
+      {/* Main Health Rating Summary Card */}
+      <FadeInView delay={80}>
+        <Card
+          style={[
+            styles.summaryCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.primaryBorder,
+            },
+          ]}
+        >
+          <CardContent>
+            <View style={styles.ratingRow}>
+              <View>
+                <Text style={[styles.ratingLabel, { color: colors.textSecondary }]}>
+                  HEALTH SCORE
+                </Text>
+                <RatingStars rating={rating} size="lg" />
+              </View>
+              <NovaBadge novaGroup={novaGroup} size="md" />
             </View>
-            <NovaBadge novaGroup={novaGroup} size="md" />
-          </View>
-          <View style={styles.novaExplanation}>
-            <NovaBadge novaGroup={novaGroup} showDescription size="sm" />
-          </View>
-        </CardContent>
-      </Card>
+            <View
+              style={[
+                styles.novaExplanation,
+                { borderTopColor: colors.separator },
+              ]}
+            >
+              <NovaBadge novaGroup={novaGroup} showDescription size="sm" />
+            </View>
+          </CardContent>
+        </Card>
+      </FadeInView>
 
-      {/* Navigation Tabs (Overview / Ingredients / Nutrition) */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'overview' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('overview')}
-        >
-          <Text style={[styles.tabText, activeTab === 'overview' && styles.tabTextActive]}>
-            Overview
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'ingredients' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('ingredients')}
-        >
-          <Text style={[styles.tabText, activeTab === 'ingredients' && styles.tabTextActive]}>
-            Ingredients ({data.ingredients.length})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'nutrition' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('nutrition')}
-        >
-          <Text style={[styles.tabText, activeTab === 'nutrition' && styles.tabTextActive]}>
-            Nutrition Facts
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Apple iOS Segmented Tab Switcher */}
+      <FadeInView delay={120} style={styles.segmentedWrapper}>
+        <SegmentedControl<ActiveTab>
+          options={[
+            { value: 'overview', label: 'Overview' },
+            {
+              value: 'ingredients',
+              label: `Ingredients (${data.ingredients.length})`,
+            },
+            { value: 'nutrition', label: 'Nutrition Facts' },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
+      </FadeInView>
 
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
-        <View>
+        <FadeInView key="tab-overview" delay={20}>
           {/* Critical Warnings (if any) */}
           {data.warnings && data.warnings.length > 0 && (
-            <Card style={styles.warningCard}>
+            <Card
+              style={{
+                borderColor: colors.warningBorder,
+                backgroundColor: colors.warningLight,
+              }}
+            >
               <CardContent>
                 <View style={styles.warningHeader}>
-                  <AlertTriangle size={20} color={colors.warning} />
-                  <Text style={styles.warningTitle}>Health Notices</Text>
+                  <AlertTriangle size={20} color={colors.warningText} />
+                  <Text style={[styles.warningTitle, { color: colors.warningText }]}>
+                    Health Notices
+                  </Text>
                 </View>
                 {data.warnings.map((warning, index) => (
-                  <Text key={index} style={styles.warningItem}>
-                    {warning}
+                  <Text
+                    key={index}
+                    style={[styles.warningItem, { color: colors.text }]}
+                  >
+                    • {warning}
                   </Text>
                 ))}
               </CardContent>
@@ -166,13 +189,19 @@ export default function ResultScreen() {
 
           {/* Pros Section */}
           {data.pros && data.pros.length > 0 && (
-            <Card style={styles.prosCard}>
+            <Card style={{ borderColor: colors.successBorder }}>
               <CardHeader title="Health Benefits & Pros" />
               <CardContent>
                 {data.pros.map((pro, index) => (
                   <View key={index} style={styles.bulletRow}>
-                    <CheckCircle size={18} color={colors.success} style={styles.bulletIcon} />
-                    <Text style={styles.bulletText}>{pro}</Text>
+                    <CheckCircle
+                      size={18}
+                      color={colors.successText}
+                      style={styles.bulletIcon}
+                    />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      {pro}
+                    </Text>
                   </View>
                 ))}
               </CardContent>
@@ -181,13 +210,19 @@ export default function ResultScreen() {
 
           {/* Cons Section */}
           {data.cons && data.cons.length > 0 && (
-            <Card style={styles.consCard}>
+            <Card style={{ borderColor: colors.dangerBorder }}>
               <CardHeader title="Concerns & Cons" />
               <CardContent>
                 {data.cons.map((con, index) => (
                   <View key={index} style={styles.bulletRow}>
-                    <XCircle size={18} color={colors.danger} style={styles.bulletIcon} />
-                    <Text style={styles.bulletText}>{con}</Text>
+                    <XCircle
+                      size={18}
+                      color={colors.dangerText}
+                      style={styles.bulletIcon}
+                    />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      {con}
+                    </Text>
                   </View>
                 ))}
               </CardContent>
@@ -210,37 +245,55 @@ export default function ResultScreen() {
                 )}
               </View>
 
-              {data.dietaryInfo.allergens && data.dietaryInfo.allergens.length > 0 && (
-                <View style={styles.allergenSection}>
-                  <Text style={styles.subSectionTitle}>Allergens Detected:</Text>
-                  <View style={styles.badgeRow}>
-                    {data.dietaryInfo.allergens.map((allergen, index) => (
-                      <Badge
-                        key={index}
-                        label={allergen}
-                        variant="danger"
-                        size="sm"
-                      />
-                    ))}
+              {data.dietaryInfo.allergens &&
+                data.dietaryInfo.allergens.length > 0 && (
+                  <View
+                    style={[
+                      styles.allergenSection,
+                      { borderTopColor: colors.separator },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.subSectionTitle,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Allergens Detected
+                    </Text>
+                    <View style={styles.badgeRow}>
+                      {data.dietaryInfo.allergens.map((allergen, index) => (
+                        <Badge
+                          key={index}
+                          label={allergen}
+                          variant="danger"
+                          size="sm"
+                        />
+                      ))}
+                    </View>
                   </View>
-                </View>
-              )}
+                )}
 
               {data.dietaryInfo.summary ? (
-                <Text style={styles.dietarySummary}>
+                <Text
+                  style={[
+                    styles.dietarySummary,
+                    { color: colors.textSecondary },
+                  ]}
+                >
                   {data.dietaryInfo.summary}
                 </Text>
               ) : null}
             </CardContent>
           </Card>
-        </View>
+        </FadeInView>
       )}
 
       {/* TAB 2: INGREDIENTS */}
       {activeTab === 'ingredients' && (
-        <View>
-          <Text style={styles.tabSectionInfo}>
-            Every ingredient identified and cross-checked against nutritional safety criteria.
+        <FadeInView key="tab-ingredients" delay={20}>
+          <Text style={[styles.tabSectionInfo, { color: colors.textSecondary }]}>
+            Every ingredient identified and cross-checked against international nutritional safety criteria.
           </Text>
 
           {data.ingredientAnalysis && data.ingredientAnalysis.length > 0 ? (
@@ -248,21 +301,40 @@ export default function ResultScreen() {
               <Card key={index} style={styles.ingredientCard}>
                 <CardContent>
                   <View style={styles.ingredientTopRow}>
-                    <Text style={styles.ingredientName}>{item.ingredient}</Text>
+                    <Text style={[styles.ingredientName, { color: colors.text }]}>
+                      {item.ingredient}
+                    </Text>
                     <View style={styles.badgeRow}>
                       {item.isAllergen && (
                         <Badge label="Allergen" variant="danger" size="sm" />
                       )}
                       {item.isControversial && (
-                        <Badge label="Controversial" variant="warning" size="sm" />
+                        <Badge label="Additive Alert" variant="warning" size="sm" />
+                      )}
+                      {!item.isAllergen && !item.isControversial && (
+                        <Badge label="Clean" variant="success" size="sm" />
                       )}
                     </View>
                   </View>
                   {item.purpose ? (
-                    <Text style={styles.ingredientPurpose}>Purpose: {item.purpose}</Text>
+                    <Text
+                      style={[
+                        styles.ingredientPurpose,
+                        { color: colors.primary },
+                      ]}
+                    >
+                      Role: {item.purpose}
+                    </Text>
                   ) : null}
                   {item.description ? (
-                    <Text style={styles.ingredientDescription}>{item.description}</Text>
+                    <Text
+                      style={[
+                        styles.ingredientDescription,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {item.description}
+                    </Text>
                   ) : null}
                 </CardContent>
               </Card>
@@ -271,74 +343,152 @@ export default function ResultScreen() {
             <Card>
               <CardContent>
                 {data.ingredients.map((ing, idx) => (
-                  <Text key={idx} style={styles.rawIngredientItem}>
+                  <Text
+                    key={idx}
+                    style={[styles.rawIngredientItem, { color: colors.text }]}
+                  >
                     {idx + 1}. {ing}
                   </Text>
                 ))}
               </CardContent>
             </Card>
           )}
-        </View>
+        </FadeInView>
       )}
 
       {/* TAB 3: NUTRITION FACTS */}
       {activeTab === 'nutrition' && (
-        <View>
+        <FadeInView key="tab-nutrition" delay={20}>
           <Card>
             <CardHeader
               title="Nutritional Panel"
               subtitle={
                 data.nutrition.servingSizeLabel
                   ? `Serving Size: ${data.nutrition.servingSizeLabel}`
-                  : 'Reported nutrient content'
+                  : 'Reported nutrient content per serving & per 100g'
               }
             />
             <CardContent>
               {data.nutrition.nutrients && data.nutrition.nutrients.length > 0 ? (
                 <View style={styles.nutritionTable}>
-                  <View style={styles.tableHeaderRow}>
-                    <Text style={[styles.tableColHeader, { flex: 2 }]}>Nutrient</Text>
-                    <Text style={[styles.tableColHeader, { flex: 1, textAlign: 'right' }]}>
+                  <View
+                    style={[
+                      styles.tableHeaderRow,
+                      {
+                        backgroundColor: colors.surfaceRaised,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tableColHeader,
+                        { color: colors.text, flex: 2 },
+                      ]}
+                    >
+                      Nutrient
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableColHeader,
+                        { color: colors.text, flex: 1, textAlign: 'right' },
+                      ]}
+                    >
                       Per Serve
                     </Text>
-                    <Text style={[styles.tableColHeader, { flex: 1, textAlign: 'right' }]}>
+                    <Text
+                      style={[
+                        styles.tableColHeader,
+                        { color: colors.text, flex: 1, textAlign: 'right' },
+                      ]}
+                    >
                       Per 100g
                     </Text>
                   </View>
 
-                  {data.nutrition.nutrients.map((n, i) => (
-                    <View key={i} style={styles.tableRow}>
-                      <Text style={[styles.nutrientName, { flex: 2 }]}>{n.nutrient}</Text>
-                      <Text style={[styles.nutrientValue, { flex: 1, textAlign: 'right' }]}>
-                        {n.perServing || '-'}
-                      </Text>
-                      <Text style={[styles.nutrientValue, { flex: 1, textAlign: 'right' }]}>
-                        {n.per100mL || '-'}
-                      </Text>
-                    </View>
-                  ))}
+                  {data.nutrition.nutrients.map((n, i) => {
+                    const isProtein = /protein/i.test(n.nutrient);
+                    return (
+                      <View
+                        key={i}
+                        style={[
+                          styles.tableRow,
+                          { borderBottomColor: colors.separator },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.nutrientName,
+                            { color: colors.text, flex: 2 },
+                          ]}
+                        >
+                          {n.nutrient}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.nutrientValue,
+                            {
+                              color: isProtein
+                                ? colors.successText
+                                : colors.textSecondary,
+                              fontWeight: isProtein
+                                ? typography.fontWeights.bold
+                                : typography.fontWeights.medium,
+                              flex: 1,
+                              textAlign: 'right',
+                            },
+                          ]}
+                        >
+                          {n.perServing || '-'}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.nutrientValue,
+                            {
+                              color: isProtein
+                                ? colors.successText
+                                : colors.textSecondary,
+                              fontWeight: isProtein
+                                ? typography.fontWeights.bold
+                                : typography.fontWeights.regular,
+                              flex: 1,
+                              textAlign: 'right',
+                            },
+                          ]}
+                        >
+                          {n.per100mL || '-'}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
               ) : (
-                <Text style={styles.rawNutritionText}>
-                  {data.nutrition.rawText || 'No structured nutrition facts table found on label.'}
+                <Text
+                  style={[
+                    styles.rawNutritionText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {data.nutrition.rawText ||
+                    'No structured nutrition facts table found on label.'}
                 </Text>
               )}
             </CardContent>
           </Card>
-        </View>
+        </FadeInView>
       )}
 
-      {/* Bottom Actions */}
-      <View style={styles.bottomActions}>
+      {/* Bottom Action */}
+      <FadeInView delay={180} style={styles.bottomActions}>
         <Button
           title="Scan Another Label"
           onPress={handleScanAnother}
           variant="primary"
           size="lg"
-          icon={<RefreshCw size={18} color="#000000" />}
+          icon={<RefreshCw size={18} color={colors.onPrimary} />}
           style={{ width: '100%' }}
         />
-      </View>
+      </FadeInView>
     </Screen>
   );
 }
@@ -350,23 +500,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.md,
   },
-  backButton: {
-    width: 40,
-    height: 40,
+  navIconButton: {
+    width: layout.minTouchTarget,
+    height: layout.minTouchTarget,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareButton: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -376,19 +514,17 @@ const styles = StyleSheet.create({
   brandText: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.bold,
-    color: colors.primary,
-    letterSpacing: 1,
+    letterSpacing: 1.0,
     marginBottom: 4,
   },
   productTitle: {
     fontSize: typography.fontSizes.xxl,
     fontWeight: typography.fontWeights.black,
-    color: colors.text,
-    lineHeight: 32,
+    letterSpacing: -0.6,
+    lineHeight: typography.lineHeights.xxl,
   },
   summaryCard: {
-    borderColor: 'rgba(34, 197, 94, 0.3)',
-    backgroundColor: colors.surfaceRaised,
+    marginBottom: spacing.base,
   },
   ratingRow: {
     flexDirection: 'row',
@@ -397,45 +533,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   ratingLabel: {
-    fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
-    marginBottom: 4,
+    fontSize: typography.fontSizes.caption2,
+    fontWeight: typography.fontWeights.semibold,
+    letterSpacing: 0.6,
+    marginBottom: 6,
   },
   novaExplanation: {
-    paddingTop: spacing.sm,
+    paddingTop: spacing.sm + 2,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: borderRadius.md,
-    padding: 4,
+  segmentedWrapper: {
     marginBottom: spacing.base,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: borderRadius.sm,
-  },
-  tabButtonActive: {
-    backgroundColor: colors.surfaceHighlight,
-  },
-  tabText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
-    color: colors.textSecondary,
-  },
-  tabTextActive: {
-    color: colors.text,
-  },
-  warningCard: {
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
   },
   warningHeader: {
     flexDirection: 'row',
@@ -445,35 +553,26 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.bold,
-    color: colors.warning,
     marginLeft: spacing.sm,
   },
   warningItem: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: typography.lineHeights.subhead,
     marginBottom: 4,
-  },
-  prosCard: {
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-  },
-  consCard: {
-    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm + 2,
   },
   bulletIcon: {
-    marginRight: spacing.sm,
+    marginRight: spacing.sm + 2,
     marginTop: 2,
   },
   bulletText: {
     flex: 1,
-    fontSize: typography.fontSizes.sm,
-    color: colors.text,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: typography.lineHeights.subhead,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -484,55 +583,50 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   subSectionTitle: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.bold,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xs + 2,
+    letterSpacing: 0.2,
   },
   dietarySummary: {
     marginTop: spacing.md,
     fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: typography.lineHeights.sm,
   },
   tabSectionInfo: {
-    fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
+    fontSize: typography.fontSizes.sm,
+    lineHeight: typography.lineHeights.sm,
     marginBottom: spacing.md,
   },
   ingredientCard: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm + 2,
   },
   ingredientTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   ingredientName: {
     fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
     flex: 1,
     marginRight: spacing.sm,
+    letterSpacing: -0.2,
   },
   ingredientPurpose: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.primary,
     marginBottom: 4,
   },
   ingredientDescription: {
     fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: typography.lineHeights.sm,
   },
   rawIngredientItem: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text,
+    fontSize: typography.fontSizes.subhead,
     lineHeight: 22,
     marginBottom: 4,
   },
@@ -541,38 +635,35 @@ const styles = StyleSheet.create({
   },
   tableHeaderRow: {
     flexDirection: 'row',
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginBottom: spacing.sm,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: borderRadius.xs,
+    borderWidth: 1,
+    marginBottom: spacing.xs,
   },
   tableColHeader: {
     fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.textSecondary,
+    fontWeight: typography.fontWeights.semibold,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(31, 31, 35, 0.5)',
   },
   nutrientName: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.subhead,
     fontWeight: typography.fontWeights.medium,
-    color: colors.text,
   },
   nutrientValue: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
+    fontSize: typography.fontSizes.subhead,
   },
   rawNutritionText: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: 21,
   },
   bottomActions: {
-    paddingVertical: spacing.xl,
-    paddingBottom: 40,
+    paddingVertical: spacing.lg,
+    paddingBottom: 36,
   },
 });

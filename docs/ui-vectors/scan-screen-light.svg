@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="428" height="1040" viewBox="0 0 428 1040" xmlns="http://www.w3.org/2000/svg">
+  <rect id="Background" width="428" height="1040" fill="#F2F2F7" />
+
+  <!-- Camera Viewport Container -->
+  <g id="Camera_Viewport" transform="translate(24, 36)">
+    <rect width="380" height="620" rx="28" fill="#0B0B0E" stroke="#D1D1D6" stroke-width="1.5" />
+
+    <!-- Top Camera Translucent Controls -->
+    <g id="Camera_Top_Controls" transform="translate(20, 20)">
+      <circle cx="22" cy="22" r="22" fill="#1C1C1E" stroke="#38383E" stroke-width="1" />
+      <path d="M24 13L16 23h6l-2 8 8-10h-6l2-8z" stroke="#FBBF24" stroke-width="1.8" fill="none" stroke-linejoin="round" />
+
+      <rect x="92" y="4" width="156" height="36" rx="18" fill="#1C1C1E" stroke="#38383E" stroke-width="1" />
+      <text x="170" y="26" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#F5F5F7" text-anchor="middle" letter-spacing="0.8">ALIGN FOOD LABEL</text>
+
+      <g transform="translate(296, 0)">
+        <circle cx="22" cy="22" r="22" fill="#1C1C1E" stroke="#38383E" stroke-width="1" />
+        <path d="M15 19h14l-3-3M29 25H15l3 3" stroke="#F5F5F7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      </g>
+    </g>
+
+    <!-- Viewfinder Framing Box -->
+    <g id="Viewfinder_Box" transform="translate(40, 88)">
+      <rect width="300" height="360" rx="24" fill="#161618" stroke="#38383E" stroke-width="1" />
+
+      <!-- Simulated Nutrition Label Inside Viewfinder -->
+      <rect x="34" y="34" width="232" height="292" rx="12" fill="#222226" stroke="#38383E" stroke-width="1" />
+      <text x="54" y="66" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#F5F5F7" text-anchor="start" letter-spacing="0.4">NUTRITION FACTS</text>
+      <line x1="54" y1="76" x2="246" y2="76" stroke="#38383E" stroke-width="2" />
+      <text x="54" y="96" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#AEAEB2" text-anchor="start">Serving Size: 1 Container (170g)</text>
+      <text x="54" y="118" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#F5F5F7" text-anchor="start">Calories 100</text>
+      <text x="54" y="142" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#AEAEB2" text-anchor="start">Total Fat 0g · Sodium 65mg</text>
+      <text x="54" y="162" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#4ADE80" text-anchor="start">Protein 17g · Total Sugars 4g</text>
+      <line x1="54" y1="178" x2="246" y2="178" stroke="#38383E" stroke-width="1" />
+      <text x="54" y="198" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#F5F5F7" text-anchor="start" letter-spacing="0.4">INGREDIENTS:</text>
+      <text x="54" y="216" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#AEAEB2" text-anchor="start">Cultured Pasteurized Nonfat</text>
+      <text x="54" y="232" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#AEAEB2" text-anchor="start">Milk, Live &amp; Active Cultures</text>
+      <text x="54" y="248" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#AEAEB2" text-anchor="start">(S. Thermophilus, L. Bulgaricus).</text>
+
+      <!-- Apple Green Corner Brackets -->
+      <path d="M0 28V12C0 5.4 5.4 0 12 0H28" stroke="#30D158" stroke-width="3.5" stroke-linecap="round" fill="none" />
+      <path d="M272 0H288C294.6 0 300 5.4 300 12V28" stroke="#30D158" stroke-width="3.5" stroke-linecap="round" fill="none" />
+      <path d="M0 332V348C0 354.6 5.4 360 12 360H28" stroke="#30D158" stroke-width="3.5" stroke-linecap="round" fill="none" />
+      <path d="M272 360H288C294.6 360 300 354.6 300 348V332" stroke="#30D158" stroke-width="3.5" stroke-linecap="round" fill="none" />
+
+      <!-- Active Animated Laser Sweep Line -->
+      <line x1="16" y1="184" x2="284" y2="184" stroke="#30D158" stroke-width="2.5" stroke-linecap="round" />
+      <rect x="16" y="184" width="268" height="24" fill="#30D158" fill-opacity="0.12" />
+    </g>
+
+    <!-- Viewfinder Hint Pill -->
+    <g transform="translate(55, 464)">
+      <rect width="270" height="30" rx="15" fill="#1C1C1E" stroke="#38383E" stroke-width="1" />
+      <text x="135" y="19" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="500" fill="#F5F5F7" text-anchor="middle">Frame ingredient list or nutrition panel</text>
+    </g>
+
+    <!-- Bottom Camera Shutter Bar -->
+    <g id="Camera_Shutter_Row" transform="translate(40, 516)">
+      <!-- Gallery Button -->
+      <g transform="translate(10, 12)">
+        <circle cx="24" cy="24" r="24" fill="#1C1C1E" stroke="#38383E" stroke-width="1" />
+        <rect x="15" y="16" width="18" height="16" rx="3" stroke="#F5F5F7" stroke-width="1.6" fill="none" />
+        <text x="24" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#F5F5F7" text-anchor="middle">Photos</text>
+      </g>
+
+      <!-- Apple Camera Shutter Ring -->
+      <g transform="translate(112, 2)">
+        <circle cx="38" cy="38" r="36" stroke="#FFFFFF" stroke-width="4" fill="none" />
+        <circle cx="38" cy="38" r="29" fill="#30D158" />
+      </g>
+
+      <!-- AI Live Mode Badge -->
+      <g transform="translate(230, 12)">
+        <circle cx="24" cy="24" r="24" fill="#0D2818" stroke="#1E4E30" stroke-width="1" />
+        <text x="24" y="28" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#4ADE80" text-anchor="middle">AI</text>
+        <text x="24" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#AEAEB2" text-anchor="middle">Auto OCR</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- AI Analysis Pipeline Status Card (Below Viewfinder) -->
+  <g id="Card_AI_Pipeline_Preview" transform="translate(24, 676)">
+    <rect width="380" height="252" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <rect width="128" height="22" rx="11" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+      <circle cx="11" cy="11" r="3.5" fill="#1E8E3E" />
+      <text x="20" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1E8E3E" text-anchor="start">STAGE 2 OF 2 READY</text>
+
+      <text x="0" y="46" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="17" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.3">Dual-Stage Vision &amp; NOVA Pipeline</text>
+      <text x="0" y="66" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Extracts label text &amp; cross-references 500+ food additives</text>
+
+      <!-- Progress Bar -->
+      <rect x="0" y="82" width="340" height="8" rx="4" fill="#F2F2F7" />
+      <rect x="0" y="82" width="238" height="8" rx="4" fill="#1E8E3E" />
+
+      <!-- Pipeline Steps -->
+      <g transform="translate(0, 106)">
+        <circle cx="9" cy="9" r="8" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+        <path d="M5.5 9l2.2 2.2 4.8-4.8" stroke="#166534" stroke-width="1.6" stroke-linecap="round" fill="none" />
+        <text x="26" y="13" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="500" fill="#1C1C1E" text-anchor="start">1. Optical character transcription (Ingredients &amp; Macros)</text>
+      </g>
+      <g transform="translate(0, 134)">
+        <circle cx="9" cy="9" r="8" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+        <path d="M5.5 9l2.2 2.2 4.8-4.8" stroke="#166534" stroke-width="1.6" stroke-linecap="round" fill="none" />
+        <text x="26" y="13" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="500" fill="#1C1C1E" text-anchor="start">2. Chemical emulsifier, dye &amp; sweetener screening</text>
+      </g>
+      <g transform="translate(0, 162)">
+        <circle cx="9" cy="9" r="8" fill="#EBF5FF" stroke="#BAE6FD" stroke-width="1" />
+        <circle cx="9" cy="9" r="3" fill="#007AFF" />
+        <text x="26" y="13" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#0055B3" text-anchor="start">3. NOVA 1-4 classification &amp; 5.0 health score calculation</text>
+      </g>
+
+      <!-- Action Button -->
+      <g transform="translate(0, 188)">
+        <rect width="340" height="36" rx="18" fill="#1E8E3E" />
+        <text x="170" y="23" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle">Analyze Captured Label with AI</text>
+      </g>
+    </g>
+  </g>
+
+  
+  <!-- Bottom Navigation Bar (Docked at Bottom y=956) -->
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 956)">
+    <rect width="428" height="84" fill="#FFFFFF" />
+    <line x1="0" y1="0" x2="428" y2="0" stroke="#E5E5EA" stroke-width="1" />
+
+    <!-- Tab 1: Home (x=48) -->
+    <g id="Tab_Home" transform="translate(48, 12)">
+      <path d="M-9 9L0 1L9 9V19A1.5 1.5 0 0 1 7.5 20.5H-7.5A1.5 1.5 0 0 1 -9 19V9Z" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M-3 20.5V13H3V20.5" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Home</text>
+    </g>
+
+    <!-- Tab 2: Scan (x=131) -->
+    <g id="Tab_Scan" transform="translate(131, 10)">
+      <rect x="-22" y="-2" width="44" height="28" rx="14" fill="#1E8E3E" stroke="#1E8E3E" stroke-width="1" />
+      <path d="M-7 6h4M-7 6v4M7 6h-4M7 6v4M-7 18h4M-7 18v-4M7 18h-4M7 18v-4" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" fill="none" />
+      <line x1="-9" y1="12" x2="9" y2="12" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" />
+      <text x="0" y="40" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1E8E3E" text-anchor="middle">Scan</text>
+    </g>
+
+    <!-- Tab 3: History (x=214) -->
+    <g id="Tab_History" transform="translate(214, 12)">
+      <circle cx="0" cy="11" r="9" stroke="#636366" stroke-width="2" fill="none" />
+      <path d="M0 6V11L3.5 13" stroke="#636366" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">History</text>
+    </g>
+
+    <!-- Tab 4: Guide (x=297) -->
+    <g id="Tab_Guide" transform="translate(297, 12)">
+      <path d="M-9 4C-5 3 -2 4 0 6C2 4 5 3 9 4V18C5 17 2 18 0 20C-2 18 -5 17 -9 18V4Z" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <line x1="0" y1="6" x2="0" y2="20" stroke="#636366" stroke-width="2" stroke-linecap="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Guide</text>
+    </g>
+
+    <!-- Tab 5: Profile (x=380) -->
+    <g id="Tab_Profile" transform="translate(380, 12)">
+      <circle cx="0" cy="7" r="4.5" stroke="#636366" stroke-width="2" fill="none" />
+      <path d="M-8 20C-8 15.5 -4.5 13 0 13C4.5 13 8 15.5 8 20" stroke="#636366" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Profile</text>
+    </g>
+
+    <!-- iOS Home Indicator Pill -->
+    <rect x="147" y="71" width="134" height="5" rx="2.5" fill="#1C1C1E" fill-opacity="0.22" />
+  </g>
+</svg>

@@ -1,37 +1,92 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
+  Animated,
 } from 'react-native';
 import { AlertCircle, Inbox } from 'lucide-react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { FadeInView } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { Button } from './Button';
 
 interface LoadingStateProps {
   message?: string;
   stepMessage?: string;
+  progress?: number;
   style?: ViewStyle;
 }
 
 export function LoadingState({
   message = 'Analyzing food label...',
   stepMessage,
+  progress,
   style,
 }: LoadingStateProps) {
+  const { colors } = useTheme();
+  const pulse = useRef(new Animated.Value(0.85)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1.06,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0.85,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
   return (
-    <View style={[styles.centerContainer, style]}>
-      <View style={styles.spinnerContainer}>
+    <FadeInView style={[styles.centerContainer, style]}>
+      <Animated.View
+        style={[
+          styles.spinnerContainer,
+          {
+            backgroundColor: colors.primaryMuted,
+            borderColor: colors.primaryBorder,
+            transform: [{ scale: pulse }],
+          },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-      <Text style={styles.loadingTitle}>{message}</Text>
+      </Animated.View>
+      <Text style={[styles.loadingTitle, { color: colors.text }]}>{message}</Text>
       {stepMessage ? (
-        <Text style={styles.loadingStep}>{stepMessage}</Text>
+        <Text style={[styles.loadingStep, { color: colors.textSecondary }]}>
+          {stepMessage}
+        </Text>
       ) : null}
-    </View>
+      {typeof progress === 'number' ? (
+        <View
+          style={[
+            styles.progressTrack,
+            { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+          ]}
+        >
+          <View
+            style={[
+              styles.progressFill,
+              {
+                backgroundColor: colors.primary,
+                width: `${Math.max(10, Math.min(100, progress * 100))}%`,
+              },
+            ]}
+          />
+        </View>
+      ) : null}
+    </FadeInView>
   );
 }
 
@@ -52,25 +107,33 @@ export function EmptyState({
   icon,
   style,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.centerContainer, style]}>
-      <View style={styles.iconCircle}>
-        {icon || <Inbox size={32} color={colors.textMuted} />}
+    <FadeInView style={[styles.centerContainer, style]}>
+      <View
+        style={[
+          styles.iconCircle,
+          { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+        ]}
+      >
+        {icon || <Inbox size={30} color={colors.textMuted} />}
       </View>
-      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
       {description ? (
-        <Text style={styles.emptyDescription}>{description}</Text>
+        <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
+          {description}
+        </Text>
       ) : null}
       {actionTitle && onAction ? (
         <Button
           title={actionTitle}
           onPress={onAction}
-          variant="secondary"
-          size="sm"
+          variant="primary"
+          size="md"
           style={styles.emptyAction}
         />
       ) : null}
-    </View>
+    </FadeInView>
   );
 }
 
@@ -87,13 +150,24 @@ export function ErrorState({
   onRetry,
   style,
 }: ErrorStateProps) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.centerContainer, style]}>
-      <View style={[styles.iconCircle, { backgroundColor: colors.dangerLight, borderColor: 'rgba(239, 68, 68, 0.3)' }]}>
-        <AlertCircle size={32} color={colors.danger} />
+    <FadeInView style={[styles.centerContainer, style]}>
+      <View
+        style={[
+          styles.iconCircle,
+          {
+            backgroundColor: colors.dangerLight,
+            borderColor: colors.dangerBorder,
+          },
+        ]}
+      >
+        <AlertCircle size={30} color={colors.dangerText} />
       </View>
-      <Text style={[styles.emptyTitle, { color: colors.danger }]}>{title}</Text>
-      <Text style={styles.emptyDescription}>{message}</Text>
+      <Text style={[styles.emptyTitle, { color: colors.dangerText }]}>{title}</Text>
+      <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
+        {message}
+      </Text>
       {onRetry ? (
         <Button
           title="Try Again"
@@ -103,7 +177,7 @@ export function ErrorState({
           style={styles.emptyAction}
         />
       ) : null}
-    </View>
+    </FadeInView>
   );
 }
 
@@ -120,14 +194,37 @@ export function Skeleton({
   borderRadius: radius = borderRadius.sm,
   style,
 }: SkeletonProps) {
+  const { colors } = useTheme();
+  const opacity = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.9,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.45,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity]);
+
   return (
-    <View
+    <Animated.View
       style={[
-        styles.skeleton,
         {
           width: width as any,
           height,
           borderRadius: radius,
+          backgroundColor: colors.surfaceRaised,
+          opacity,
         },
         style,
       ]}
@@ -136,8 +233,15 @@ export function Skeleton({
 }
 
 export function SkeletonCard({ style }: { style?: ViewStyle }) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.skeletonCard, style]}>
+    <View
+      style={[
+        styles.skeletonCard,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+        style,
+      ]}
+    >
       <Skeleton height={22} width="60%" style={{ marginBottom: spacing.sm }} />
       <Skeleton height={14} width="40%" style={{ marginBottom: spacing.md }} />
       <Skeleton height={14} width="100%" style={{ marginBottom: spacing.xs }} />
@@ -154,33 +258,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   spinnerContainer: {
-    padding: spacing.base,
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: borderRadius.full,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
   loadingTitle: {
     fontSize: typography.fontSizes.lg,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
     textAlign: 'center',
+    letterSpacing: -0.3,
     marginBottom: spacing.xs,
   },
   loadingStep: {
     fontSize: typography.fontSizes.sm,
-    color: colors.primary,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
+    lineHeight: typography.lineHeights.sm,
+  },
+  progressTrack: {
+    width: 220,
+    height: 6,
+    borderRadius: 3,
+    borderWidth: 1,
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   iconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.base,
@@ -188,29 +303,23 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: typography.fontSizes.lg,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
     textAlign: 'center',
+    letterSpacing: -0.3,
     marginBottom: spacing.xs,
   },
   emptyDescription: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
+    fontSize: typography.fontSizes.subhead,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: typography.lineHeights.subhead,
     marginBottom: spacing.base,
   },
   emptyAction: {
     marginTop: spacing.sm,
   },
-  skeleton: {
-    backgroundColor: colors.surfaceRaised,
-  },
   skeletonCard: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.base,
+    padding: spacing.lg,
     marginBottom: spacing.base,
   },
 });

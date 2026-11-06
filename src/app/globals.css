@@ -4,101 +4,101 @@
 
 @layer base {
   :root {
-    /* Apple Minimal Light Mode */
-    --background: 240 5% 96%; /* #F5F5F7 Apple Light Background */
-    --foreground: 240 6% 12%; /* #1D1D1F Apple Primary Dark Slate */
+    /* Apple Minimal Light Mode (HIG Grouped Background + Accessible Contrast) */
+    --background: 240 14% 95%; /* #F2F2F7 Apple systemGroupedBackground Light */
+    --foreground: 240 4% 11%; /* #1C1C1E Apple Primary Label Light (17.4:1 contrast) */
 
-    --card: 0 0% 100%; /* #FFFFFF Apple White Card Surface */
-    --card-foreground: 240 6% 12%;
+    --card: 0 0% 100%; /* #FFFFFF Pure White Grouped Card Surface */
+    --card-foreground: 240 4% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 12%;
+    --popover-foreground: 240 4% 11%;
 
-    --primary: 142 69% 45%; /* #34C759 Apple iOS System Green (Light) */
+    --primary: 138 65% 34%; /* #1E8E3E Accessible Apple Green Light (4.7:1 on white) */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 92%; /* #E5E5EA Apple System Gray 4 */
-    --secondary-foreground: 240 6% 12%;
+    --secondary: 240 14% 95%; /* #F2F2F7 */
+    --secondary-foreground: 240 4% 11%;
 
-    --muted: 240 5% 92%;
-    --muted-foreground: 240 2% 50%; /* #86868B Apple Muted Gray */
+    --muted: 240 11% 91%; /* #E5E5EA Apple systemGray5 Light */
+    --muted-foreground: 240 3% 29%; /* #48484A Accessible Secondary Text (8.4:1 on white) */
 
-    --accent: 142 69% 45%;
+    --accent: 138 65% 34%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%; /* #FF3B30 Apple Red */
+    --destructive: 354 100% 42%; /* #D70015 Accessible Apple Red Light */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 88%; /* rgba(0, 0, 0, 0.08) Subtle Hairline */
-    --input: 240 6% 88%;
-    --ring: 142 69% 45%;
+    --border: 240 11% 90%; /* #E5E5EA Crisp Hairline */
+    --input: 240 11% 90%;
+    --ring: 138 65% 34%;
 
-    --radius: 1.25rem; /* 20px Apple Smooth Squircle */
+    --radius: 1.25rem; /* 20px Apple Continuous Squircle */
 
     /* Chart Colors */
-    --chart-1: 142 69% 45%;
-    --chart-2: 211 100% 50%;
-    --chart-3: 38 100% 50%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 280 65% 55%;
+    --chart-1: 138 65% 34%;
+    --chart-2: 211 100% 42%;
+    --chart-3: 32 95% 38%;
+    --chart-4: 354 100% 42%;
+    --chart-5: 280 65% 50%;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 6% 12%;
-    --sidebar-primary: 142 69% 45%;
+    --sidebar-foreground: 240 4% 11%;
+    --sidebar-primary: 138 65% 34%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 92%;
-    --sidebar-accent-foreground: 240 6% 12%;
-    --sidebar-border: 240 6% 88%;
-    --sidebar-ring: 142 69% 45%;
+    --sidebar-accent: 240 14% 95%;
+    --sidebar-accent-foreground: 240 4% 11%;
+    --sidebar-border: 240 11% 90%;
+    --sidebar-ring: 138 65% 34%;
   }
 
   .dark {
-    /* Apple Minimal Dark Mode */
+    /* Apple Minimal Dark Mode (True OLED Black + Elevated Surface Hierarchy) */
     --background: 0 0% 0%; /* #000000 Pure Black OLED */
-    --foreground: 240 5% 96%; /* #F5F5F7 Apple Primary Text */
+    --foreground: 240 11% 96%; /* #F5F5F7 Apple Primary Label Dark */
 
-    --card: 240 4% 9%; /* #161618 Apple System Gray 6 Dark */
-    --card-foreground: 240 5% 96%;
+    --card: 240 5% 9%; /* #161618 Apple secondarySystemGroupedBackground Dark */
+    --card-foreground: 240 11% 96%;
 
-    --popover: 240 4% 9%;
-    --popover-foreground: 240 5% 96%;
+    --popover: 240 5% 9%;
+    --popover-foreground: 240 11% 96%;
 
-    --primary: 142 69% 50%; /* #30D158 Apple iOS System Green (Dark) */
-    --primary-foreground: 0 0% 0%;
+    --primary: 135 64% 50%; /* #30D158 Apple System Green Dark */
+    --primary-foreground: 136 80% 6%; /* #031A09 High-Contrast Ink on Green */
 
-    --secondary: 240 3% 13%; /* #222225 */
-    --secondary-foreground: 240 5% 96%;
+    --secondary: 240 6% 14%; /* #222226 Apple tertiarySystemGroupedBackground Dark */
+    --secondary-foreground: 240 11% 96%;
 
-    --muted: 240 3% 13%;
-    --muted-foreground: 240 2% 54%; /* #86868B */
+    --muted: 240 6% 14%;
+    --muted-foreground: 240 4% 69%; /* #AEAEB2 Apple systemGray2 Dark (8.2:1 contrast) */
 
-    --accent: 142 69% 50%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 135 64% 50%;
+    --accent-foreground: 136 80% 6%;
 
-    --destructive: 0 84% 60%; /* #FF453A Apple System Red */
-    --destructive-foreground: 240 5% 96%;
+    --destructive: 3 100% 61%; /* #FF453A Apple System Red Dark */
+    --destructive-foreground: 240 11% 96%;
 
-    --border: 240 4% 16%; /* rgba(255, 255, 255, 0.08) */
-    --input: 240 4% 16%;
-    --ring: 142 69% 50%;
+    --border: 240 5% 16%; /* #26262A Specular Hairline */
+    --input: 240 5% 16%;
+    --ring: 135 64% 50%;
 
     /* Chart Colors */
-    --chart-1: 142 69% 50%;
-    --chart-2: 211 100% 60%;
-    --chart-3: 38 100% 50%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 280 65% 60%;
+    --chart-1: 135 64% 50%;
+    --chart-2: 210 100% 62%;
+    --chart-3: 37 100% 52%;
+    --chart-4: 3 100% 61%;
+    --chart-5: 280 65% 65%;
 
     /* Sidebar */
-    --sidebar-background: 240 4% 9%;
-    --sidebar-foreground: 240 5% 96%;
-    --sidebar-primary: 142 69% 50%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 240 3% 13%;
-    --sidebar-accent-foreground: 240 5% 96%;
-    --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 142 69% 50%;
+    --sidebar-background: 240 5% 9%;
+    --sidebar-foreground: 240 11% 96%;
+    --sidebar-primary: 135 64% 50%;
+    --sidebar-primary-foreground: 136 80% 6%;
+    --sidebar-accent: 240 6% 14%;
+    --sidebar-accent-foreground: 240 11% 96%;
+    --sidebar-border: 240 5% 16%;
+    --sidebar-ring: 135 64% 50%;
   }
 
   * {
@@ -113,9 +113,15 @@
   }
 }
 
-/* Apple Fluid Feedback on Active Touch/Click */
+/* Apple Liquid Glass Material Utility */
+.apple-glass {
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Apple Fluid Spring Feedback on Active Touch/Click */
 button:active,
 a:active {
-  transform: scale(0.98);
-  transition: transform 100ms ease-out;
+  transform: scale(0.975);
+  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
 }

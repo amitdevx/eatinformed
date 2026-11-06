@@ -27,7 +27,7 @@ async function resizeImageIfLarge(dataUri: string): Promise<string> {
 
 /**
  * Two-step product analysis pipeline:
- * Step 1: Vision model performs focused OCR — extracts ALL ingredients and ALL nutrients
+ * Step 1: Vision model performs focused OCR  -  extracts ALL ingredients and ALL nutrients
  * Step 2: Text reasoning model performs deep health analysis on the extracted data
  * 
  * GRACEFUL DEGRADATION: If step 2 fails (timeout, etc.), step 1 data is still returned
@@ -57,7 +57,7 @@ export async function analyzeProduct(image: string): Promise<ProductAnalysisOutp
   }
 
   // ══════════════════════════════════════════════════════════════
-  // STEP 1: Vision OCR — Extract raw text data from the image
+  // STEP 1: Vision OCR  -  Extract raw text data from the image
   // Uses the vision model ONLY for reading text (its strength)
   // ══════════════════════════════════════════════════════════════
   let productName = '';
@@ -74,7 +74,7 @@ export async function analyzeProduct(image: string): Promise<ProductAnalysisOutp
   const optimizedImage = await resizeImageIfLarge(image);
 
   try {
-    console.log("DEBUG: Step 1 — OCR extraction starting...");
+    console.log("DEBUG: Step 1  -  OCR extraction starting...");
 
     const ocrPrompt = `You are a precision OCR system for food product labels. Read and extract ALL text data from this food label image.
 
@@ -169,7 +169,7 @@ CRITICAL: Output ONLY a raw JSON object inside \`\`\`json ... \`\`\` code fence.
   }
 
   // ══════════════════════════════════════════════════════════════
-  // STEP 2: Deep Health Analysis — Analyze the extracted data
+  // STEP 2: Deep Health Analysis  -  Analyze the extracted data
   // If Step 1 vision model already provided complete analysis, skip Step 2
   // to avoid Vercel timeouts and redundant LLM latency.
   // ══════════════════════════════════════════════════════════════
@@ -192,7 +192,7 @@ CRITICAL: Output ONLY a raw JSON object inside \`\`\`json ... \`\`\` code fence.
     };
   } else {
     try {
-      console.log("DEBUG: Step 2 — Health analysis starting...");
+      console.log("DEBUG: Step 2  -  Health analysis starting...");
 
       const ingredientsList = ingredients.join(', ');
       const nutrientsSummary = nutrients.map((n: any) =>
@@ -299,10 +299,10 @@ Output ONLY a raw JSON object. Start with { and end with }.
       servingSizeLabel: servingSize || undefined,
       nutrients: nutrients,
     },
-    // From Analysis (Step 2) — with fallbacks if analysis failed
+    // From Analysis (Step 2)  -  with fallbacks if analysis failed
     rating: hasAnalysis ? (analysisData.rating ?? 2.5) : (ocrRating ?? 2.5),
     pros: hasAnalysis && Array.isArray(analysisData.pros) ? analysisData.pros : ['Ingredients successfully extracted from label'],
-    cons: hasAnalysis && Array.isArray(analysisData.cons) ? analysisData.cons : ['Detailed health analysis could not be completed — please try again'],
+    cons: hasAnalysis && Array.isArray(analysisData.cons) ? analysisData.cons : ['Detailed health analysis could not be completed  -  please try again'],
     warnings: hasAnalysis && Array.isArray(analysisData.warnings) ? analysisData.warnings : [],
     ingredientAnalysis: hasAnalysis && Array.isArray(analysisData.ingredientAnalysis)
       ? analysisData.ingredientAnalysis
@@ -346,7 +346,7 @@ Output ONLY a raw JSON object. Start with { and end with }.
     }
   }
 
-  console.log(`DEBUG: Final output — ${output.ingredients.length} ingredients, ${output.nutrition.nutrients?.length || 0} nutrients, rating: ${output.rating}, analysis: ${hasAnalysis ? 'full' : 'fallback'}`);
+  console.log(`DEBUG: Final output  -  ${output.ingredients.length} ingredients, ${output.nutrition.nutrients?.length || 0} nutrients, rating: ${output.rating}, analysis: ${hasAnalysis ? 'full' : 'fallback'}`);
   return output;
 }
 

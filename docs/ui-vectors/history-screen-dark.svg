@@ -1,117 +1,173 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="428" height="960" viewBox="0 0 428 960" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
-    </style>
-  </defs>
-
+<svg width="428" height="960" viewBox="0 0 428 960" xmlns="http://www.w3.org/2000/svg">
   <rect id="Background" width="428" height="960" fill="#000000" />
 
   <!-- Header -->
-  <g id="Header" transform="translate(24, 44)">
-    <text x="0" y="24" font-size="28" font-weight="800" fill="#F5F5F7" letter-spacing="-0.5">Scan History</text>
-    <text x="0" y="48" font-size="13" font-weight="400" fill="#86868B">2 saved reports on local device</text>
+  <g id="Header" transform="translate(24, 36)">
+    <text x="0" y="26" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="28" font-weight="800" fill="#F5F5F7" text-anchor="start" letter-spacing="-0.6">Scan History</text>
+    <text x="0" y="48" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#AEAEB2" text-anchor="start">3 saved product reports on local device</text>
 
     <!-- Clear All Button -->
-    <g id="Button_Clear_All" transform="translate(290, 8)">
-      <rect width="90" height="30" rx="8" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
-      <text x="45" y="19" font-size="11" font-weight="600" fill="#FF453A" text-anchor="middle">Clear All</text>
+    <g id="Button_Clear_All" transform="translate(284, 8)">
+      <rect width="96" height="32" rx="16" fill="#2C1215" stroke="#582226" stroke-width="1" />
+      <text x="48" y="20" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#FF6961" text-anchor="middle">Clear All</text>
     </g>
   </g>
 
-  <!-- History Item 1: Tokyo Kitchen Ramen -->
-  <g id="History_Item_Ramen" transform="translate(24, 115)">
-    <rect width="380" height="110" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <text x="0" y="12" font-size="11" font-weight="700" fill="#30D158">TOKYO KITCHEN</text>
-      <text x="0" y="32" font-size="15" font-weight="600" fill="#F5F5F7">Instant Ramen Noodles</text>
+  <!-- History Item 1: Plain Greek Yogurt (NOVA 1) -->
+  <g id="History_Item_Yogurt" transform="translate(24, 108)">
+    <rect width="380" height="132" rx="20" fill="#161618" stroke="#26262A" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <text x="0" y="12" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#30D158" text-anchor="start" letter-spacing="0.7">CHOBANI</text>
+      <text x="0" y="34" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#F5F5F7" text-anchor="start" letter-spacing="-0.2">Plain Greek Yogurt (0% Milkfat)</text>
 
-      <!-- Delete Trash Icon -->
-      <g transform="translate(320, 0)">
-        <circle cx="10" cy="10" r="12" fill="#1C1C1E" />
-        <path d="M6 7h8M7 7v7a1 1 0 001 1h4a1 1 0 001-1V7" stroke="#86868B" stroke-width="1.2" fill="none" />
-      </g>
-
-      <!-- Meta Row -->
-      <g transform="translate(0, 48)">
-        <rect width="70" height="20" rx="5" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
-        <text x="35" y="14" font-size="10" font-weight="700" fill="#FF453A" text-anchor="middle">2.0 / 5.0</text>
-
-        <g transform="translate(80, 0)">
-          <rect width="140" height="20" rx="10" fill="rgba(255, 69, 58, 0.15)" stroke="rgba(255, 69, 58, 0.3)" stroke-width="1" />
-          <circle cx="8" cy="10" r="3" fill="#FF453A" />
-          <text x="16" y="14" font-size="9" font-weight="700" fill="#FF453A">NOVA 4: Ultra-Processed</text>
-        </g>
-
-        <text x="335" y="14" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="end">Nov 6, 6:26 AM</text>
-      </g>
-    </g>
-  </g>
-
-  <!-- History Item 2: Dark Chocolate Almonds -->
-  <g id="History_Item_Almonds" transform="translate(24, 240)">
-    <rect width="380" height="110" rx="20" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <text x="0" y="12" font-size="11" font-weight="700" fill="#30D158">NUTRIHARVEST</text>
-      <text x="0" y="32" font-size="15" font-weight="600" fill="#F5F5F7">Dark Chocolate Almonds</text>
-
-      <g transform="translate(320, 0)">
-        <circle cx="10" cy="10" r="12" fill="#1C1C1E" />
-        <path d="M6 7h8M7 7v7a1 1 0 001 1h4a1 1 0 001-1V7" stroke="#86868B" stroke-width="1.2" fill="none" />
+      <g transform="translate(312, 0)">
+        <circle cx="14" cy="14" r="14" fill="#222226" />
+        <path d="M9 11h10M11 11v7a1 1 0 001 1h4a1 1 0 001-1v-7" stroke="#AEAEB2" stroke-width="1.4" fill="none" stroke-linecap="round" />
       </g>
 
       <g transform="translate(0, 48)">
-        <rect width="70" height="20" rx="5" fill="#1C1C1E" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
-        <text x="35" y="14" font-size="10" font-weight="700" fill="#FF9F0A" text-anchor="middle">3.0 / 5.0</text>
+        <polygon points="6,4 7.8,8 12,8.5 8.8,11.4 9.7,15.6 6,13.4 2.3,15.6 3.2,11.4 0,8.5 4.2,8" fill="#FBBF24" />
+<polygon points="21,4 22.8,8 27,8.5 23.8,11.4 24.7,15.6 21,13.4 17.3,15.6 18.2,11.4 15,8.5 19.2,8" fill="#FBBF24" />
+<polygon points="36,4 37.8,8 42,8.5 38.8,11.4 39.7,15.6 36,13.4 32.3,15.6 33.2,11.4 30,8.5 34.2,8" fill="#FBBF24" />
+<polygon points="51,4 52.8,8 57,8.5 53.8,11.4 54.7,15.6 51,13.4 47.3,15.6 48.2,11.4 45,8.5 49.2,8" fill="#FBBF24" />
+<polygon points="66,4 67.8,8 72,8.5 68.8,11.4 69.7,15.6 66,13.4 62.3,15.6 63.2,11.4 60,8.5 64.2,8" fill="#FBBF24" fill-opacity="0.55" />
+        <rect x="82" y="0" width="64" height="22" rx="6" fill="#0D2818" stroke="#1E4E30" stroke-width="1" />
+        <text x="114" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#4ADE80" text-anchor="middle">4.8 / 5.0</text>
 
-        <g transform="translate(80, 0)">
-          <rect width="136" height="20" rx="10" fill="rgba(255, 159, 10, 0.15)" stroke="rgba(255, 159, 10, 0.3)" stroke-width="1" />
-          <circle cx="8" cy="10" r="3" fill="#FF9F0A" />
-          <text x="16" y="14" font-size="9" font-weight="700" fill="#FF9F0A">NOVA 3: Processed Food</text>
+        <g transform="translate(196, 0)">
+          <rect width="144" height="22" rx="11" fill="#0D2818" stroke="#1E4E30" stroke-width="1" />
+          <circle cx="11" cy="11" r="3.5" fill="#30D158" />
+          <text x="20" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#4ADE80" text-anchor="start">NOVA 1: Whole Food</text>
         </g>
-
-        <text x="335" y="14" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="end">Nov 5, 9:00 AM</text>
       </g>
+
+      <line x1="0" y1="80" x2="340" y2="80" stroke="#222226" stroke-width="1" />
+      <text x="0" y="98" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8E8E93" text-anchor="start">Nov 6, 11:42 AM · 17g Protein, 0g Added Sugar</text>
+      <path d="M332 90l4 4-4 4" stroke="#AEAEB2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     </g>
   </g>
 
-  <!-- Bottom Navigation Bar -->
+  <!-- History Item 2: Tokyo Kitchen Ramen (NOVA 4) -->
+  <g id="History_Item_Ramen" transform="translate(24, 254)">
+    <rect width="380" height="132" rx="20" fill="#161618" stroke="#26262A" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <text x="0" y="12" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#30D158" text-anchor="start" letter-spacing="0.7">TOKYO KITCHEN</text>
+      <text x="0" y="34" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#F5F5F7" text-anchor="start" letter-spacing="-0.2">Instant Ramen Noodles</text>
+
+      <g transform="translate(312, 0)">
+        <circle cx="14" cy="14" r="14" fill="#222226" />
+        <path d="M9 11h10M11 11v7a1 1 0 001 1h4a1 1 0 001-1v-7" stroke="#AEAEB2" stroke-width="1.4" fill="none" stroke-linecap="round" />
+      </g>
+
+      <g transform="translate(0, 48)">
+        <polygon points="6,4 7.8,8 12,8.5 8.8,11.4 9.7,15.6 6,13.4 2.3,15.6 3.2,11.4 0,8.5 4.2,8" fill="#FBBF24" />
+<polygon points="21,4 22.8,8 27,8.5 23.8,11.4 24.7,15.6 21,13.4 17.3,15.6 18.2,11.4 15,8.5 19.2,8" fill="#FBBF24" />
+<polygon points="36,4 37.8,8 42,8.5 38.8,11.4 39.7,15.6 36,13.4 32.3,15.6 33.2,11.4 30,8.5 34.2,8" fill="#38383E" />
+<polygon points="51,4 52.8,8 57,8.5 53.8,11.4 54.7,15.6 51,13.4 47.3,15.6 48.2,11.4 45,8.5 49.2,8" fill="#38383E" />
+<polygon points="66,4 67.8,8 72,8.5 68.8,11.4 69.7,15.6 66,13.4 62.3,15.6 63.2,11.4 60,8.5 64.2,8" fill="#38383E" />
+        <rect x="82" y="0" width="64" height="22" rx="6" fill="#2C1215" stroke="#582226" stroke-width="1" />
+        <text x="114" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#FF6961" text-anchor="middle">2.0 / 5.0</text>
+
+        <g transform="translate(180, 0)">
+          <rect width="160" height="22" rx="11" fill="#2C1215" stroke="#582226" stroke-width="1" />
+          <circle cx="11" cy="11" r="3.5" fill="#FF453A" />
+          <text x="20" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#FF6961" text-anchor="start">NOVA 4: Ultra-Processed</text>
+        </g>
+      </g>
+
+      <line x1="0" y1="80" x2="340" y2="80" stroke="#222226" stroke-width="1" />
+      <text x="0" y="98" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8E8E93" text-anchor="start">Nov 6, 6:26 AM · High Sodium &amp; TBHQ Flagged</text>
+      <path d="M332 90l4 4-4 4" stroke="#AEAEB2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    </g>
+  </g>
+
+  <!-- History Item 3: Dark Chocolate Almonds (NOVA 3) -->
+  <g id="History_Item_Almonds" transform="translate(24, 400)">
+    <rect width="380" height="132" rx="20" fill="#161618" stroke="#26262A" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <text x="0" y="12" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#30D158" text-anchor="start" letter-spacing="0.7">NUTRIHARVEST</text>
+      <text x="0" y="34" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#F5F5F7" text-anchor="start" letter-spacing="-0.2">Dark Chocolate Almonds</text>
+
+      <g transform="translate(312, 0)">
+        <circle cx="14" cy="14" r="14" fill="#222226" />
+        <path d="M9 11h10M11 11v7a1 1 0 001 1h4a1 1 0 001-1v-7" stroke="#AEAEB2" stroke-width="1.4" fill="none" stroke-linecap="round" />
+      </g>
+
+      <g transform="translate(0, 48)">
+        <polygon points="6,4 7.8,8 12,8.5 8.8,11.4 9.7,15.6 6,13.4 2.3,15.6 3.2,11.4 0,8.5 4.2,8" fill="#FBBF24" />
+<polygon points="21,4 22.8,8 27,8.5 23.8,11.4 24.7,15.6 21,13.4 17.3,15.6 18.2,11.4 15,8.5 19.2,8" fill="#FBBF24" />
+<polygon points="36,4 37.8,8 42,8.5 38.8,11.4 39.7,15.6 36,13.4 32.3,15.6 33.2,11.4 30,8.5 34.2,8" fill="#FBBF24" />
+<polygon points="51,4 52.8,8 57,8.5 53.8,11.4 54.7,15.6 51,13.4 47.3,15.6 48.2,11.4 45,8.5 49.2,8" fill="#FBBF24" fill-opacity="0.55" />
+<polygon points="66,4 67.8,8 72,8.5 68.8,11.4 69.7,15.6 66,13.4 62.3,15.6 63.2,11.4 60,8.5 64.2,8" fill="#38383E" />
+        <rect x="82" y="0" width="64" height="22" rx="6" fill="#2A1C08" stroke="#523610" stroke-width="1" />
+        <text x="114" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#FBBF24" text-anchor="middle">3.5 / 5.0</text>
+
+        <g transform="translate(184, 0)">
+          <rect width="156" height="22" rx="11" fill="#2A1C08" stroke="#523610" stroke-width="1" />
+          <circle cx="11" cy="11" r="3.5" fill="#FF9F0A" />
+          <text x="20" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#FBBF24" text-anchor="start">NOVA 3: Processed Food</text>
+        </g>
+      </g>
+
+      <line x1="0" y1="80" x2="340" y2="80" stroke="#222226" stroke-width="1" />
+      <text x="0" y="98" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8E8E93" text-anchor="start">Nov 5, 9:00 AM · Whole Almonds &amp; Cocoa Butter</text>
+      <path d="M332 90l4 4-4 4" stroke="#AEAEB2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    </g>
+  </g>
+
+  <!-- Local Privacy Vault Note Card -->
+  <g id="Card_Vault_Privacy" transform="translate(24, 548)">
+    <rect width="380" height="84" rx="20" fill="#161618" stroke="#26262A" stroke-width="1" />
+    <g transform="translate(20, 20)">
+      <text x="0" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#F5F5F7" text-anchor="start" letter-spacing="-0.2">On-Device Privacy Vault</text>
+      <text x="0" y="35" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#AEAEB2" text-anchor="start">All scanned food reports are stored locally on your device.</text>
+    </g>
+  </g>
+
   
-  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
-    <!-- Tab Bar Surface -->
-    <rect width="428" height="84" fill="#161618" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+  <!-- Bottom Navigation Bar (Docked at Bottom y=876) -->
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 876)">
+    <rect width="428" height="84" fill="#161618" />
+    <line x1="0" y1="0" x2="428" y2="0" stroke="#26262A" stroke-width="1" />
 
-    <g id="Tab_Home">
-      <!-- Icon indicator -->
-      <circle cx="43" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
-      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Home</text>
+    <!-- Tab 1: Home (x=48) -->
+    <g id="Tab_Home" transform="translate(48, 12)">
+      <path d="M-9 9L0 1L9 9V19A1.5 1.5 0 0 1 7.5 20.5H-7.5A1.5 1.5 0 0 1 -9 19V9Z" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M-3 20.5V13H3V20.5" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#8E8E93" text-anchor="middle">Home</text>
     </g>
 
-    <g id="Tab_Scan" transform="translate(106, 10)">
-      <circle cx="22" cy="22" r="22" fill="#30D158" />
-      <!-- Scan Viewfinder Icon -->
-      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#000000" stroke-width="2" stroke-linecap="round" fill="none" />
-      <line x1="12" y1="22" x2="32" y2="22" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+    <!-- Tab 2: Scan (x=131) -->
+    <g id="Tab_Scan" transform="translate(131, 10)">
+      <rect x="-22" y="-2" width="44" height="28" rx="14" fill="#0D2818" stroke="#1E4E30" stroke-width="1" />
+      <path d="M-7 6h4M-7 6v4M7 6h-4M7 6v4M-7 18h4M-7 18v-4M7 18h-4M7 18v-4" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" fill="none" />
+      <line x1="-9" y1="12" x2="9" y2="12" stroke="#30D158" stroke-width="1.8" stroke-linecap="round" />
+      <text x="0" y="40" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#8E8E93" text-anchor="middle">Scan</text>
     </g>
 
-    <g id="Tab_History">
-      <!-- Icon indicator -->
-      <circle cx="214" cy="22" r="8" fill="#30D158" fill-opacity="1.0" />
-      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#30D158" text-anchor="middle">History</text>
+    <!-- Tab 3: History (x=214) -->
+    <g id="Tab_History" transform="translate(214, 12)">
+      <circle cx="0" cy="11" r="9" stroke="#30D158" stroke-width="2" fill="none" />
+      <path d="M0 6V11L3.5 13" stroke="#30D158" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#30D158" text-anchor="middle">History</text>
     </g>
 
-    <g id="Tab_Guide">
-      <!-- Icon indicator -->
-      <circle cx="300" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
-      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Guide</text>
+    <!-- Tab 4: Guide (x=297) -->
+    <g id="Tab_Guide" transform="translate(297, 12)">
+      <path d="M-9 4C-5 3 -2 4 0 6C2 4 5 3 9 4V18C5 17 2 18 0 20C-2 18 -5 17 -9 18V4Z" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <line x1="0" y1="6" x2="0" y2="20" stroke="#8E8E93" stroke-width="2" stroke-linecap="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#8E8E93" text-anchor="middle">Guide</text>
     </g>
 
-    <g id="Tab_Profile">
-      <!-- Icon indicator -->
-      <circle cx="385" cy="22" r="8" fill="#6E6E73" fill-opacity="0.4" />
-      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#6E6E73" text-anchor="middle">Profile</text>
+    <!-- Tab 5: Profile (x=380) -->
+    <g id="Tab_Profile" transform="translate(380, 12)">
+      <circle cx="0" cy="7" r="4.5" stroke="#8E8E93" stroke-width="2" fill="none" />
+      <path d="M-8 20C-8 15.5 -4.5 13 0 13C4.5 13 8 15.5 8 20" stroke="#8E8E93" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#8E8E93" text-anchor="middle">Profile</text>
     </g>
+
+    <!-- iOS Home Indicator Pill -->
+    <rect x="147" y="71" width="134" height="5" rx="2.5" fill="#F5F5F7" fill-opacity="0.22" />
   </g>
-
 </svg>

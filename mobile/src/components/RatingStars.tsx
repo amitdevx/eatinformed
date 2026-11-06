@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Star } from 'lucide-react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 interface RatingStarsProps {
@@ -17,23 +17,40 @@ export function RatingStars({
   showScore = true,
   style,
 }: RatingStarsProps) {
+  const { colors } = useTheme();
   const normalizedRating = Math.max(0, Math.min(5, Number(rating) || 0));
 
   const starSizes: Record<'sm' | 'md' | 'lg', number> = {
     sm: 14,
     md: 18,
-    lg: 24,
+    lg: 22,
   };
 
   const starSize = starSizes[size];
 
-  const getScoreColor = (score: number): string => {
-    if (score >= 4.0) return colors.primary;
-    if (score >= 2.5) return colors.warning;
-    return colors.danger;
+  const getScoreMeta = (score: number) => {
+    if (score >= 4.0) {
+      return {
+        text: colors.successText,
+        bg: colors.successLight,
+        border: colors.successBorder,
+      };
+    }
+    if (score >= 2.5) {
+      return {
+        text: colors.warningText,
+        bg: colors.warningLight,
+        border: colors.warningBorder,
+      };
+    }
+    return {
+      text: colors.dangerText,
+      bg: colors.dangerLight,
+      border: colors.dangerBorder,
+    };
   };
 
-  const scoreColor = getScoreColor(normalizedRating);
+  const scoreMeta = getScoreMeta(normalizedRating);
 
   return (
     <View style={[styles.container, style]}>
@@ -46,8 +63,14 @@ export function RatingStars({
             <Star
               key={index}
               size={starSize}
-              color={isFilled || isPartial ? '#EAB308' : colors.surfaceRaised}
-              fill={isFilled ? '#EAB308' : isPartial ? 'rgba(234, 179, 8, 0.4)' : 'transparent'}
+              color={isFilled || isPartial ? colors.starFilled : colors.starEmpty}
+              fill={
+                isFilled
+                  ? colors.starFilled
+                  : isPartial
+                  ? colors.starFilled
+                  : 'transparent'
+              }
               style={styles.star}
             />
           );
@@ -55,8 +78,16 @@ export function RatingStars({
       </View>
 
       {showScore ? (
-        <View style={[styles.scoreBadge, { borderColor: `${scoreColor}40` }]}>
-          <Text style={[styles.scoreText, { color: scoreColor }]}>
+        <View
+          style={[
+            styles.scoreBadge,
+            {
+              backgroundColor: scoreMeta.bg,
+              borderColor: scoreMeta.border,
+            },
+          ]}
+        >
+          <Text style={[styles.scoreText, { color: scoreMeta.text }]}>
             {normalizedRating.toFixed(1)} / 5.0
           </Text>
         </View>
@@ -79,14 +110,14 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   scoreBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
+    borderRadius: borderRadius.xs,
     borderWidth: 1,
-    backgroundColor: colors.surfaceRaised,
   },
   scoreText: {
-    fontSize: typography.fontSizes.xs,
+    fontSize: typography.fontSizes.caption2,
     fontWeight: typography.fontWeights.bold,
+    letterSpacing: -0.1,
   },
 });

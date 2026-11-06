@@ -1,20 +1,25 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ScanLine, ArrowRight, BookOpen, History, User, Sun, Moon } from 'lucide-react-native';
+import {
+  ScanLine,
+  ChevronRight,
+  BookOpen,
+  History,
+  User,
+  Sun,
+  Moon,
+  Sparkles,
+} from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
 import { useTheme } from '../theme/ThemeContext';
-import { borderRadius, spacing, typography } from '../theme/tokens';
+import { FadeInView, PressableScale } from '../theme/animations';
+import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { SAMPLE_PRODUCTS, SampleProduct } from '../lib/sample-products';
 import { RootStackParamList } from '../navigation/types';
 
@@ -49,22 +54,39 @@ export default function HomeScreen() {
 
   return (
     <Screen scrollable>
-      {/* Apple Minimal Header with Theme Toggle */}
-      <View style={styles.header}>
+      {/* Apple Minimal Header with Brand & Theme Toggle */}
+      <FadeInView delay={0} style={styles.header}>
         <View style={styles.topRow}>
-          <Text style={[styles.brandTitle, { color: colors.text }]}>EatInformed</Text>
-          <TouchableOpacity
-            style={[styles.themeToggleButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+          <View style={styles.brandRow}>
+            <View
+              style={[
+                styles.brandBadge,
+                { backgroundColor: colors.primaryMuted, borderColor: colors.primaryBorder },
+              ]}
+            >
+              <Sparkles size={14} color={colors.primary} />
+            </View>
+            <Text style={[styles.brandTitle, { color: colors.text }]}>EatInformed</Text>
+          </View>
+
+          <PressableScale
+            style={[
+              styles.themeToggleButton,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
             onPress={toggleTheme}
-            activeOpacity={0.75}
-            accessibilityLabel="Toggle theme"
+            scaleTo={0.92}
+            accessibilityLabel="Toggle appearance mode"
           >
             {isDark ? (
-              <Sun size={18} color={colors.textSecondary} />
+              <Sun size={18} color={colors.text} />
             ) : (
-              <Moon size={18} color={colors.textSecondary} />
+              <Moon size={18} color={colors.text} />
             )}
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         <Text style={[styles.heroTitle, { color: colors.text }]}>
@@ -72,117 +94,172 @@ export default function HomeScreen() {
           <Text style={{ color: colors.textSecondary }}>For what you eat.</Text>
         </Text>
         <Text style={[styles.heroDescription, { color: colors.textSecondary }]}>
-          Scan any ingredient list or nutrition panel for instant NOVA processing classification, chemical additive screening, and health scores.
+          Scan any ingredient list or nutrition panel for instant NOVA food processing classifications, additive alerts, and objective health scores.
         </Text>
-      </View>
+      </FadeInView>
 
       {/* Main Scan Action Card */}
-      <Card style={{ borderColor: isDark ? 'rgba(48, 209, 88, 0.25)' : 'rgba(52, 199, 89, 0.35)' }}>
-        <CardContent>
-          <View style={styles.ctaTopRow}>
-            <View style={[styles.ctaIconContainer, { backgroundColor: colors.primaryMuted }]}>
-              <ScanLine size={24} color={colors.primary} />
+      <FadeInView delay={60}>
+        <Card
+          style={{
+            borderColor: colors.primaryBorder,
+          }}
+        >
+          <CardContent>
+            <View style={styles.ctaTopRow}>
+              <View
+                style={[
+                  styles.ctaIconContainer,
+                  {
+                    backgroundColor: colors.primaryMuted,
+                    borderColor: colors.primaryBorder,
+                  },
+                ]}
+              >
+                <ScanLine size={22} color={colors.primary} />
+              </View>
+              <View style={styles.ctaTextContainer}>
+                <Text style={[styles.ctaTitle, { color: colors.text }]}>
+                  Scan a Product Label
+                </Text>
+                <Text style={[styles.ctaDescription, { color: colors.textSecondary }]}>
+                  Instant camera capture or photo library upload
+                </Text>
+              </View>
             </View>
-            <View style={styles.ctaTextContainer}>
-              <Text style={[styles.ctaTitle, { color: colors.text }]}>Scan a Product Label</Text>
-              <Text style={[styles.ctaDescription, { color: colors.textSecondary }]}>
-                Camera capture or photo library upload
-              </Text>
+
+            <Button
+              title="Scan Food Label"
+              onPress={handleStartScan}
+              variant="primary"
+              size="lg"
+              icon={<ScanLine size={18} color={colors.onPrimary} />}
+              style={styles.ctaButton}
+            />
+
+            <View style={styles.quickNavRow}>
+              <PressableScale
+                style={[
+                  styles.quickNavButton,
+                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                ]}
+                onPress={handleOpenHistory}
+                scaleTo={0.95}
+              >
+                <History size={14} color={colors.text} />
+                <Text style={[styles.quickNavText, { color: colors.text }]}>History</Text>
+              </PressableScale>
+
+              <PressableScale
+                style={[
+                  styles.quickNavButton,
+                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                ]}
+                onPress={handleOpenGuide}
+                scaleTo={0.95}
+              >
+                <BookOpen size={14} color={colors.text} />
+                <Text style={[styles.quickNavText, { color: colors.text }]}>NOVA Guide</Text>
+              </PressableScale>
+
+              <PressableScale
+                style={[
+                  styles.quickNavButton,
+                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                ]}
+                onPress={handleOpenProfile}
+                scaleTo={0.95}
+              >
+                <User size={14} color={colors.text} />
+                <Text style={[styles.quickNavText, { color: colors.text }]}>Account</Text>
+              </PressableScale>
             </View>
-          </View>
-          <Button
-            title="Scan Food Label"
-            onPress={handleStartScan}
-            variant="primary"
-            size="lg"
-            icon={<ScanLine size={18} color="#000000" />}
-            style={styles.ctaButton}
-          />
-          <View style={styles.quickNavRow}>
-            <TouchableOpacity
-              style={[styles.quickNavButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
-              onPress={handleOpenHistory}
-              activeOpacity={0.75}
-            >
-              <History size={14} color={colors.textSecondary} />
-              <Text style={[styles.quickNavText, { color: colors.textSecondary }]}>History</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickNavButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
-              onPress={handleOpenGuide}
-              activeOpacity={0.75}
-            >
-              <BookOpen size={14} color={colors.textSecondary} />
-              <Text style={[styles.quickNavText, { color: colors.textSecondary }]}>NOVA Guide</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickNavButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
-              onPress={handleOpenProfile}
-              activeOpacity={0.75}
-            >
-              <User size={14} color={colors.textSecondary} />
-              <Text style={[styles.quickNavText, { color: colors.textSecondary }]}>Account</Text>
-            </TouchableOpacity>
-          </View>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </FadeInView>
 
       {/* Demo Samples Section */}
-      <View style={styles.sectionHeader}>
-        <View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Try Instant Samples</Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            Compare products across the food processing spectrum
-          </Text>
-        </View>
-      </View>
+      <FadeInView delay={120} style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Try Instant Samples
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+          Compare real products across the NOVA food processing spectrum
+        </Text>
+      </FadeInView>
 
-      {SAMPLE_PRODUCTS.map((sample) => (
-        <Card
-          key={sample.id}
-          onPress={() => handleOpenSample(sample)}
-          style={styles.sampleCard}
-        >
-          <View style={styles.sampleHeader}>
-            <View style={styles.sampleInfo}>
-              <Text style={[styles.sampleTitle, { color: colors.text }]}>{sample.title}</Text>
-              <Text style={[styles.sampleSubtitle, { color: colors.textSecondary }]}>{sample.subtitle}</Text>
+      {SAMPLE_PRODUCTS.map((sample, index) => (
+        <FadeInView key={sample.id} delay={160 + index * 50}>
+          <Card onPress={() => handleOpenSample(sample)} style={styles.sampleCard}>
+            <View style={styles.sampleHeader}>
+              <View style={styles.sampleInfo}>
+                <Text style={[styles.sampleTitle, { color: colors.text }]}>
+                  {sample.title}
+                </Text>
+                <Text style={[styles.sampleSubtitle, { color: colors.textSecondary }]}>
+                  {sample.subtitle}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.chevronCircle,
+                  { backgroundColor: colors.surfaceRaised },
+                ]}
+              >
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </View>
             </View>
-            <ArrowRight size={16} color={colors.textSecondary} />
-          </View>
-          <View style={styles.sampleMeta}>
-            <RatingStars rating={sample.data.rating} size="sm" />
-            <NovaBadge novaGroup={sample.novaGroup} size="sm" />
-          </View>
-        </Card>
+            <View style={[styles.sampleMeta, { borderTopColor: colors.separator }]}>
+              <RatingStars rating={sample.data.rating} size="sm" />
+              <NovaBadge novaGroup={sample.novaGroup} size="sm" />
+            </View>
+          </Card>
+        </FadeInView>
       ))}
 
       {/* Educational NOVA Banner */}
-      <Card onPress={handleOpenGuide} style={{ borderColor: colors.info + '30' }}>
-        <CardContent>
-          <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
-              <BookOpen size={20} color={colors.info} />
+      <FadeInView delay={320}>
+        <Card
+          onPress={handleOpenGuide}
+          style={{
+            borderColor: colors.infoBorder,
+            backgroundColor: colors.surface,
+          }}
+        >
+          <CardContent>
+            <View style={styles.infoRow}>
+              <View
+                style={[
+                  styles.infoIcon,
+                  {
+                    backgroundColor: colors.infoLight,
+                    borderColor: colors.infoBorder,
+                  },
+                ]}
+              >
+                <BookOpen size={18} color={colors.infoText} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={[styles.infoTitle, { color: colors.text }]}>
+                  The NOVA Standard
+                </Text>
+                <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
+                  Developed at the University of Sao Paulo to classify foods by the extent and purpose of industrial processing.
+                </Text>
+              </View>
+              <ChevronRight size={16} color={colors.textMuted} style={{ marginTop: 2 }} />
             </View>
-            <View style={styles.infoTextContainer}>
-              <Text style={[styles.infoTitle, { color: colors.text }]}>The NOVA Standard</Text>
-              <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
-                Developed at the University of Sao Paulo to classify foods by the extent and purpose of industrial processing.
-              </Text>
-            </View>
-          </View>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </FadeInView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.base,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.md,
   },
   topRow: {
     flexDirection: 'row',
@@ -190,14 +267,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  brandBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
   brandTitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.bold,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   themeToggleButton: {
-    width: 36,
-    height: 36,
+    width: layout.minTouchTarget,
+    height: layout.minTouchTarget,
     borderRadius: borderRadius.full,
     borderWidth: 1,
     alignItems: 'center',
@@ -205,14 +295,14 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: typography.fontSizes.xxxl,
-    fontWeight: typography.fontWeights.bold,
-    letterSpacing: -0.6,
+    fontWeight: typography.fontWeights.black,
+    letterSpacing: -0.8,
     lineHeight: 40,
     marginBottom: spacing.xs,
   },
   heroDescription: {
-    fontSize: typography.fontSizes.sm,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.subhead,
+    lineHeight: typography.lineHeights.subhead,
     marginTop: 4,
   },
   ctaTopRow: {
@@ -221,9 +311,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.base,
   },
   ctaIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -234,10 +325,10 @@ const styles = StyleSheet.create({
   ctaTitle: {
     fontSize: typography.fontSizes.md,
     fontWeight: typography.fontWeights.semibold,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   ctaDescription: {
-    fontSize: typography.fontSizes.xs,
+    fontSize: typography.fontSizes.sm,
     marginTop: 2,
   },
   ctaButton: {
@@ -254,27 +345,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 6,
+    minHeight: 40,
+    paddingVertical: 9,
+    paddingHorizontal: 8,
     borderRadius: borderRadius.md,
     borderWidth: 1,
   },
   quickNavText: {
     fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.medium,
-    marginLeft: 5,
+    fontWeight: typography.fontWeights.semibold,
+    marginLeft: 6,
+    letterSpacing: -0.1,
   },
   sectionHeader: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.semibold,
-    letterSpacing: -0.3,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: -0.4,
   },
   sectionSubtitle: {
-    fontSize: typography.fontSizes.xs,
+    fontSize: typography.fontSizes.sm,
     marginTop: 2,
   },
   sampleCard: {
@@ -284,10 +377,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   sampleInfo: {
     flex: 1,
+    paddingRight: spacing.sm,
   },
   sampleTitle: {
     fontSize: typography.fontSizes.base,
@@ -295,32 +389,48 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   sampleSubtitle: {
-    fontSize: typography.fontSizes.xs,
+    fontSize: typography.fontSizes.sm,
     marginTop: 2,
+  },
+  chevronCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sampleMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: spacing.sm + 2,
+    borderTopWidth: 1,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   infoIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: spacing.md,
-    marginTop: 2,
   },
   infoTextContainer: {
     flex: 1,
+    paddingRight: spacing.xs,
   },
   infoTitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.subhead,
     fontWeight: typography.fontWeights.semibold,
-    marginBottom: 2,
+    letterSpacing: -0.2,
+    marginBottom: 3,
   },
   infoDescription: {
-    fontSize: typography.fontSizes.xs,
-    lineHeight: 18,
+    fontSize: typography.fontSizes.sm,
+    lineHeight: typography.lineHeights.sm,
   },
 });

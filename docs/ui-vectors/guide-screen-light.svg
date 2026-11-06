@@ -1,165 +1,150 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="428" height="1180" viewBox="0 0 428 1180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      text { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif; }
-    </style>
-  </defs>
-
-  <rect id="Background" width="428" height="1180" fill="#F5F5F7" />
+<svg width="428" height="1220" viewBox="0 0 428 1220" xmlns="http://www.w3.org/2000/svg">
+  <rect id="Background" width="428" height="1220" fill="#F2F2F7" />
 
   <!-- Header -->
-  <g id="Header" transform="translate(24, 44)">
-    <text x="0" y="24" font-size="28" font-weight="800" fill="#1D1D1F" letter-spacing="-0.5">Food Safety Guide</text>
-    <text x="0" y="50" font-size="13" font-weight="400" fill="#86868B">
-      Understand food processing, chemical additives, and health impacts.
-    </text>
+  <g id="Header" transform="translate(24, 36)">
+    <text x="0" y="26" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="28" font-weight="800" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.6">Food Safety Guide</text>
+    <text x="0" y="48" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#48484A" text-anchor="start">Decode food processing levels, additives, and health impacts.</text>
   </g>
 
-  <!-- NOVA Scale Description -->
-  <g id="NOVA_Intro" transform="translate(24, 120)">
-    <text x="0" y="16" font-size="18" font-weight="700" fill="#1D1D1F">The NOVA Classification</text>
-    <text x="0" y="34" font-size="12" font-weight="400" fill="#86868B">
-      Developed at the University of Sao Paulo, NOVA categorizes all foods by degree of processing.
-    </text>
+  <!-- NOVA Scale Intro -->
+  <g id="NOVA_Intro" transform="translate(24, 108)">
+    <text x="0" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.4">The NOVA Classification</text>
+    <text x="0" y="35" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">University of Sao Paulo standard for food processing levels.</text>
   </g>
 
   <!-- NOVA 1 Card -->
-  <g id="Card_NOVA_1" transform="translate(24, 175)">
-    <rect width="380" height="150" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <rect width="160" height="24" rx="12" fill="rgba(52, 199, 89, 0.12)" stroke="rgba(52, 199, 89, 0.3)" stroke-width="1" />
-      <circle cx="12" cy="12" r="3.5" fill="#248A3D" />
-      <text x="22" y="16" font-size="11" font-weight="700" fill="#248A3D">Group 1: Whole Foods</text>
-      <text x="0" y="44" font-size="13" font-weight="600" fill="#1D1D1F">Unprocessed or Minimally Processed</text>
-      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
-        Whole grains, rolled oats, fresh fruits, vegetables, plain milk, eggs, and raw seeds.
-      </text>
-      <text x="0" y="96" font-size="11" font-weight="600" fill="#34C759">
-        Impact: Optimal nutrient density and highest health rating.
-      </text>
+  <g id="Card_NOVA_1" transform="translate(24, 158)">
+    <rect width="380" height="148" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <rect width="166" height="24" rx="12" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+      <circle cx="12" cy="12" r="3.5" fill="#1E8E3E" />
+      <text x="22" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#166534" text-anchor="start">Group 1: Whole Foods</text>
+      <text x="0" y="44" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.2">Unprocessed or Minimally Processed</text>
+      <text x="0" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Fresh fruits, leafy vegetables, whole grains, rolled oats,</text>
+      <text x="0" y="81" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">plain non-fat yogurt, milk, eggs, and raw nuts/seeds.</text>
+      <line x1="0" y1="94" x2="340" y2="94" stroke="#EBEBF0" stroke-width="1" />
+      <text x="0" y="112" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#166534" text-anchor="start">Impact: Optimal nutrient density and highest health score.</text>
     </g>
   </g>
 
   <!-- NOVA 2 Card -->
-  <g id="Card_NOVA_2" transform="translate(24, 340)">
-    <rect width="380" height="150" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <rect width="170" height="24" rx="12" fill="rgba(0, 122, 255, 0.12)" stroke="rgba(0, 122, 255, 0.3)" stroke-width="1" />
+  <g id="Card_NOVA_2" transform="translate(24, 320)">
+    <rect width="380" height="148" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <rect width="176" height="24" rx="12" fill="#EBF5FF" stroke="#BAE6FD" stroke-width="1" />
       <circle cx="12" cy="12" r="3.5" fill="#007AFF" />
-      <text x="22" y="16" font-size="11" font-weight="700" fill="#007AFF">Group 2: Culinary Bases</text>
-      <text x="0" y="44" font-size="13" font-weight="600" fill="#1D1D1F">Processed Culinary Ingredients</text>
-      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
-        Substances derived from nature: olive oil, butter, table sugar, and sea salt.
-      </text>
-      <text x="0" y="96" font-size="11" font-weight="600" fill="#007AFF">
-        Impact: Safe when used in balanced home cooking.
-      </text>
+      <text x="22" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#0055B3" text-anchor="start">Group 2: Culinary Bases</text>
+      <text x="0" y="44" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.2">Processed Culinary Ingredients</text>
+      <text x="0" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Substances extracted directly from nature for home cooking:</text>
+      <text x="0" y="81" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">extra-virgin olive oil, unsalted butter, pure honey, sea salt.</text>
+      <line x1="0" y1="94" x2="340" y2="94" stroke="#EBEBF0" stroke-width="1" />
+      <text x="0" y="112" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#0055B3" text-anchor="start">Impact: Safe and healthy when used in balanced cooking.</text>
     </g>
   </g>
 
   <!-- NOVA 3 Card -->
-  <g id="Card_NOVA_3" transform="translate(24, 505)">
-    <rect width="380" height="150" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <rect width="176" height="24" rx="12" fill="rgba(255, 149, 0, 0.12)" stroke="rgba(255, 149, 0, 0.3)" stroke-width="1" />
-      <circle cx="12" cy="12" r="3.5" fill="#C97700" />
-      <text x="22" y="16" font-size="11" font-weight="700" fill="#C97700">Group 3: Processed Foods</text>
-      <text x="0" y="44" font-size="13" font-weight="600" fill="#1D1D1F">Simple Processed Formulations</text>
-      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
-        Foods made by adding salt, sugar, or oil to whole foods (e.g. canned beans, cheeses).
-      </text>
-      <text x="0" y="96" font-size="11" font-weight="600" fill="#C97700">
-        Impact: Balanced; monitor sodium and added sugar totals.
-      </text>
+  <g id="Card_NOVA_3" transform="translate(24, 482)">
+    <rect width="380" height="148" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <rect width="182" height="24" rx="12" fill="#FFF4E5" stroke="#FDE68A" stroke-width="1" />
+      <circle cx="12" cy="12" r="3.5" fill="#D97706" />
+      <text x="22" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#9A4D00" text-anchor="start">Group 3: Processed Foods</text>
+      <text x="0" y="44" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.2">Simple Processed Formulations</text>
+      <text x="0" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Whole foods preserved with simple culinary additions:</text>
+      <text x="0" y="81" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">canned legumes in brine, traditional cheeses, sourdough bread.</text>
+      <line x1="0" y1="94" x2="340" y2="94" stroke="#EBEBF0" stroke-width="1" />
+      <text x="0" y="112" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#9A4D00" text-anchor="start">Impact: Healthy in moderation; monitor sodium &amp; added sugar.</text>
     </g>
   </g>
 
   <!-- NOVA 4 Card -->
-  <g id="Card_NOVA_4" transform="translate(24, 670)">
-    <rect width="380" height="150" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <rect width="190" height="24" rx="12" fill="rgba(255, 59, 48, 0.12)" stroke="rgba(255, 59, 48, 0.3)" stroke-width="1" />
+  <g id="Card_NOVA_4" transform="translate(24, 644)">
+    <rect width="380" height="148" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <rect width="194" height="24" rx="12" fill="#FFEBEE" stroke="#FECDD3" stroke-width="1" />
       <circle cx="12" cy="12" r="3.5" fill="#D70015" />
-      <text x="22" y="16" font-size="11" font-weight="700" fill="#D70015">Group 4: Ultra-Processed</text>
-      <text x="0" y="44" font-size="13" font-weight="600" fill="#1D1D1F">Ultra-Processed Foods (UPFs)</text>
-      <text x="0" y="64" font-size="11" font-weight="400" fill="#86868B">
-        Industrial formulations with emulsifiers, colors, artificial sweeteners, and preservatives.
-      </text>
-      <text x="0" y="96" font-size="11" font-weight="600" fill="#D70015">
-        Impact: Linked to metabolic disruption and inflammatory risk.
-      </text>
+      <text x="22" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#C41224" text-anchor="start">Group 4: Ultra-Processed</text>
+      <text x="0" y="44" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.2">Ultra-Processed Foods (UPFs)</text>
+      <text x="0" y="64" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Industrial formulations containing chemical emulsifiers,</text>
+      <text x="0" y="81" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">synthetic dyes, artificial sweeteners, and flavor enhancers.</text>
+      <line x1="0" y1="94" x2="340" y2="94" stroke="#EBEBF0" stroke-width="1" />
+      <text x="0" y="112" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#C41224" text-anchor="start">Impact: Linked to metabolic disruption and gut barrier risk.</text>
     </g>
   </g>
 
   <!-- Additives Section Header -->
-  <g id="Section_Additives" transform="translate(24, 840)">
-    <text x="0" y="16" font-size="18" font-weight="700" fill="#1D1D1F">Concerning Additives</text>
-    <text x="0" y="34" font-size="12" font-weight="400" fill="#86868B">
-      Industrial substances frequently flagged in packaged consumer foods.
-    </text>
+  <g id="Section_Additives" transform="translate(24, 814)">
+    <text x="0" y="16" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.4">Concerning Additives to Watch</text>
+    <text x="0" y="35" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Industrial compounds flagged during EatInformed screening.</text>
   </g>
 
   <!-- Additive Card 1: Emulsifiers -->
-  <g id="Card_Emulsifiers" transform="translate(24, 890)">
-    <rect width="380" height="96" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">Emulsifiers (Polysorbate 80, CMC)</text>
-      <text x="0" y="34" font-size="11" font-weight="400" fill="#86868B">
-        <tspan x="0" dy="0">Used to blend immiscible liquids and extend shelf life.</tspan>
-        <tspan x="0" dy="16">Studies suggest high intake can thin gut mucosal barriers.</tspan>
-      </text>
+  <g id="Card_Emulsifiers" transform="translate(24, 864)">
+    <rect width="380" height="122" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <text x="0" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.2">Emulsifiers (Polysorbate 80, CMC)</text>
+      <text x="0" y="33" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#9A4D00" text-anchor="start">Texture Stabilizers · High Watch Priority</text>
+      <text x="0" y="56" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Used to blend immiscible liquids and extend shelf life.</text>
+      <text x="0" y="74" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Studies suggest high intake can alter gut mucosal barriers.</text>
     </g>
   </g>
 
-  <!-- Additive Card 2: High Fructose Corn Syrup -->
-  <g id="Card_HFCS" transform="translate(24, 1000)">
-    <rect width="380" height="96" rx="20" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
-    <g transform="translate(20, 20)">
-      <text x="0" y="14" font-size="14" font-weight="600" fill="#1D1D1F">High-Fructose Corn Syrup (HFCS)</text>
-      <text x="0" y="34" font-size="11" font-weight="400" fill="#86868B">
-        <tspan x="0" dy="0">Industrial liquid sweetener with rapid hepatic uptake,</tspan>
-        <tspan x="0" dy="16">strongly associated with elevated triglycerides and fatty liver.</tspan>
-      </text>
+  <!-- Additive Card 2: HFCS & Synthetic Dyes -->
+  <g id="Card_HFCS" transform="translate(24, 998)">
+    <rect width="380" height="122" rx="20" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1" />
+    <g transform="translate(20, 18)">
+      <text x="0" y="15" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1C1C1E" text-anchor="start" letter-spacing="-0.2">HFCS &amp; Synthetic Azo Dyes (Red 40, Yellow 5)</text>
+      <text x="0" y="33" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#C41224" text-anchor="start">Industrial Sweeteners &amp; Cosmetic Colorants</text>
+      <text x="0" y="56" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">Rapidly absorbed refined syrups and petroleum-derived dyes</text>
+      <text x="0" y="74" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#48484A" text-anchor="start">associated with glycemic spikes and behavioral sensitivity.</text>
     </g>
   </g>
 
-  <!-- Bottom Navigation Bar -->
   
-  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 830)">
-    <!-- Tab Bar Surface -->
-    <rect width="428" height="84" fill="#FFFFFF" stroke="rgba(0, 0, 0, 0.08)" stroke-width="1" />
+  <!-- Bottom Navigation Bar (Docked at Bottom y=1136) -->
+  <g id="Navigation_Bottom_Tab_Bar" transform="translate(0, 1136)">
+    <rect width="428" height="84" fill="#FFFFFF" />
+    <line x1="0" y1="0" x2="428" y2="0" stroke="#E5E5EA" stroke-width="1" />
 
-    <g id="Tab_Home">
-      <!-- Icon indicator -->
-      <circle cx="43" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="43" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Home</text>
+    <!-- Tab 1: Home (x=48) -->
+    <g id="Tab_Home" transform="translate(48, 12)">
+      <path d="M-9 9L0 1L9 9V19A1.5 1.5 0 0 1 7.5 20.5H-7.5A1.5 1.5 0 0 1 -9 19V9Z" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M-3 20.5V13H3V20.5" stroke="#636366" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Home</text>
     </g>
 
-    <g id="Tab_Scan" transform="translate(106, 10)">
-      <circle cx="22" cy="22" r="22" fill="#34C759" />
-      <!-- Scan Viewfinder Icon -->
-      <path d="M14 16h4M14 16v4M30 16h-4M30 16v4M14 28h4M14 28v-4M30 28h-4M30 28v-4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none" />
-      <line x1="12" y1="22" x2="32" y2="22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+    <!-- Tab 2: Scan (x=131) -->
+    <g id="Tab_Scan" transform="translate(131, 10)">
+      <rect x="-22" y="-2" width="44" height="28" rx="14" fill="#E8F8ED" stroke="#A7F3D0" stroke-width="1" />
+      <path d="M-7 6h4M-7 6v4M7 6h-4M7 6v4M-7 18h4M-7 18v-4M7 18h-4M7 18v-4" stroke="#1E8E3E" stroke-width="1.8" stroke-linecap="round" fill="none" />
+      <line x1="-9" y1="12" x2="9" y2="12" stroke="#1E8E3E" stroke-width="1.8" stroke-linecap="round" />
+      <text x="0" y="40" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Scan</text>
     </g>
 
-    <g id="Tab_History">
-      <!-- Icon indicator -->
-      <circle cx="214" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="214" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">History</text>
+    <!-- Tab 3: History (x=214) -->
+    <g id="Tab_History" transform="translate(214, 12)">
+      <circle cx="0" cy="11" r="9" stroke="#636366" stroke-width="2" fill="none" />
+      <path d="M0 6V11L3.5 13" stroke="#636366" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">History</text>
     </g>
 
-    <g id="Tab_Guide">
-      <!-- Icon indicator -->
-      <circle cx="300" cy="22" r="8" fill="#34C759" fill-opacity="1.0" />
-      <text x="300" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="600" fill="#34C759" text-anchor="middle">Guide</text>
+    <!-- Tab 4: Guide (x=297) -->
+    <g id="Tab_Guide" transform="translate(297, 12)">
+      <path d="M-9 4C-5 3 -2 4 0 6C2 4 5 3 9 4V18C5 17 2 18 0 20C-2 18 -5 17 -9 18V4Z" stroke="#1E8E3E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <line x1="0" y1="6" x2="0" y2="20" stroke="#1E8E3E" stroke-width="2" stroke-linecap="round" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1E8E3E" text-anchor="middle">Guide</text>
     </g>
 
-    <g id="Tab_Profile">
-      <!-- Icon indicator -->
-      <circle cx="385" cy="22" r="8" fill="#86868B" fill-opacity="0.4" />
-      <text x="385" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#86868B" text-anchor="middle">Profile</text>
+    <!-- Tab 5: Profile (x=380) -->
+    <g id="Tab_Profile" transform="translate(380, 12)">
+      <circle cx="0" cy="7" r="4.5" stroke="#636366" stroke-width="2" fill="none" />
+      <path d="M-8 20C-8 15.5 -4.5 13 0 13C4.5 13 8 15.5 8 20" stroke="#636366" stroke-width="2" stroke-linecap="round" fill="none" />
+      <text x="0" y="38" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#636366" text-anchor="middle">Profile</text>
     </g>
+
+    <!-- iOS Home Indicator Pill -->
+    <rect x="147" y="71" width="134" height="5" rx="2.5" fill="#1C1C1E" fill-opacity="0.22" />
   </g>
-
 </svg>

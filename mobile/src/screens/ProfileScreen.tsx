@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -13,43 +12,38 @@ import {
   Shield,
   Server,
   Sparkles,
-  ExternalLink,
   LogOut,
   LogIn,
-  CheckCircle,
-  XCircle,
-  HelpCircle,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
+import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
-import { colors } from '../theme/colors';
-import { borderRadius, spacing, typography } from '../theme/tokens';
+import { SegmentedControl } from '../components/SegmentedControl';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession } from '../lib/auth';
 import { useTheme, ThemeMode } from '../theme/ThemeContext';
+import { FadeInView, PressableScale } from '../theme/animations';
+import { borderRadius, spacing, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { colors, isDark, theme: currentTheme, setTheme } = useTheme();
+  const { colors, theme: currentTheme, setTheme } = useTheme();
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-  const [serverMessage, setServerMessage] = useState<string>('Checking server status...');
-  const [isCheckingServer, setIsCheckingServer] = useState(false);
+  const [serverMessage, setServerMessage] = useState<string>(
+    'Checking server status...'
+  );
 
-  // In production, real auth status loaded from SecureStore/Firebase
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const checkBackend = async () => {
-    setIsCheckingServer(true);
     const health = await checkApiHealth();
     setServerOnline(health.ok);
     setServerMessage(health.message);
-    setIsCheckingServer(false);
   };
 
   useFocusEffect(
@@ -69,22 +63,18 @@ export default function ProfileScreen() {
 
   const handleAuthAction = () => {
     if (isLoggedIn) {
-      Alert.alert(
-        'Sign Out',
-        'Are you sure you want to sign out?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Sign Out',
-            style: 'destructive',
-            onPress: async () => {
-              await clearUserSession();
-              setIsLoggedIn(false);
-              setUserEmail(null);
-            },
+      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await clearUserSession();
+            setIsLoggedIn(false);
+            setUserEmail(null);
           },
-        ]
-      );
+        },
+      ]);
     } else {
       navigation.navigate('Auth', { initialTab: 'login' });
     }
@@ -92,180 +82,252 @@ export default function ProfileScreen() {
 
   return (
     <Screen scrollable>
-      <View style={styles.header}>
-        <Text style={styles.title}>Account & System</Text>
-      </View>
+      <FadeInView delay={0} style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Account & System
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Manage appearance preferences, session sync, and AI service diagnostics
+        </Text>
+      </FadeInView>
 
       {/* User Card */}
-      <Card style={styles.userCard}>
-        <CardContent>
-          <View style={styles.userRow}>
-            <View style={styles.avatarCircle}>
-              <User size={30} color={colors.primary} />
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                {isLoggedIn ? (userEmail?.split('@')[0] || 'User') : 'Guest Explorer'}
-              </Text>
-              <Text style={styles.userEmail}>
-                {isLoggedIn ? userEmail : 'Local guest session (free scanning)'}
-              </Text>
-              <View style={{ marginTop: 6 }}>
-                <Badge
-                  label={isLoggedIn ? 'Registered Member' : 'Guest Mode'}
-                  variant={isLoggedIn ? 'primary' : 'default'}
-                  size="sm"
-                />
+      <FadeInView delay={50}>
+        <Card
+          style={{
+            borderColor: colors.primaryBorder,
+          }}
+        >
+          <CardContent>
+            <View style={styles.userRow}>
+              <View
+                style={[
+                  styles.avatarCircle,
+                  {
+                    backgroundColor: colors.primaryMuted,
+                    borderColor: colors.primaryBorder,
+                  },
+                ]}
+              >
+                <User size={28} color={colors.primary} />
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={[styles.userName, { color: colors.text }]}>
+                  {isLoggedIn
+                    ? userEmail?.split('@')[0] || 'User'
+                    : 'Guest Explorer'}
+                </Text>
+                <Text
+                  style={[styles.userEmail, { color: colors.textSecondary }]}
+                >
+                  {isLoggedIn
+                    ? userEmail
+                    : 'Local guest session · Free unlimited scanning'}
+                </Text>
+                <View style={{ marginTop: 6 }}>
+                  <Badge
+                    label={isLoggedIn ? 'Registered Member' : 'Guest Mode'}
+                    variant={isLoggedIn ? 'primary' : 'default'}
+                    size="sm"
+                  />
+                </View>
               </View>
             </View>
-          </View>
 
-          <Button
-            title={isLoggedIn ? 'Sign Out' : 'Sign In / Register'}
-            onPress={handleAuthAction}
-            variant={isLoggedIn ? 'secondary' : 'primary'}
-            size="md"
-            icon={
-              isLoggedIn ? (
-                <LogOut size={16} color={colors.text} />
-              ) : (
-                <LogIn size={16} color="#000000" />
-              )
-            }
-            style={styles.authButton}
-          />
-        </CardContent>
-      </Card>
+            <Button
+              title={isLoggedIn ? 'Sign Out' : 'Sign In / Create Account'}
+              onPress={handleAuthAction}
+              variant={isLoggedIn ? 'danger' : 'primary'}
+              size="md"
+              icon={
+                isLoggedIn ? (
+                  <LogOut size={16} color={colors.dangerText} />
+                ) : (
+                  <LogIn size={16} color={colors.onPrimary} />
+                )
+              }
+              style={styles.authButton}
+            />
+          </CardContent>
+        </Card>
+      </FadeInView>
 
       {/* Apple Appearance / Theme Selector Card */}
-      <Card>
-        <CardHeader
-          title="Appearance"
-          subtitle="Match device settings or choose a preferred theme"
-        />
-        <CardContent>
-          <View style={[styles.themeSegmentContainer, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-            {(['system', 'light', 'dark'] as ThemeMode[]).map((mode) => {
-              const isSelected = currentTheme === mode;
-              return (
-                <TouchableOpacity
-                  key={mode}
-                  style={[
-                    styles.themeSegment,
-                    isSelected && { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
-                  ]}
-                  onPress={() => setTheme(mode)}
-                  activeOpacity={0.75}
-                >
-                  <Text
-                    style={[
-                      styles.themeSegmentText,
-                      { color: isSelected ? colors.text : colors.textSecondary, fontWeight: isSelected ? '600' : '400' },
-                    ]}
-                  >
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </CardContent>
-      </Card>
+      <FadeInView delay={100}>
+        <Card>
+          <CardHeader
+            title="Appearance"
+            subtitle="Match system settings or lock Light / Dark mode"
+          />
+          <CardContent>
+            <SegmentedControl<ThemeMode>
+              options={[
+                { value: 'system', label: 'System' },
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
+              value={currentTheme}
+              onChange={setTheme}
+            />
+          </CardContent>
+        </Card>
+      </FadeInView>
 
       {/* Backend & AI Service Status Card */}
-      <Card>
-        <CardHeader
-          title="Backend AI Status"
-          subtitle="Connection to EatInformed Vision & Reasoning API"
-        />
-        <CardContent>
-          <View style={styles.statusRow}>
-            <View style={styles.statusIndicator}>
-              {serverOnline === null ? (
-                <View style={[styles.statusDot, { backgroundColor: colors.warning }]} />
-              ) : serverOnline ? (
-                <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
-              ) : (
-                <View style={[styles.statusDot, { backgroundColor: colors.danger }]} />
-              )}
-              <Text style={styles.statusText}>
-                {serverOnline === null
-                  ? 'Checking...'
-                  : serverOnline
-                  ? 'API Online and Responsive'
-                  : 'Backend Offline'}
-              </Text>
-            </View>
+      <FadeInView delay={150}>
+        <Card>
+          <CardHeader
+            title="Backend AI Status"
+            subtitle="Connection to EatInformed Vision & Reasoning API"
+          />
+          <CardContent>
+            <View style={styles.statusRow}>
+              <View style={styles.statusIndicator}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor:
+                        serverOnline === null
+                          ? colors.warning
+                          : serverOnline
+                          ? colors.success
+                          : colors.danger,
+                    },
+                  ]}
+                />
+                <Text style={[styles.statusText, { color: colors.text }]}>
+                  {serverOnline === null
+                    ? 'Checking endpoint...'
+                    : serverOnline
+                    ? 'API Online and Responsive'
+                    : 'Backend Offline'}
+                </Text>
+              </View>
 
-            <TouchableOpacity
-              onPress={checkBackend}
-              style={styles.recheckButton}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.recheckText}>Check</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.statusDetail}>{serverMessage}</Text>
-        </CardContent>
-      </Card>
+              <PressableScale
+                onPress={checkBackend}
+                style={[
+                  styles.recheckButton,
+                  {
+                    backgroundColor: colors.surfaceRaised,
+                    borderColor: colors.border,
+                  },
+                ]}
+                scaleTo={0.94}
+              >
+                <Text
+                  style={[styles.recheckText, { color: colors.textSecondary }]}
+                >
+                  Check
+                </Text>
+              </PressableScale>
+            </View>
+            <Text style={[styles.statusDetail, { color: colors.textMuted }]}>
+              {serverMessage}
+            </Text>
+          </CardContent>
+        </Card>
+      </FadeInView>
 
       {/* Architecture & AI Engine Info */}
-      <Card>
-        <CardHeader title="AI Engine Architecture" />
-        <CardContent>
-          <View style={styles.techItem}>
-            <Sparkles size={16} color={colors.primary} style={styles.techIcon} />
-            <View style={styles.techTextContainer}>
-              <Text style={styles.techTitle}>OCR & Label Extraction</Text>
-              <Text style={styles.techSubtitle}>
-                NVIDIA Nemotron 3.5 Super VL (120B) via NVIDIA NIM
-              </Text>
+      <FadeInView delay={200}>
+        <Card>
+          <CardHeader title="AI Engine Architecture" />
+          <CardContent>
+            <View style={styles.techItem}>
+              <View
+                style={[
+                  styles.techIconBox,
+                  { backgroundColor: colors.primaryMuted },
+                ]}
+              >
+                <Sparkles size={16} color={colors.primary} />
+              </View>
+              <View style={styles.techTextContainer}>
+                <Text style={[styles.techTitle, { color: colors.text }]}>
+                  OCR & Label Extraction
+                </Text>
+                <Text
+                  style={[styles.techSubtitle, { color: colors.textSecondary }]}
+                >
+                  NVIDIA Nemotron 3.5 Super VL (120B) via NVIDIA NIM
+                </Text>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.techItem}>
-            <Shield size={16} color={colors.info} style={styles.techIcon} />
-            <View style={styles.techTextContainer}>
-              <Text style={styles.techTitle}>Nutritional Reasoning</Text>
-              <Text style={styles.techSubtitle}>
-                NVIDIA Nemotron 3.5 Lightning (30B) Reasoning Model
-              </Text>
+            <View style={styles.techItem}>
+              <View
+                style={[
+                  styles.techIconBox,
+                  { backgroundColor: colors.infoLight },
+                ]}
+              >
+                <Shield size={16} color={colors.infoText} />
+              </View>
+              <View style={styles.techTextContainer}>
+                <Text style={[styles.techTitle, { color: colors.text }]}>
+                  Nutritional Reasoning
+                </Text>
+                <Text
+                  style={[styles.techSubtitle, { color: colors.textSecondary }]}
+                >
+                  NVIDIA Nemotron 3.5 Lightning (30B) Reasoning Model
+                </Text>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.techItem}>
-            <Server size={16} color={colors.warning} style={styles.techIcon} />
-            <View style={styles.techTextContainer}>
-              <Text style={styles.techTitle}>Classification System</Text>
-              <Text style={styles.techSubtitle}>
-                International NOVA Food Processing Classification (Groups 1-4)
-              </Text>
+            <View style={[styles.techItem, { marginBottom: 0 }]}>
+              <View
+                style={[
+                  styles.techIconBox,
+                  { backgroundColor: colors.warningLight },
+                ]}
+              >
+                <Server size={16} color={colors.warningText} />
+              </View>
+              <View style={styles.techTextContainer}>
+                <Text style={[styles.techTitle, { color: colors.text }]}>
+                  Classification Standard
+                </Text>
+                <Text
+                  style={[styles.techSubtitle, { color: colors.textSecondary }]}
+                >
+                  International NOVA Food Processing Classification (Groups 1-4)
+                </Text>
+              </View>
             </View>
-          </View>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </FadeInView>
 
       {/* App Version Info */}
-      <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>EatInformed Android App v1.0.0</Text>
-        <Text style={styles.versionSubtext}>Food Product Analysis & Nutrition Intelligence</Text>
-      </View>
+      <FadeInView delay={240} style={styles.versionContainer}>
+        <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+          EatInformed Mobile v1.1.0
+        </Text>
+        <Text style={[styles.versionSubtext, { color: colors.textMuted }]}>
+          Food Product Analysis & Nutrition Intelligence
+        </Text>
+      </FadeInView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.md,
   },
   title: {
     fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text,
+    fontWeight: typography.fontWeights.black,
+    letterSpacing: -0.6,
   },
-  userCard: {
-    backgroundColor: colors.surfaceRaised,
-    borderColor: 'rgba(34, 197, 94, 0.25)',
+  subtitle: {
+    fontSize: typography.fontSizes.sm,
+    lineHeight: typography.lineHeights.sm,
+    marginTop: 3,
   },
   userRow: {
     flexDirection: 'row',
@@ -276,9 +338,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primaryMuted,
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -289,11 +349,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: typography.fontSizes.lg,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
+    letterSpacing: -0.3,
   },
   userEmail: {
     fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   authButton: {
@@ -316,25 +375,21 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   statusText: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.subhead,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
   },
   recheckButton: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surfaceRaised,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   recheckText: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
+    fontWeight: typography.fontWeights.semibold,
   },
   statusDetail: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textMuted,
     marginTop: 4,
   },
   techItem: {
@@ -342,54 +397,37 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
-  techIcon: {
+  techIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: spacing.md,
-    marginTop: 2,
   },
   techTextContainer: {
     flex: 1,
   },
   techTitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: typography.fontSizes.subhead,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.text,
   },
   techSubtitle: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textSecondary,
     marginTop: 2,
     lineHeight: 16,
   },
   versionContainer: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
-    paddingBottom: 40,
+    paddingBottom: 36,
   },
   versionText: {
     fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.textMuted,
+    fontWeight: typography.fontWeights.semibold,
   },
   versionSubtext: {
-    fontSize: typography.fontSizes.xs,
-    color: colors.borderStrong,
-    marginTop: 2,
-  },
-  themeSegmentContainer: {
-    flexDirection: 'row',
-    padding: 3,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-  },
-  themeSegment: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: borderRadius.sm,
-  },
-  themeSegmentText: {
-    fontSize: typography.fontSizes.xs,
-    letterSpacing: -0.2,
+    fontSize: typography.fontSizes.caption2,
+    marginTop: 3,
   },
 });

@@ -15,7 +15,7 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
     title: 'Greek Yogurt',
     subtitle: 'Chobani Plain Non-Fat',
     badge: 'NOVA 1 • Unprocessed',
-    badgeColor: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+    badgeColor: 'border-emerald-600/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400',
     data: {
       status: 'success',
       productName: 'Plain Greek Yogurt (0% Milkfat)',
@@ -81,7 +81,7 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
     title: 'Oats & Honey Granola',
     subtitle: 'KIND Healthy Grains',
     badge: 'NOVA 3 • Processed',
-    badgeColor: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
+    badgeColor: 'border-amber-600/30 bg-amber-500/10 text-amber-800 dark:text-amber-400',
     data: {
       status: 'success',
       productName: 'Oats & Honey Granola with Toasted Coconut',
@@ -164,7 +164,7 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
     title: 'Nacho Cheese Chips',
     subtitle: 'Doritos Flavored Tortilla',
     badge: 'NOVA 4 • Ultra-Processed',
-    badgeColor: 'border-red-500/30 bg-red-500/10 text-red-400',
+    badgeColor: 'border-rose-600/30 bg-rose-500/10 text-rose-800 dark:text-rose-400',
     data: {
       status: 'success',
       productName: 'Nacho Cheese Flavored Tortilla Chips',

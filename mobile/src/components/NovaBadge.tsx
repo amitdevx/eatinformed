@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { getNovaColor } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 interface NovaBadgeProps {
@@ -11,10 +12,10 @@ interface NovaBadgeProps {
 }
 
 const novaDescriptions: Record<number, string> = {
-  1: 'Unprocessed or minimally processed food. Clean whole-food source.',
-  2: 'Processed culinary ingredient derived from nature (e.g. oil, butter, salt).',
-  3: 'Processed food with simple ingredients, typically cooked or canned.',
-  4: 'Ultra-processed food formulation with industrial additives and emulsifiers.',
+  1: 'Unprocessed or minimally processed whole food in its natural state.',
+  2: 'Processed culinary ingredient extracted from nature (e.g., olive oil, butter, salt).',
+  3: 'Processed food with simple culinary additions (e.g., cheese, canned legumes, artisan bread).',
+  4: 'Ultra-processed industrial formulation containing additives, emulsifiers, or flavorings.',
 };
 
 export function NovaBadge({
@@ -23,7 +24,8 @@ export function NovaBadge({
   size = 'md',
   style,
 }: NovaBadgeProps) {
-  const meta = getNovaColor(novaGroup);
+  const { colors, isDark } = useTheme();
+  const meta = getNovaColor(novaGroup, !isDark);
   const description = novaDescriptions[novaGroup] || '';
 
   const isLg = size === 'lg';
@@ -37,22 +39,22 @@ export function NovaBadge({
           {
             backgroundColor: meta.bg,
             borderColor: meta.border,
-            paddingVertical: isSm ? 3 : isLg ? 8 : 6,
-            paddingHorizontal: isSm ? 8 : isLg ? 16 : 12,
+            paddingVertical: isSm ? 4 : isLg ? 8 : 6,
+            paddingHorizontal: isSm ? 10 : isLg ? 16 : 12,
           },
         ]}
       >
-        <View style={[styles.dot, { backgroundColor: meta.text }]} />
+        <View style={[styles.dot, { backgroundColor: meta.dot }]} />
         <Text
           style={[
             styles.label,
             {
               color: meta.text,
               fontSize: isSm
-                ? typography.fontSizes.xs
+                ? typography.fontSizes.caption2
                 : isLg
-                ? typography.fontSizes.md
-                : typography.fontSizes.sm,
+                ? typography.fontSizes.subhead
+                : typography.fontSizes.xs,
             },
           ]}
         >
@@ -61,7 +63,9 @@ export function NovaBadge({
       </View>
 
       {showDescription && description ? (
-        <Text style={styles.description}>{description}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
+          {description}
+        </Text>
       ) : null}
     </View>
   );
@@ -86,12 +90,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: typography.fontWeights.bold,
-    letterSpacing: 0.4,
+    letterSpacing: 0.2,
   },
   description: {
     marginTop: spacing.xs + 2,
-    fontSize: typography.fontSizes.xs,
-    color: '#A1A1AA',
-    lineHeight: 16,
+    fontSize: typography.fontSizes.sm,
+    lineHeight: typography.lineHeights.sm,
   },
 });

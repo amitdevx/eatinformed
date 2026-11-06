@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   RefreshControl,
 } from 'react-native';
@@ -12,7 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Trash2,
   Clock,
-  ArrowRight,
+  ChevronRight,
   History as HistoryIcon,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
@@ -20,7 +19,8 @@ import { Card } from '../components/Card';
 import { EmptyState } from '../components/States';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { getScanHistory, deleteHistoryItem, clearAllHistory } from '../lib/history';
 import { HistoryItem } from '../types';
@@ -30,6 +30,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HistoryScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -60,7 +61,7 @@ export default function HistoryScreen() {
   const handleDeleteItem = (id: string, name: string) => {
     Alert.alert(
       'Delete Scan',
-      `Remove "${name}" from scan history?`,
+      `Remove "${name}" from your saved scan history?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -78,7 +79,7 @@ export default function HistoryScreen() {
   const handleClearAll = () => {
     Alert.alert(
       'Clear History',
-      'Are you sure you want to delete all saved scan reports?',
+      'Are you sure you want to delete all saved scan reports from this device?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -114,75 +115,96 @@ export default function HistoryScreen() {
         />
       }
     >
-      <View style={styles.headerRow}>
+      <FadeInView delay={0} style={styles.headerRow}>
         <View>
-          <Text style={styles.title}>Scan History</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Scan History</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             {historyItems.length}{' '}
-            {historyItems.length === 1 ? 'saved report' : 'saved reports'}
+            {historyItems.length === 1
+              ? 'saved report on device'
+              : 'saved reports on device'}
           </Text>
         </View>
 
         {historyItems.length > 0 && (
-          <TouchableOpacity
-            style={styles.clearButton}
+          <PressableScale
+            style={[
+              styles.clearButton,
+              {
+                backgroundColor: colors.dangerLight,
+                borderColor: colors.dangerBorder,
+              },
+            ]}
             onPress={handleClearAll}
-            activeOpacity={0.8}
+            scaleTo={0.95}
           >
-            <Trash2 size={16} color={colors.danger} />
-            <Text style={styles.clearButtonText}>Clear All</Text>
-          </TouchableOpacity>
+            <Trash2 size={14} color={colors.dangerText} />
+            <Text style={[styles.clearButtonText, { color: colors.dangerText }]}>
+              Clear All
+            </Text>
+          </PressableScale>
         )}
-      </View>
+      </FadeInView>
 
       {historyItems.length === 0 ? (
         <EmptyState
-          title="No Scans Yet"
-          description="Point your camera at food ingredient labels or choose sample items from the home screen."
+          title="No Saved Scans Yet"
+          description="Point your camera at any food ingredient label or explore instant samples from the Home screen."
           actionTitle="Start Scanning"
           onAction={() => (navigation as any).navigate('Scan')}
-          icon={<HistoryIcon size={36} color={colors.textMuted} />}
-          style={{ marginTop: 40 }}
+          icon={<HistoryIcon size={32} color={colors.textMuted} />}
+          style={{ marginTop: 44 }}
         />
       ) : (
-        historyItems.map((item) => (
-          <Card
-            key={item.id}
-            onPress={() => handleOpenItem(item)}
-            style={styles.itemCard}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleContainer}>
-                {item.brand ? (
-                  <Text style={styles.brandText}>{item.brand}</Text>
-                ) : null}
-                <Text style={styles.productName}>{item.productName}</Text>
+        historyItems.map((item, idx) => (
+          <FadeInView key={item.id} delay={50 + idx * 45}>
+            <Card onPress={() => handleOpenItem(item)} style={styles.itemCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTitleContainer}>
+                  {item.brand ? (
+                    <Text style={[styles.brandText, { color: colors.primary }]}>
+                      {item.brand.toUpperCase()}
+                    </Text>
+                  ) : null}
+                  <Text style={[styles.productName, { color: colors.text }]}>
+                    {item.productName}
+                  </Text>
+                </View>
+
+                <PressableScale
+                  onPress={() => handleDeleteItem(item.id, item.productName)}
+                  style={[
+                    styles.deleteIconButton,
+                    { backgroundColor: colors.surfaceRaised },
+                  ]}
+                  scaleTo={0.9}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Trash2 size={15} color={colors.textSecondary} />
+                </PressableScale>
               </View>
 
-              <TouchableOpacity
-                onPress={() => handleDeleteItem(item.id, item.productName)}
-                style={styles.deleteIconButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              <View style={styles.metaRow}>
+                <RatingStars rating={item.rating} size="sm" />
+                <NovaBadge novaGroup={item.novaGroup} size="sm" />
+              </View>
+
+              <View
+                style={[
+                  styles.cardFooter,
+                  { borderTopColor: colors.separator },
+                ]}
               >
-                <Trash2 size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.metaRow}>
-              <RatingStars rating={item.rating} size="sm" />
-              <NovaBadge novaGroup={item.novaGroup} size="sm" />
-            </View>
-
-            <View style={styles.cardFooter}>
-              <View style={styles.timeRow}>
-                <Clock size={12} color={colors.textMuted} />
-                <Text style={styles.timeText}>
-                  {formatTimestamp(item.timestamp)}
-                </Text>
+                <View style={styles.timeRow}>
+                  <Clock size={12} color={colors.textMuted} />
+                  <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                    {formatTimestamp(item.timestamp)}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color={colors.textSecondary} />
               </View>
-              <ArrowRight size={16} color={colors.textSecondary} />
-            </View>
-          </Card>
+            </Card>
+          </FadeInView>
         ))
       )}
     </Screen>
@@ -194,32 +216,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.lg,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.md,
   },
   title: {
     fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text,
+    fontWeight: typography.fontWeights.black,
+    letterSpacing: -0.6,
   },
   subtitle: {
     fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   clearButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.dangerLight,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: borderRadius.sm,
+    paddingVertical: 7,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   clearButtonText: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.danger,
     marginLeft: spacing.xs,
   },
   itemCard: {
@@ -229,39 +248,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm + 2,
   },
   cardTitleContainer: {
     flex: 1,
     paddingRight: spacing.sm,
   },
   brandText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
-    color: colors.primary,
+    fontSize: typography.fontSizes.caption2,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: 0.7,
     marginBottom: 2,
   },
   productName: {
     fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.bold,
-    color: colors.text,
+    letterSpacing: -0.2,
   },
   deleteIconButton: {
-    padding: spacing.xs,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm + 2,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: spacing.xs,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   timeRow: {
     flexDirection: 'row',
@@ -269,7 +291,6 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: typography.fontSizes.xs,
-    color: colors.textMuted,
     marginLeft: spacing.xs,
   },
 });

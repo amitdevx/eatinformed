@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 export type BadgeVariant =
@@ -21,44 +21,6 @@ interface BadgeProps {
   textStyle?: TextStyle;
 }
 
-const variantStyles: Record<BadgeVariant, { bg: string; text: string; border: string }> = {
-  default: {
-    bg: colors.surfaceRaised,
-    text: colors.textSecondary,
-    border: colors.border,
-  },
-  primary: {
-    bg: colors.primaryMuted,
-    text: colors.primary,
-    border: 'rgba(34, 197, 94, 0.3)',
-  },
-  success: {
-    bg: colors.successLight,
-    text: colors.success,
-    border: 'rgba(16, 185, 129, 0.3)',
-  },
-  danger: {
-    bg: colors.dangerLight,
-    text: colors.danger,
-    border: 'rgba(239, 68, 68, 0.3)',
-  },
-  warning: {
-    bg: colors.warningLight,
-    text: colors.warning,
-    border: 'rgba(245, 158, 11, 0.3)',
-  },
-  info: {
-    bg: colors.infoLight,
-    text: colors.info,
-    border: 'rgba(59, 130, 246, 0.3)',
-  },
-  secondary: {
-    bg: colors.surfaceHighlight,
-    text: colors.text,
-    border: colors.borderStrong,
-  },
-};
-
 export function Badge({
   label,
   variant = 'default',
@@ -67,8 +29,48 @@ export function Badge({
   style,
   textStyle,
 }: BadgeProps) {
-  const currentVariant = variantStyles[variant];
+  const { colors } = useTheme();
   const isSm = size === 'sm';
+
+  const variantStyles: Record<BadgeVariant, { bg: string; text: string; border: string }> = {
+    default: {
+      bg: colors.surfaceRaised,
+      text: colors.textSecondary,
+      border: colors.border,
+    },
+    primary: {
+      bg: colors.primaryMuted,
+      text: colors.primary,
+      border: colors.primaryBorder,
+    },
+    success: {
+      bg: colors.successLight,
+      text: colors.successText,
+      border: colors.successBorder,
+    },
+    danger: {
+      bg: colors.dangerLight,
+      text: colors.dangerText,
+      border: colors.dangerBorder,
+    },
+    warning: {
+      bg: colors.warningLight,
+      text: colors.warningText,
+      border: colors.warningBorder,
+    },
+    info: {
+      bg: colors.infoLight,
+      text: colors.infoText,
+      border: colors.infoBorder,
+    },
+    secondary: {
+      bg: colors.surfaceHighlight,
+      text: colors.text,
+      border: colors.borderStrong,
+    },
+  };
+
+  const currentVariant = variantStyles[variant];
 
   return (
     <View
@@ -77,8 +79,8 @@ export function Badge({
         {
           backgroundColor: currentVariant.bg,
           borderColor: currentVariant.border,
-          paddingVertical: isSm ? 2 : 4,
-          paddingHorizontal: isSm ? 8 : 12,
+          paddingVertical: isSm ? 4 : 6,
+          paddingHorizontal: isSm ? 10 : 13,
         },
         style,
       ]}
@@ -89,7 +91,7 @@ export function Badge({
           styles.text,
           {
             color: currentVariant.text,
-            fontSize: isSm ? typography.fontSizes.xs : typography.fontSizes.sm,
+            fontSize: isSm ? typography.fontSizes.caption2 : typography.fontSizes.xs,
           },
           textStyle,
         ]}
@@ -114,6 +116,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontWeight: typography.fontWeights.semibold,
-    letterSpacing: 0.3,
+    letterSpacing: 0.1,
   },
 });
