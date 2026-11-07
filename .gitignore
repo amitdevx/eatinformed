@@ -39,6 +39,8 @@ next-env.d.ts
 
 .genkit/*
 .env*
+!.env.example
+!mobile/.env.example
 
 # firebase
 firebase-debug.log
@@ -56,11 +58,13 @@ mig.md
 context_of_ai.md
 nvidia_models.txt
 planeatinformed.svg
+docs/*ARCHITECTURE*
+docs/*FLOW*
+*.pdf
 
 # mobile app
 mobile/node_modules/
 mobile/.expo/
 mobile/dist/
-mobile/android/build/
-mobile/android/.gradle/
-mobile/android/app/build/
+mobile/android/
+mobile/ios/

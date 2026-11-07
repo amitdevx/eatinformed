@@ -128,8 +128,10 @@ export async function signInAsGuest(): Promise<UserSessionData> {
 export async function signInWithGoogle(): Promise<UserSessionData> {
   const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
-  if (!clientId) {
-    throw new Error('Google Sign-In is not configured (missing EXPO_PUBLIC_GOOGLE_CLIENT_ID).');
+  if (!clientId || clientId === 'your-google-client-id.apps.googleusercontent.com') {
+    throw new Error(
+      'Google Sign-In is not configured (missing EXPO_PUBLIC_GOOGLE_CLIENT_ID in mobile/.env). Please add your Google OAuth Client ID or continue as Guest.'
+    );
   }
 
   const redirectUri = makeRedirectUri({

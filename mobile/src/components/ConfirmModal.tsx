@@ -4,7 +4,7 @@ import React from 'react';
 import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from './Button';
-import { borderRadius, spacing, typography } from '../theme/tokens';
+import { borderRadius, getCardShadow, spacing, typography } from '../theme/tokens';
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -27,7 +27,7 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Modal
@@ -37,16 +37,23 @@ export function ConfirmModal({
       statusBarTranslucent
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.backdrop} onPress={onCancel}>
+      <View style={styles.backdrop}>
+        {/* Backdrop touch target to dismiss dialog */}
         <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onCancel}
+          accessibilityLabel="Dismiss dialog"
+        />
+
+        <View
           style={[
             styles.dialog,
             {
               backgroundColor: colors.surface,
               borderColor: colors.borderStrong,
             },
+            getCardShadow(isDark),
           ]}
-          onPress={(e) => e.stopPropagation()}
         >
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           <Text style={[styles.message, { color: colors.textSecondary }]}>
@@ -69,8 +76,8 @@ export function ConfirmModal({
               style={styles.actionButton}
             />
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

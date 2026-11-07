@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Camera as CameraIcon,
@@ -20,15 +20,19 @@ import {
   SwitchCamera,
   RefreshCw,
   Sparkles,
+  Shield,
+  LogIn,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
+import { Badge } from '../components/Badge';
 import { LoadingState, ErrorState } from '../components/States';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 import { scanFoodLabel, getEstimatedScanDuration, checkApiHealth } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
+import { getUserSession, signInAsGuest, UserSessionData } from '../lib/auth';
 import { RootStackParamList } from '../navigation/types';
 
 const { width } = Dimensions.get('window');
@@ -62,6 +66,36 @@ export default function ScanScreen() {
   const [estimatedTotalMs, setEstimatedTotalMs] = useState<number>(15000);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [session, setSession] = useState<UserSessionData | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+
+  // Check user session on screen focus to restrict scans for unauthenticated users
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      getUserSession().then((s) => {
+        if (isMounted) {
+          setSession(s);
+          setIsAuthChecking(false);
+        }
+      });
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const handleQuickGuestAccess = async () => {
+    setIsAuthChecking(true);
+    try {
+      const newSession = await signInAsGuest();
+      setSession(newSession);
+    } catch (e) {
+      console.warn('Quick guest access failed:', e);
+    } finally {
+      setIsAuthChecking(false);
+    }
+  };
 
   // Pre-warm the backend serverless function as soon as the user opens the Scan tab or picks a photo
   useEffect(() => {
@@ -129,6 +163,12 @@ export default function ScanScreen() {
   }, [progress]);
 
   const handleCapturePhoto = async () => {
+    const currentSession = session || (await getUserSession());
+    if (!currentSession || !currentSession.isLoggedIn) {
+      navigation.navigate('Auth', { initialTab: 'login' });
+      return;
+    }
+
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({
@@ -149,6 +189,12 @@ export default function ScanScreen() {
   };
 
   const handlePickFromGallery = async () => {
+    const currentSession = session || (await getUserSession());
+    if (!currentSession || !currentSession.isLoggedIn) {
+      navigation.navigate('Auth', { initialTab: 'login' });
+      return;
+    }
+
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
@@ -200,6 +246,12 @@ export default function ScanScreen() {
   };
 
   const handleAnalyze = async () => {
+    const currentSession = session || (await getUserSession());
+    if (!currentSession || !currentSession.isLoggedIn) {
+      navigation.navigate('Auth', { initialTab: 'login' });
+      return;
+    }
+
     if (!selectedImageBase64) return;
 
     const avgMs = await getEstimatedScanDuration();
@@ -364,8 +416,52 @@ export default function ScanScreen() {
     );
   }
 
+  // Authentication requirement gate: users must sign in or continue as Guest before scanning
+  if (!isAuthChecking && (!session || !session.isLoggedIn)) {
+    return (
+      <Screen style={styles.centerContainer}>
+        <View
+          style={[
+            styles.permissionIconCircle,
+            { backgroundColor: colors.primaryMuted, borderColor: colors.primaryBorder },
+          ]}
+        >
+          <Shield size={34} color={colors.primary} />
+        </View>
+        <Text style={[styles.permissionTitle, { color: colors.text }]}>
+          Authentication Required
+        </Text>
+        <Text style={[styles.permissionSubtitle, { color: colors.textSecondary }]}>
+          Sign in or explore in Guest Mode to scan nutrition labels, analyze ingredients, and verify food processing.
+        </Text>
+        <View style={styles.tierBadgesRow}>
+          <Badge label="Guest: 25 scans / hr" variant="default" size="sm" />
+          <Badge label="Member: 50 scans / hr" variant="primary" size="sm" />
+        </View>
+        <View style={styles.permissionButtonsWrapper}>
+          <Button
+            title="Sign In or Create Account"
+            onPress={() => navigation.navigate('Auth', { initialTab: 'login' })}
+            variant="primary"
+            size="lg"
+            icon={<LogIn size={18} color={colors.onPrimary} />}
+            style={styles.fullWidthButton}
+          />
+          <Button
+            title="Continue as Guest (25/hr)"
+            onPress={handleQuickGuestAccess}
+            variant="secondary"
+            size="lg"
+            icon={<Sparkles size={18} color={colors.text} />}
+            style={styles.fullWidthButton}
+          />
+        </View>
+      </Screen>
+    );
+  }
+
   // Camera permissions check
-  if (!permission) {
+  if (!permission || isAuthChecking) {
     return (
       <Screen style={styles.centerContainer}>
         <LoadingState message="Checking camera permissions..." />
@@ -437,7 +533,9 @@ export default function ScanScreen() {
             </PressableScale>
 
             <View style={styles.headerPill}>
-              <Text style={styles.headerPillText}>ALIGN FOOD LABEL</Text>
+              <Text style={styles.headerPillText}>
+                {session?.isAnonymous ? 'GUEST MODE • 25/HR' : 'ALIGN FOOD LABEL'}
+              </Text>
             </View>
 
             <PressableScale
@@ -723,7 +821,12 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.subhead,
     textAlign: 'center',
     lineHeight: typography.lineHeights.subhead,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  tierBadgesRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
   actionRow: {
     flexDirection: 'row',

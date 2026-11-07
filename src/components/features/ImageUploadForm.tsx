@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect, useCallback, type ChangeEvent, type DragEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AuthForm } from '@/components/features/AuthForm';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 import { type ProductAnalysisOutput } from '@/ai/flows/product-analysis-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +44,8 @@ const LOADING_STEPS = [
 export function CheckPageClient() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const [openAuthModal, setOpenAuthModal] = useState(false);
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -372,6 +377,16 @@ export function CheckPageClient() {
   };
 
   const handleScan = useCallback(async (photoDataUri: string) => {
+    // Restrict scanning to authenticated or guest sessions
+    if (!user) {
+      setOpenAuthModal(true);
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in or continue as Guest to analyze food labels.',
+      });
+      return;
+    }
+
     // ponytail: release camera hardware stream immediately so it doesn't run in the background during scan
     stopCameraStream();
     setIsLoading(true);
@@ -423,7 +438,7 @@ export function CheckPageClient() {
       });
     }
     setIsLoading(false);
-  }, [toast, saveToHistory, stopCameraStream]);
+  }, [user, toast, saveToHistory, stopCameraStream]);
   
   const handleReset = () => {
     stopCameraStream();
@@ -764,6 +779,27 @@ export function CheckPageClient() {
           </div>
         </motion.div>
       )}
+
+      {/* Auth Gate Dialog for unauthenticated scans */}
+      <Dialog open={openAuthModal} onOpenChange={setOpenAuthModal}>
+        <DialogContent className="sm:max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight">Authentication Required</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Sign in with Google, Email, or Guest Mode to analyze food labels and track nutrition.
+            </DialogDescription>
+          </DialogHeader>
+          <AuthForm
+            initialTab="login"
+            onAuthSuccess={() => {
+              setOpenAuthModal(false);
+              if (imagePreviewUrl) {
+                handleScan(imagePreviewUrl);
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

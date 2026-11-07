@@ -66,14 +66,14 @@ export default function ProfileScreen() {
     useCallback(() => {
       checkBackend();
       getUserSession().then((session) => {
-        if (session && session.isLoggedIn && !session.isAnonymous && session.email) {
+        if (session && session.isLoggedIn) {
           setIsLoggedIn(true);
-          setIsAnonymous(false);
-          setUserEmail(session.email);
-          setUserName(session.name || session.email.split('@')[0]);
+          setIsAnonymous(Boolean(session.isAnonymous));
+          setUserEmail(session.email || (session.isAnonymous ? 'Guest Explorer' : null));
+          setUserName(session.name || (session.isAnonymous ? 'Guest Explorer' : session.email?.split('@')[0] || 'Member'));
         } else {
           setIsLoggedIn(false);
-          setIsAnonymous(true);
+          setIsAnonymous(false);
           setUserEmail(null);
           setUserName(null);
         }
@@ -82,7 +82,7 @@ export default function ProfileScreen() {
   );
 
   const handleAuthAction = () => {
-    if (isLoggedIn && !isAnonymous) {
+    if (isLoggedIn) {
       setSignOutModalVisible(true);
     } else {
       navigation.navigate('Auth', { initialTab: 'login' });
@@ -93,7 +93,7 @@ export default function ProfileScreen() {
     setSignOutModalVisible(false);
     await clearUserSession();
     setIsLoggedIn(false);
-    setIsAnonymous(true);
+    setIsAnonymous(false);
     setUserEmail(null);
     setUserName(null);
   };
@@ -137,39 +137,70 @@ export default function ProfileScreen() {
                 <Text style={[styles.userName, { color: colors.text }]}>
                   {isLoggedIn && !isAnonymous
                     ? userName || userEmail?.split('@')[0] || 'Member'
-                    : 'Guest Explorer'}
+                    : isLoggedIn && isAnonymous
+                    ? 'Guest Explorer'
+                    : 'Not Signed In'}
                 </Text>
                 <Text
                   style={[styles.userEmail, { color: colors.textSecondary }]}
                 >
                   {isLoggedIn && !isAnonymous
                     ? userEmail
-                    : 'Guest session · Free unlimited scanning'}
+                    : isLoggedIn && isAnonymous
+                    ? 'Guest session · 25 scans / hr limit'
+                    : 'Sign in with Google, Email, or Guest to scan'}
                 </Text>
                 <View style={{ marginTop: 6 }}>
                   <Badge
-                    label={isLoggedIn && !isAnonymous ? 'Registered Member' : 'Guest Mode'}
-                    variant={isLoggedIn && !isAnonymous ? 'primary' : 'default'}
+                    label={
+                      isLoggedIn && !isAnonymous
+                        ? 'Registered Member'
+                        : isLoggedIn && isAnonymous
+                        ? 'Guest Mode (Active)'
+                        : 'No Active Session'
+                    }
+                    variant={isLoggedIn && !isAnonymous ? 'primary' : isLoggedIn ? 'default' : 'secondary'}
                     size="sm"
                   />
                 </View>
               </View>
             </View>
 
-            <Button
-              title={isLoggedIn && !isAnonymous ? 'Sign Out' : 'Sign In / Create Account'}
-              onPress={handleAuthAction}
-              variant={isLoggedIn && !isAnonymous ? 'danger' : 'primary'}
-              size="md"
-              icon={
-                isLoggedIn && !isAnonymous ? (
-                  <LogOut size={16} color={colors.dangerText} />
-                ) : (
-                  <LogIn size={16} color={colors.onPrimary} />
-                )
-              }
-              style={styles.authButton}
-            />
+            {isLoggedIn && isAnonymous ? (
+              <View style={{ gap: spacing.sm, marginTop: spacing.xs }}>
+                <Button
+                  title="Sign In / Save Account"
+                  onPress={() => navigation.navigate('Auth', { initialTab: 'login' })}
+                  variant="primary"
+                  size="md"
+                  icon={<LogIn size={16} color={colors.onPrimary} />}
+                  style={styles.authButton}
+                />
+                <Button
+                  title="Exit Guest Mode"
+                  onPress={() => setSignOutModalVisible(true)}
+                  variant="danger"
+                  size="md"
+                  icon={<LogOut size={16} color={colors.dangerText} />}
+                  style={styles.authButton}
+                />
+              </View>
+            ) : (
+              <Button
+                title={isLoggedIn ? 'Sign Out' : 'Sign In / Create Account'}
+                onPress={handleAuthAction}
+                variant={isLoggedIn ? 'danger' : 'primary'}
+                size="md"
+                icon={
+                  isLoggedIn ? (
+                    <LogOut size={16} color={colors.dangerText} />
+                  ) : (
+                    <LogIn size={16} color={colors.onPrimary} />
+                  )
+                }
+                style={styles.authButton}
+              />
+            )}
           </CardContent>
         </Card>
       </FadeInView>
@@ -337,9 +368,13 @@ export default function ProfileScreen() {
 
       <ConfirmModal
         visible={signOutModalVisible}
-        title="Sign Out"
-        message="Are you sure you want to sign out of your EatInformed account?"
-        confirmText="Sign Out"
+        title={isAnonymous ? "Exit Guest Mode" : "Sign Out"}
+        message={
+          isAnonymous
+            ? "Your temporary guest scanning session will end. You can start a new guest session or sign in anytime."
+            : "Are you sure you want to sign out of your EatInformed account?"
+        }
+        confirmText={isAnonymous ? "Exit Guest Mode" : "Sign Out"}
         cancelText="Cancel"
         destructive={true}
         onConfirm={confirmSignOut}
