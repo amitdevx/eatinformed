@@ -44,7 +44,9 @@ next-env.d.ts
 firebase-debug.log
 firestore-debug.log
 
-# SQLite database files
+# Archives
+*.zip
+*.tar.gz
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

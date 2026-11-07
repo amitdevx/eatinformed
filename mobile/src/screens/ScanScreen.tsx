@@ -27,7 +27,7 @@ import { LoadingState, ErrorState } from '../components/States';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
-import { scanFoodLabel, getEstimatedScanDuration } from '../api/client';
+import { scanFoodLabel, getEstimatedScanDuration, checkApiHealth } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
 import { RootStackParamList } from '../navigation/types';
 
@@ -62,6 +62,13 @@ export default function ScanScreen() {
   const [estimatedTotalMs, setEstimatedTotalMs] = useState<number>(15000);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Pre-warm the backend serverless function as soon as the user opens the Scan tab or picks a photo
+  useEffect(() => {
+    if (isFocused || selectedImageUri) {
+      checkApiHealth().catch(() => null);
+    }
+  }, [isFocused, selectedImageUri]);
 
   const cameraRef = useRef<any>(null);
   const scanLineY = useRef(new Animated.Value(12)).current;

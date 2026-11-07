@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
+import { isNimConfigured } from '@/ai/nim';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,11 @@ export async function OPTIONS() {
 }
 
 export async function GET() {
+  // Pre-warm NIM client connection and serverless runtime on warmup ping
+  try {
+    isNimConfigured();
+  } catch (_) {}
+
   return NextResponse.json(
     {
       status: 'ok',

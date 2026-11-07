@@ -53,6 +53,11 @@ export function CheckPageClient() {
   const [isDragging, setIsDragging] = useState(false);
   const [recentScans, setRecentScans] = useState<HistoryItem[]>([]);
 
+  // Pre-warm /api/scan on mount so serverless runtime & sharp are warm before the user clicks Analyze
+  useEffect(() => {
+    fetch('/api/scan', { method: 'GET' }).catch(() => null);
+  }, []);
+
   // Automatically load sample product if requested via query param
   useEffect(() => {
     const sampleParam = searchParams.get('sample');
@@ -373,37 +378,51 @@ export function CheckPageClient() {
     setError(null);
     setAnalysisData(null);
     
-    try {
-      const result = await analyzeProduct(photoDataUri);
+    let lastResult: ProductAnalysisOutput | null = null;
+    let lastError: any = null;
 
-      if (result.status !== 'success') {
-        const detail = result.warnings?.[0] || result.nutrition?.rawText;
-        if (result.status === 'unreadable') {
-          setError(detail || 'The image was unreadable. Please upload or capture a clearer photo of the product label.');
-        } else if (result.status === 'no_data') {
-          setError(detail || "We couldn't find any ingredient or nutrition text on the label. Please try a different image.");
-        } else {
-          setError(detail || 'Analysis could not be completed for this image.');
+    // Transparently retry up to 2 attempts on transient cold-start or network glitches before failing
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const result = await analyzeProduct(photoDataUri);
+        if (result.status === 'success') {
+          setProgress(100);
+          setAnalysisData(result);
+          saveToHistory(result, photoDataUri);
+          setIsLoading(false);
+          return;
         }
-        setIsLoading(false);
-        return;
+        lastResult = result;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      } catch (e: any) {
+        lastError = e;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+        }
       }
-      
-      setProgress(100);
-      setAnalysisData(result);
-      saveToHistory(result, photoDataUri);
+    }
 
-    } catch (e: any) {
-      console.error('Scan failed:', e);
+    if (lastResult) {
+      const detail = lastResult.warnings?.[0] || lastResult.nutrition?.rawText;
+      if (lastResult.status === 'unreadable') {
+        setError(detail || 'The image was unreadable. Please upload or capture a clearer photo of the product label.');
+      } else if (lastResult.status === 'no_data') {
+        setError(detail || "We couldn't find any ingredient or nutrition text on the label. Please try a different image.");
+      } else {
+        setError(detail || 'Analysis could not be completed for this image.');
+      }
+    } else {
+      console.error('Scan failed:', lastError);
       setError('An unexpected error occurred during analysis. The AI service may be temporarily unavailable. Please try again.');
       toast({
         variant: 'destructive',
         title: 'Analysis Failed',
-        description: e.message || 'Could not process the image.',
+        description: lastError?.message || 'Could not process the image.',
       });
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }, [toast, saveToHistory, stopCameraStream]);
   
   const handleReset = () => {
