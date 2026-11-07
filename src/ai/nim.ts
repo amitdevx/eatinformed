@@ -8,8 +8,8 @@ export const getNimClient = (): OpenAI | null => {
     nimClientInstance = new OpenAI({
       apiKey,
       baseURL: (process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/+$/, ''),
-      timeout: 24 * 1000, // 24s per attempt so a cold stall immediately triggers fallback/retry inside 60s
-      maxRetries: 1,
+      timeout: 22 * 1000, // 22s per request so Step 1 + fallback never exceeds 60s HTTP ceiling
+      maxRetries: 0,      // Handled explicitly inside callNimWithFallback
     });
   }
   return nimClientInstance;
@@ -17,21 +17,20 @@ export const getNimClient = (): OpenAI | null => {
 
 export const isNimConfigured = (): boolean => Boolean(getNimClient());
 
-// ponytail: backwards-compatible proxy that delegates to getNimClient()
-export const nimClient = new Proxy({} as any, {
+export const nimClient = new Proxy({} as OpenAI, {
   get(_target, prop) {
     const client = getNimClient();
-    if (!client) return undefined;
-    const value = (client as any)[prop];
-    if (typeof value === 'function') {
-      return value.bind(client);
+    if (!client) {
+      throw new Error('AI System Offline: NVIDIA_API_KEY is not configured on the server.');
     }
-    return value;
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
   },
 });
 
 /**
- * Calls NVIDIA NIM chat completions with automatic model fallback on 404/429/5xx.
+ * Calls NVIDIA NIM chat completions with thinking disabled for fast JSON output
+ * and automatic retry/fallback if a model returns an empty response or 429/5xx.
  */
 export async function callNimWithFallback(
   models: string[],
@@ -43,50 +42,204 @@ export async function callNimWithFallback(
     throw new Error('AI System Offline: NVIDIA_API_KEY is not configured on the server.');
   }
 
+  // Ensure system directive disables long chain-of-thought reasoning on Nemotron 3.5 / Qwen 3.5
+  const hasSystem = messages.some((m) => m.role === 'system');
+  const preparedMessages = hasSystem
+    ? messages.map((m) =>
+        m.role === 'system'
+          ? { ...m, content: `detailed thinking off\n${m.content}` }
+          : m
+      )
+    : [
+        {
+          role: 'system',
+          content: 'detailed thinking off. You are a fast, strict JSON extraction API. Output ONLY valid raw JSON.',
+        },
+        ...messages,
+      ];
+
   let lastError: any = null;
+
   for (const model of models) {
-    try {
-      const response = await client.chat.completions.create({
-        model,
-        messages,
-        max_tokens: options.max_tokens ?? 4000,
-        temperature: options.temperature ?? 0.05,
-        top_p: options.top_p ?? 0.9,
-      });
+    // Allow up to 2 attempts per model in case free-tier NIM drops or returns empty content on cold start
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await (client.chat.completions.create as any)({
+          model,
+          messages: preparedMessages,
+          max_tokens: options.max_tokens ?? 4096,
+          temperature: options.temperature ?? 0.1,
+          top_p: options.top_p ?? 0.9,
+          chat_template_kwargs: {
+            thinking: false,
+            enable_thinking: false,
+          },
+        });
 
-      const choice = response.choices?.[0]?.message as any;
-      // ponytail: only fall back to reasoning_content if it actually contains a JSON object
-      const content =
-        choice?.content?.trim() ||
-        (choice?.reasoning_content?.includes('{') ? choice.reasoning_content : null);
+        const choice = response.choices?.[0]?.message as any;
+        const rawContent = choice?.content?.trim() || '';
+        const rawReasoning = choice?.reasoning_content?.trim() || '';
 
-      if (content) return content;
-      throw new Error(`Empty response from model ${model}`);
-    } catch (err: any) {
-      lastError = err;
-      console.warn(`NIM model "${model}" failed (${err?.status || err?.message}), trying fallback...`);
+        const content =
+          rawContent ||
+          (rawReasoning.includes('{') ? rawReasoning : '');
+
+        if (content) {
+          return content;
+        }
+        throw new Error(`Empty response from model ${model}`);
+      } catch (err: any) {
+        lastError = err;
+        const status = err?.status || err?.response?.status;
+        if (status === 401 || status === 403 || status === 404) {
+          // Don't retry same model on auth or 404 model-not-found errors
+          break;
+        }
+        console.warn(
+          `[NIM] Model "${model}" attempt ${attempt} failed (${err?.message || status}).`
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 400));
+        }
+      }
     }
   }
+
   throw lastError || new Error('All configured NVIDIA NIM models failed.');
 }
 
 /**
- * Robust utility to extract, repair, and parse JSON from LLM responses.
- * Handles markdown code fences, think tags, trailing commas, control characters,
- * and truncated tail closure via LIFO stack.
+ * Repairs unescaped inner double-quotes, missing opening quotes after colons,
+ * literal newlines inside strings, trailing commas, and truncated brackets/braces.
  */
+function repairJsonStringsAndStructure(input: string): string {
+  // 1. Fix missing opening quote after colon: e.g. "description": A blend of spices", -> "description": "A blend of spices",
+  let s = input.replace(
+    /(":\s*)(?!(?:true|false|null|-?\d|["{\[]))([A-Za-z][^"\n}]*?)"(\s*[,}\]])/g,
+    '$1"$2"$3'
+  );
+
+  // 2. State-machine pass: escape literal newlines/tabs AND unescaped inner quotes inside JSON strings
+  let out = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+
+    if (escaped) {
+      out += ch;
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      out += ch;
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      if (!inString) {
+        inString = true;
+        out += '"';
+      } else {
+        // Peek ahead past whitespace to check if this quote is a true JSON string delimiter
+        let j = i + 1;
+        while (j < s.length && (s[j] === ' ' || s[j] === '\t' || s[j] === '\r' || s[j] === '\n')) {
+          j++;
+        }
+        const nextCh = j < s.length ? s[j] : '';
+        const isTrueClosingQuote =
+          nextCh === '' ||
+          nextCh === ':' ||
+          nextCh === ',' ||
+          nextCh === '}' ||
+          nextCh === ']';
+
+        if (isTrueClosingQuote) {
+          inString = false;
+          out += '"';
+        } else {
+          // It's an unescaped inner quote inside a string (e.g. ""A blend... or "A "blend" of...): escape it!
+          out += '\\"';
+        }
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (ch === '\n') {
+        out += '\\n';
+      } else if (ch === '\r') {
+        out += '\\r';
+      } else if (ch === '\t') {
+        out += '\\t';
+      } else {
+        out += ch;
+      }
+    } else {
+      out += ch;
+    }
+  }
+
+  if (inString) {
+    out += '"';
+  }
+
+  // 3. Clean structural comma glitches outside strings
+  out = out
+    .replace(/,\s*,+/g, ',')
+    .replace(/(,\s*)+([\]}])/g, '$2')
+    .replace(/([{\[])\s*,+/g, '$1')
+    .replace(/,\s*$/g, '')
+    .replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
+
+  // 4. Balance any unclosed brackets/braces in LIFO order
+  inString = false;
+  escaped = false;
+  const stack: ('}' | ']')[] = [];
+
+  for (let i = 0; i < out.length; i++) {
+    const ch = out[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (!inString) {
+      if (ch === '{') stack.push('}');
+      else if (ch === '[') stack.push(']');
+      else if ((ch === '}' || ch === ']') && stack.length > 0 && stack[stack.length - 1] === ch) {
+        stack.pop();
+      }
+    }
+  }
+
+  while (stack.length > 0) {
+    out += stack.pop();
+  }
+
+  return out.replace(/(,\s*)+([\]}])/g, '$2');
+}
+
 export const parseNIMResponse = (content: string | null): any => {
   if (!content || content.trim().length === 0) {
     throw new Error('AI returned an empty response.');
   }
 
-  // 1. Strip any <think>...</think> reasoning blocks (including unclosed <think> prefixes if truncated)
   let cleaned = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   if (cleaned.startsWith('<think>') && cleaned.indexOf('{') !== -1) {
     cleaned = cleaned.substring(cleaned.indexOf('{'));
   }
 
-  // 2. Extract from markdown code fences if present
   const allFences = Array.from(cleaned.matchAll(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/gi));
   if (allFences.length > 0) {
     for (let i = allFences.length - 1; i >= 0; i--) {
@@ -100,7 +253,6 @@ export const parseNIMResponse = (content: string | null): any => {
     }
   }
 
-  // Strip any stray opening/closing code fences if the fence regex didn't match a closed pair
   cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```+$/g, '').trim();
 
   const firstBrace = cleaned.indexOf('{');
@@ -116,68 +268,15 @@ export const parseNIMResponse = (content: string | null): any => {
     try {
       return JSON.parse(fastCandidate);
     } catch {
-      // Proceed to full repair stage
+      // Proceed to full state-machine repair
     }
   }
 
-  // 3. Slice strictly between firstBrace and lastBrace (if closed) so trailing text/fences are removed
-  let toRepair = cleaned.substring(
+  const candidateToRepair = cleaned.substring(
     firstBrace,
     lastBrace > firstBrace ? lastBrace + 1 : undefined
   );
 
-  // Escape literal newlines, carriage returns, and tabs inside JSON string literals
-  toRepair = toRepair
-    .replace(/(?<=[,{\[\]\d"true"false"null}])\s*\/\/[^\n]*/g, '')
-    .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) =>
-      match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
-    )
-    .replace(/,\s*,+/g, ',')
-    .replace(/(,\s*)+([}\]])/g, '$2')
-    .replace(/([{\[])\s*,+/g, '$1')
-    .replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
-
-  try {
-    return JSON.parse(toRepair);
-  } catch {
-    // 4. LIFO bracket/brace balancer for truncated JSON outputs
-    let inString = false;
-    let escaped = false;
-    const stack: ('}' | ']')[] = [];
-
-    for (let i = 0; i < toRepair.length; i++) {
-      const ch = toRepair[i];
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-      if (ch === '\\') {
-        escaped = true;
-        continue;
-      }
-      if (ch === '"') {
-        inString = !inString;
-        continue;
-      }
-      if (!inString) {
-        if (ch === '{') stack.push('}');
-        else if (ch === '[') stack.push(']');
-        else if ((ch === '}' || ch === ']') && stack.length > 0 && stack[stack.length - 1] === ch) {
-          stack.pop();
-        }
-      }
-    }
-
-    if (inString) toRepair += '"';
-    toRepair = toRepair
-      .replace(/,\s*,+/g, ',')
-      .replace(/(,\s*)+([}\]])/g, '$2')
-      .replace(/,\s*$/, '');
-    while (stack.length > 0) {
-      toRepair += stack.pop();
-    }
-    toRepair = toRepair.replace(/(,\s*)+([}\]])/g, '$2');
-
-    return JSON.parse(toRepair);
-  }
+  const repaired = repairJsonStringsAndStructure(candidateToRepair);
+  return JSON.parse(repaired);
 };

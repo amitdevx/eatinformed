@@ -16,10 +16,13 @@ const MAX_CACHE_ENTRIES = 100;
 
 const VISION_MODELS = [
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
+  'nvidia/nemotron-nano-12b-v2-vl',
+  'meta/llama-3.2-90b-vision-instruct',
 ];
 
 const REASONING_MODELS = [
   'nvidia/nemotron-3.5-lightning-30b-a3b',
+  'meta/llama-3.3-70b-instruct',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
 ];
 
@@ -239,10 +242,29 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
     };
   });
 
+  const resolvedNova = analysisData?.novaGroup ?? ocrData?.novaGroup ?? 4;
+  const rawPros: string[] = Array.isArray(analysisData?.pros) && analysisData.pros.length > 0
+    ? analysisData.pros
+    : Array.isArray(ocrData?.pros) && ocrData.pros.length > 0
+    ? ocrData.pros
+    : resolvedNova <= 2
+    ? ['Minimally processed whole-food ingredient profile']
+    : ['Clearly declared ingredient and allergen labeling'];
+
+  const rawCons: string[] = Array.isArray(analysisData?.cons) && analysisData.cons.length > 0
+    ? analysisData.cons
+    : Array.isArray(ocrData?.cons) && ocrData.cons.length > 0
+    ? ocrData.cons
+    : resolvedNova === 4
+    ? ['Ultra-processed formulation (NOVA 4) containing industrial seasonings or additives']
+    : resolvedNova === 3
+    ? ['Processed food formulation — monitor sodium and added sugars per serving']
+    : [];
+
   const merged = {
     productName: ocrData.productName?.trim() || 'Scanned Food Product',
     brand,
-    novaGroup: analysisData?.novaGroup ?? ocrData.novaGroup ?? 4,
+    novaGroup: resolvedNova,
     ingredients,
     nutrition: {
       rawText: nutritionRaw,
@@ -250,9 +272,13 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
       nutrients,
     },
     rating: Math.max(0, Math.min(5, Number(analysisData?.rating ?? ocrData.rating ?? 2.5))),
-    pros: Array.isArray(analysisData?.pros) ? analysisData.pros : [],
-    cons: Array.isArray(analysisData?.cons) ? analysisData.cons : [],
-    warnings: Array.isArray(analysisData?.warnings) ? analysisData.warnings : [],
+    pros: rawPros,
+    cons: rawCons,
+    warnings: Array.isArray(analysisData?.warnings)
+      ? analysisData.warnings
+      : ocrData.allergenAdvice && !analysisData?.dietaryInfo?.summary
+      ? [ocrData.allergenAdvice]
+      : [],
     ingredientAnalysis: finalIngredientAnalysis.length > 0
       ? finalIngredientAnalysis
       : ingredients.map((ing) => ({

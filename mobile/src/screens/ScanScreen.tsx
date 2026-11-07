@@ -94,7 +94,7 @@ export default function ScanScreen() {
     return () => loop.stop();
   }, [scanLineY]);
 
-  // ponytail: monotonic asymptotic progress ticker (never loops or moves backward)
+  // ponytail: monotonic asymptotic progress ticker (advances smoothly from 8% -> 95% on Android & iOS)
   useEffect(() => {
     if (!isLoading) {
       setProgress(0);
@@ -106,16 +106,14 @@ export default function ScanScreen() {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const now = Date.now();
-      setElapsedMs(now - startTime);
+      const elapsed = now - startTime;
+      setElapsedMs(elapsed);
 
-      if (uploadDoneTimeRef.current !== null) {
-        const serverElapsed = now - uploadDoneTimeRef.current;
-        // Asymptotic curve: smoothly approaches 0.95 based on rolling avg duration, never resets
-        const tau = Math.max(6000, estimatedTotalMs * 0.65);
-        const serverFraction = 1 - Math.exp(-serverElapsed / tau);
-        const targetProgress = Math.min(0.95, 0.28 + 0.67 * serverFraction);
-        setProgress((prev) => Math.max(prev, targetProgress));
-      }
+      // Smoothly advance from 0.08 to 0.95 using rolling average scan duration
+      const tau = Math.max(5500, estimatedTotalMs * 0.65);
+      const curveFraction = 1 - Math.exp(-elapsed / tau);
+      const targetProgress = Math.min(0.95, 0.08 + 0.87 * curveFraction);
+      setProgress((prev) => Math.max(prev, targetProgress));
     }, 150);
 
     return () => clearInterval(interval);

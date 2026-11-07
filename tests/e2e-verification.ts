@@ -75,6 +75,14 @@ async function runTests() {
   const res5 = parseNIMResponse('{"nutrition": {"calories": 150, "nutrients": [{"name": "Iron"');
   assert(res5?.nutrition?.calories === 150 && res5?.nutrition?.nutrients?.[0]?.name === 'Iron', 'LIFO auto-balancer closes unclosed truncated JSON objects and arrays');
 
+  // 2.6 Missing opening quote after colon (Screenshot 72610.png fix)
+  const res6 = parseNIMResponse('{"description": A blend of spices", "isAllergen": false}');
+  assert(res6?.description?.includes('A blend of spices') && res6?.isAllergen === false, 'Repairs missing opening quote after colon');
+
+  // 2.7 Inner unescaped double quotes & duplicate quotes
+  const res7 = parseNIMResponse('{"ingredient": "A "blend" of spices", "summary": ""Organic oatmeal""}');
+  assert(res7?.ingredient?.includes('blend') && res7?.summary?.includes('Organic oatmeal'), 'Escapes unescaped inner and duplicate quotes in string values');
+
   // -------------------------------------------------------------
   // TEST GROUP 3: Image OCR & Sharp Pipeline
   // -------------------------------------------------------------
