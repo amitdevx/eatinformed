@@ -40,10 +40,11 @@ export default function ResultScreen() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
-  // ponytail: scan is already saved upon capture in ScanScreen; no duplicate save on mount here
-
   const productName = data.productName || 'Food Product';
-  const brand = data.brand || '';
+  const rawBrand = (data.brand || '').trim();
+  const brand = /^(unknown|n\/a|none|not visible|null|undefined|generic)$/i.test(rawBrand)
+    ? ''
+    : rawBrand;
   const rating = data.rating || 0;
   const novaGroup = data.novaGroup || 4;
 
@@ -59,7 +60,77 @@ export default function ResultScreen() {
   };
 
   const handleScanAnother = () => {
-    navigation.goBack();
+    navigation.navigate('Main', { screen: 'Scan' });
+  };
+
+  // ponytail: guarantee every declared ingredient in data.ingredients is analyzed & displayed
+  const completeIngredientAnalysis = React.useMemo(() => {
+    const analysisList = Array.isArray(data.ingredientAnalysis) ? data.ingredientAnalysis : [];
+    const rawList = Array.isArray(data.ingredients) ? data.ingredients : [];
+
+    if (rawList.length === 0) return analysisList;
+    if (analysisList.length >= rawList.length) return analysisList;
+
+    const matchedIndices = new Set<number>();
+    const merged = rawList.map((rawIng) => {
+      const normalizedRaw = rawIng.toLowerCase().trim();
+      const foundIdx = analysisList.findIndex(
+        (a, idx) =>
+          !matchedIndices.has(idx) &&
+          (a.ingredient.toLowerCase().trim() === normalizedRaw ||
+            normalizedRaw.includes(a.ingredient.toLowerCase().trim()) ||
+            a.ingredient.toLowerCase().trim().includes(normalizedRaw))
+      );
+      if (foundIdx !== -1) {
+        matchedIndices.add(foundIdx);
+        return analysisList[foundIdx];
+      }
+      const isSugarOrSyrup = /sugar|syrup|honey|dextrose|fructose|maltose|sucrose/i.test(rawIng);
+      const isOilOrFat = /\boil\b|fat|butter|shortening|palm/i.test(rawIng);
+      const isSalt = /\bsalt\b|sodium/i.test(rawIng);
+      return {
+        ingredient: rawIng,
+        description: isSugarOrSyrup
+          ? 'Caloric sweetener used for taste, browning, and texture.'
+          : isOilOrFat
+          ? 'Culinary or processing lipid used for mouthfeel, moisture, and baking.'
+          : isSalt
+          ? 'Mineral seasoning used for flavor enhancement and preservation.'
+          : 'Declared food ingredient extracted from product packaging label.',
+        purpose: isSugarOrSyrup
+          ? 'Sweetener'
+          : isOilOrFat
+          ? 'Texture & Lipid Base'
+          : isSalt
+          ? 'Seasoning & Preservation'
+          : 'Formulation Ingredient',
+        isAllergen: /milk|dairy|whey|casein|soy|wheat|gluten|peanut|nut|coconut|egg|fish|sesame/i.test(rawIng),
+        isControversial: /artificial|dye|red 40|yellow 5|yellow 6|msg|monosodium|high-fructose|bha|bht|tbhq|carrageenan|polysorbate/i.test(rawIng),
+      };
+    });
+
+    return merged;
+  }, [data.ingredients, data.ingredientAnalysis]);
+
+  const getIngredientBadge = (item: {
+    ingredient: string;
+    isAllergen: boolean;
+    isControversial: boolean;
+  }) => {
+    const name = item.ingredient.toLowerCase();
+    if (item.isControversial) {
+      return <Badge label="Additive Alert" variant="warning" size="sm" />;
+    }
+    if (/sugar|syrup|dextrose|fructose|maltose|sucrose|corn sweetener/i.test(name)) {
+      return <Badge label="Added Sweetener" variant="warning" size="sm" />;
+    }
+    if (/\bsalt\b|sodium/i.test(name)) {
+      return <Badge label="Sodium Source" variant="default" size="sm" />;
+    }
+    if (/vegetable oil|canola oil|palm oil|soybean oil|corn oil|sunflower oil/i.test(name)) {
+      return <Badge label="Processing Oil" variant="default" size="sm" />;
+    }
+    return <Badge label="Whole / Clean" variant="success" size="sm" />;
   };
 
   return (
@@ -122,7 +193,6 @@ export default function ResultScreen() {
                 </Text>
                 <RatingStars rating={rating} size="lg" />
               </View>
-              <NovaBadge novaGroup={novaGroup} size="md" />
             </View>
             <View
               style={[
@@ -130,7 +200,7 @@ export default function ResultScreen() {
                 { borderTopColor: colors.separator },
               ]}
             >
-              <NovaBadge novaGroup={novaGroup} showDescription size="sm" />
+              <NovaBadge novaGroup={novaGroup} showDescription size="md" />
             </View>
           </CardContent>
         </Card>
@@ -143,7 +213,7 @@ export default function ResultScreen() {
             { value: 'overview', label: 'Overview' },
             {
               value: 'ingredients',
-              label: `Ingredients (${data.ingredients.length})`,
+              label: `Ingredients (${completeIngredientAnalysis.length || data.ingredients.length})`,
             },
             { value: 'nutrition', label: 'Nutrition Facts' },
           ]}
@@ -238,6 +308,9 @@ export default function ResultScreen() {
                 {data.dietaryInfo.isGlutenFree && (
                   <Badge label="Gluten-Free" variant="info" size="md" />
                 )}
+                {data.dietaryInfo.suitability?.map((suit, idx) => (
+                  <Badge key={idx} label={suit} variant="secondary" size="md" />
+                ))}
               </View>
 
               {data.dietaryInfo.allergens &&
@@ -291,8 +364,8 @@ export default function ResultScreen() {
             Every ingredient identified and cross-checked against international nutritional safety criteria.
           </Text>
 
-          {data.ingredientAnalysis && data.ingredientAnalysis.length > 0 ? (
-            data.ingredientAnalysis.map((item, index) => (
+          {completeIngredientAnalysis && completeIngredientAnalysis.length > 0 ? (
+            completeIngredientAnalysis.map((item, index) => (
               <Card key={index} style={styles.ingredientCard}>
                 <CardContent>
                   <View style={styles.ingredientTopRow}>
@@ -303,12 +376,7 @@ export default function ResultScreen() {
                       {item.isAllergen && (
                         <Badge label="Allergen" variant="danger" size="sm" />
                       )}
-                      {item.isControversial && (
-                        <Badge label="Additive Alert" variant="warning" size="sm" />
-                      )}
-                      {!item.isAllergen && !item.isControversial && (
-                        <Badge label="Clean" variant="success" size="sm" />
-                      )}
+                      {getIngredientBadge(item)}
                     </View>
                   </View>
                   {item.purpose ? (
@@ -352,126 +420,156 @@ export default function ResultScreen() {
       )}
 
       {/* TAB 3: NUTRITION FACTS */}
-      {activeTab === 'nutrition' && (
-        <FadeInView key="tab-nutrition" delay={20}>
-          <Card>
-            <CardHeader
-              title="Nutritional Panel"
-              subtitle={
-                data.nutrition.servingSizeLabel
-                  ? `Serving Size: ${data.nutrition.servingSizeLabel}`
-                  : 'Reported nutrient content per serving & per 100g'
-              }
-            />
-            <CardContent>
-              {data.nutrition.nutrients && data.nutrition.nutrients.length > 0 ? (
-                <View style={styles.nutritionTable}>
-                  <View
-                    style={[
-                      styles.tableHeaderRow,
-                      {
-                        backgroundColor: colors.surfaceRaised,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.tableColHeader,
-                        { color: colors.text, flex: 2 },
-                      ]}
-                    >
-                      Nutrient
-                    </Text>
-                    <Text
-                      style={[
-                        styles.tableColHeader,
-                        { color: colors.text, flex: 1, textAlign: 'right' },
-                      ]}
-                    >
-                      Per Serve
-                    </Text>
-                    <Text
-                      style={[
-                        styles.tableColHeader,
-                        { color: colors.text, flex: 1, textAlign: 'right' },
-                      ]}
-                    >
-                      Per 100g
-                    </Text>
-                  </View>
+      {activeTab === 'nutrition' && (() => {
+        const nutrientsList = Array.isArray(data.nutrition?.nutrients) ? data.nutrition.nutrients : [];
+        const hasPer100 = nutrientsList.some((n) => n.per100mL && n.per100mL.trim() !== '' && n.per100mL.trim() !== '-');
+        const hasPerServe = nutrientsList.some((n) => n.perServing && n.perServing.trim() !== '' && n.perServing.trim() !== '-');
 
-                  {data.nutrition.nutrients.map((n, i) => {
-                    const isProtein = /protein/i.test(n.nutrient);
-                    return (
-                      <View
-                        key={i}
+        const getNutrientColor = (name: string, valStr?: string) => {
+          if (!valStr || valStr === '-') return colors.textSecondary;
+          const num = parseFloat(valStr.replace(/[^0-9.]/g, ''));
+          if (isNaN(num)) return colors.textSecondary;
+
+          const lower = name.toLowerCase();
+          if (lower.includes('protein') && num >= 5) return colors.successText;
+          if (lower.includes('fiber') && num >= 4) return colors.successText;
+          if ((lower.includes('sugar') || lower.includes('added sugar')) && num >= 10) return colors.warningText;
+          if (lower.includes('sodium') && num >= 400) return colors.dangerText;
+          if (lower.includes('saturated') && num >= 4) return colors.warningText;
+
+          return colors.textSecondary;
+        };
+
+        return (
+          <FadeInView key="tab-nutrition" delay={20}>
+            <Card>
+              <CardHeader
+                title="Nutritional Panel"
+                subtitle={
+                  data.nutrition.servingSizeLabel
+                    ? `Serving Size: ${data.nutrition.servingSizeLabel}`
+                    : hasPer100 && hasPerServe
+                    ? 'Reported nutrient content per serving & per 100g'
+                    : hasPerServe
+                    ? 'Reported nutrient content per serving'
+                    : 'Reported nutrient content'
+                }
+              />
+              <CardContent>
+                {nutrientsList.length > 0 ? (
+                  <View style={styles.nutritionTable}>
+                    <View
+                      style={[
+                        styles.tableHeaderRow,
+                        {
+                          backgroundColor: colors.surfaceRaised,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
                         style={[
-                          styles.tableRow,
-                          { borderBottomColor: colors.separator },
+                          styles.tableColHeader,
+                          { color: colors.text, flex: 2 },
                         ]}
                       >
+                        Nutrient
+                      </Text>
+                      {hasPerServe && (
                         <Text
                           style={[
-                            styles.nutrientName,
-                            { color: colors.text, flex: 2 },
+                            styles.tableColHeader,
+                            { color: colors.text, flex: 1, textAlign: 'right' },
                           ]}
                         >
-                          {n.nutrient}
+                          Per Serve
                         </Text>
+                      )}
+                      {hasPer100 && (
                         <Text
                           style={[
-                            styles.nutrientValue,
-                            {
-                              color: isProtein
-                                ? colors.successText
-                                : colors.textSecondary,
-                              fontWeight: isProtein
-                                ? typography.fontWeights.bold
-                                : typography.fontWeights.medium,
-                              flex: 1,
-                              textAlign: 'right',
-                            },
+                            styles.tableColHeader,
+                            { color: colors.text, flex: 1, textAlign: 'right' },
                           ]}
                         >
-                          {n.perServing || '-'}
+                          Per 100g
                         </Text>
-                        <Text
+                      )}
+                    </View>
+
+                    {nutrientsList.map((n, i) => {
+                      const serveColor = getNutrientColor(n.nutrient, n.perServing);
+                      const p100Color = getNutrientColor(n.nutrient, n.per100mL);
+                      return (
+                        <View
+                          key={i}
                           style={[
-                            styles.nutrientValue,
-                            {
-                              color: isProtein
-                                ? colors.successText
-                                : colors.textSecondary,
-                              fontWeight: isProtein
-                                ? typography.fontWeights.bold
-                                : typography.fontWeights.regular,
-                              flex: 1,
-                              textAlign: 'right',
-                            },
+                            styles.tableRow,
+                            { borderBottomColor: colors.separator },
                           ]}
                         >
-                          {n.per100mL || '-'}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              ) : (
-                <Text
-                  style={[
-                    styles.rawNutritionText,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {data.nutrition.rawText ||
-                    'No structured nutrition facts table found on label.'}
-                </Text>
-              )}
-            </CardContent>
-          </Card>
-        </FadeInView>
-      )}
+                          <Text
+                            style={[
+                              styles.nutrientName,
+                              { color: colors.text, flex: 2 },
+                            ]}
+                          >
+                            {n.nutrient}
+                          </Text>
+                          {hasPerServe && (
+                            <Text
+                              style={[
+                                styles.nutrientValue,
+                                {
+                                  color: serveColor,
+                                  fontWeight: serveColor !== colors.textSecondary
+                                    ? typography.fontWeights.bold
+                                    : typography.fontWeights.medium,
+                                  flex: 1,
+                                  textAlign: 'right',
+                                },
+                              ]}
+                            >
+                              {n.perServing || '-'}
+                            </Text>
+                          )}
+                          {hasPer100 && (
+                            <Text
+                              style={[
+                                styles.nutrientValue,
+                                {
+                                  color: p100Color,
+                                  fontWeight: p100Color !== colors.textSecondary
+                                    ? typography.fontWeights.bold
+                                    : typography.fontWeights.regular,
+                                  flex: 1,
+                                  textAlign: 'right',
+                                },
+                              ]}
+                            >
+                              {n.per100mL || '-'}
+                            </Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text
+                    style={[
+                      styles.rawNutritionText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {data.nutrition.rawText ||
+                      'No structured nutrition facts table found on label.'}
+                  </Text>
+                )}
+              </CardContent>
+            </Card>
+          </FadeInView>
+        );
+      })()}
 
       {/* Bottom Action */}
       <FadeInView delay={180} style={styles.bottomActions}>
@@ -504,6 +602,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   productHeader: {
+    marginTop: spacing.xs,
     marginBottom: spacing.base,
   },
   brandText: {

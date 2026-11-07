@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -20,6 +19,7 @@ import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { SegmentedControl } from '../components/SegmentedControl';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession } from '../lib/auth';
 import { useTheme, ThemeMode } from '../theme/ThemeContext';
@@ -37,52 +37,65 @@ export default function ProfileScreen() {
   const [serverMessage, setServerMessage] = useState<string>(
     'Checking server status...'
   );
+  const [isCheckingServer, setIsCheckingServer] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
-  const checkBackend = async () => {
+  const checkBackend = useCallback(async () => {
+    setIsCheckingServer(true);
+    setServerOnline(null);
+    setServerMessage('Pinging EatInformed API...');
+    const start = Date.now();
     const health = await checkApiHealth();
+    const elapsedMs = Date.now() - start;
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     setServerOnline(health.ok);
-    setServerMessage(health.message);
-  };
+    setServerMessage(
+      health.ok
+        ? `${health.message} (${elapsedMs}ms · Checked at ${timeStr})`
+        : `${health.message} (Checked at ${timeStr})`
+    );
+    setIsCheckingServer(false);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       checkBackend();
       getUserSession().then((session) => {
-        if (session && session.isLoggedIn) {
+        if (session && session.isLoggedIn && !session.isAnonymous && session.email) {
           setIsLoggedIn(true);
-          setIsAnonymous(Boolean(session.isAnonymous));
+          setIsAnonymous(false);
           setUserEmail(session.email);
+          setUserName(session.name || session.email.split('@')[0]);
         } else {
           setIsLoggedIn(false);
-          setIsAnonymous(false);
+          setIsAnonymous(true);
           setUserEmail(null);
+          setUserName(null);
         }
       });
-    }, [])
+    }, [checkBackend])
   );
 
   const handleAuthAction = () => {
     if (isLoggedIn && !isAnonymous) {
-      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await clearUserSession();
-            setIsLoggedIn(false);
-            setIsAnonymous(false);
-            setUserEmail(null);
-          },
-        },
-      ]);
+      setSignOutModalVisible(true);
     } else {
       navigation.navigate('Auth', { initialTab: 'login' });
     }
+  };
+
+  const confirmSignOut = async () => {
+    setSignOutModalVisible(false);
+    await clearUserSession();
+    setIsLoggedIn(false);
+    setIsAnonymous(true);
+    setUserEmail(null);
+    setUserName(null);
   };
 
   return (
@@ -123,7 +136,7 @@ export default function ProfileScreen() {
               <View style={styles.userInfo}>
                 <Text style={[styles.userName, { color: colors.text }]}>
                   {isLoggedIn && !isAnonymous
-                    ? userEmail?.split('@')[0] || 'User'
+                    ? userName || userEmail?.split('@')[0] || 'Member'
                     : 'Guest Explorer'}
                 </Text>
                 <Text
@@ -216,11 +229,13 @@ export default function ProfileScreen() {
 
               <PressableScale
                 onPress={checkBackend}
+                disabled={isCheckingServer}
                 style={[
                   styles.recheckButton,
                   {
                     backgroundColor: colors.surfaceRaised,
                     borderColor: colors.border,
+                    opacity: isCheckingServer ? 0.6 : 1,
                   },
                 ]}
                 scaleTo={0.94}
@@ -228,7 +243,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.recheckText, { color: colors.textSecondary }]}
                 >
-                  Check
+                  {isCheckingServer ? 'Checking...' : 'Check'}
                 </Text>
               </PressableScale>
             </View>
@@ -260,7 +275,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.techSubtitle, { color: colors.textSecondary }]}
                 >
-                  NVIDIA Nemotron 3.5 Super VL (120B) via NVIDIA NIM
+                  NVIDIA Nemotron Nano 12B v2 VL (Unified Single-Pass Vision & OCR)
                 </Text>
               </View>
             </View>
@@ -281,7 +296,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.techSubtitle, { color: colors.textSecondary }]}
                 >
-                  NVIDIA Nemotron 3.5 Lightning (30B) Reasoning Model
+                  Qwen 3.5 (122B) Clinical Nutrition Reasoning Model
                 </Text>
               </View>
             </View>
@@ -319,6 +334,17 @@ export default function ProfileScreen() {
           Food Product Analysis & Nutrition Intelligence
         </Text>
       </FadeInView>
+
+      <ConfirmModal
+        visible={signOutModalVisible}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your EatInformed account?"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        destructive={true}
+        onConfirm={confirmSignOut}
+        onCancel={() => setSignOutModalVisible(false)}
+      />
     </Screen>
   );
 }

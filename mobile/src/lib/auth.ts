@@ -114,61 +114,53 @@ export async function signInAsGuest(): Promise<UserSessionData> {
   }
 
   return await saveUserSession(
-    'guest@eatinformed.local',
+    '',
     'Guest Explorer',
     `guest_${Date.now()}`,
     true
   );
 }
 
-// ponytail: Google OAuth flow with system browser sheet + graceful mock fallback in dev/test
+// ponytail: Google OAuth flow with system browser sheet
 export async function signInWithGoogle(): Promise<UserSessionData> {
   const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
-  if (clientId) {
-    try {
-      const redirectUri = 'eatinformed://auth/callback';
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
-        clientId
-      )}&response_type=token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}`;
-
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-
-      if (result.type === 'success' && result.url) {
-        const match = result.url.match(/access_token=([^&]+)/);
-        const accessToken = match ? match[1] : null;
-
-        if (accessToken) {
-          try {
-            const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            if (userRes.ok) {
-              const userInfo = await userRes.json();
-              return await saveUserSession(
-                userInfo.email || 'user@gmail.com',
-                userInfo.name || 'Google User',
-                accessToken,
-                false,
-                userInfo.picture
-              );
-            }
-          } catch (fetchErr) {
-            console.warn('Failed to fetch Google profile info:', fetchErr);
-          }
-        }
-      }
-    } catch (browserErr) {
-      console.warn('WebBrowser auth session error:', browserErr);
-    }
+  if (!clientId) {
+    throw new Error('Google Sign-In is not configured (missing EXPO_PUBLIC_GOOGLE_CLIENT_ID).');
   }
 
+  const redirectUri = 'eatinformed://auth/callback';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+    clientId
+  )}&response_type=token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}`;
+
+  const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+  if (result.type !== 'success' || !result.url) {
+    throw new Error('Google sign-in was cancelled.');
+  }
+
+  const match = result.url.match(/access_token=([^&]+)/);
+  const accessToken = match ? match[1] : null;
+
+  if (!accessToken) {
+    throw new Error('No access token returned from Google authentication.');
+  }
+
+  const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!userRes.ok) {
+    throw new Error('Failed to fetch user profile from Google.');
+  }
+  const userInfo = await userRes.json();
   return await saveUserSession(
-    'eatinformed.user@gmail.com',
-    'EatInformed Member',
-    `google_auth_${Date.now()}`,
-    false
+    userInfo.email || '',
+    userInfo.name || userInfo.email?.split('@')[0] || 'Member',
+    accessToken,
+    false,
+    userInfo.picture
   );
 }

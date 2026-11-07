@@ -7,6 +7,7 @@ import {
   Pressable,
   ViewStyle,
   StyleProp,
+  StyleSheet,
   AccessibilityInfo,
 } from 'react-native';
 
@@ -159,6 +160,43 @@ export function PressableScale({
   hitSlop,
 }: PressableScaleProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const flatStyle = StyleSheet.flatten(style) || {};
+
+  // ponytail: extract outer flexbox & dimensions to outer Pressable so Yoga properly sizes full-width buttons
+  const {
+    width,
+    minWidth,
+    maxWidth,
+    flex,
+    flexGrow,
+    flexShrink,
+    alignSelf,
+    margin,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    marginHorizontal,
+    marginVertical,
+    ...innerStyle
+  } = flatStyle;
+
+  const outerLayoutStyle: ViewStyle = {
+    ...(width !== undefined ? { width } : {}),
+    ...(minWidth !== undefined ? { minWidth } : {}),
+    ...(maxWidth !== undefined ? { maxWidth } : {}),
+    ...(flex !== undefined ? { flex } : {}),
+    ...(flexGrow !== undefined ? { flexGrow } : {}),
+    ...(flexShrink !== undefined ? { flexShrink } : {}),
+    ...(alignSelf !== undefined ? { alignSelf } : {}),
+    ...(margin !== undefined ? { margin } : {}),
+    ...(marginTop !== undefined ? { marginTop } : {}),
+    ...(marginBottom !== undefined ? { marginBottom } : {}),
+    ...(marginLeft !== undefined ? { marginLeft } : {}),
+    ...(marginRight !== undefined ? { marginRight } : {}),
+    ...(marginHorizontal !== undefined ? { marginHorizontal } : {}),
+    ...(marginVertical !== undefined ? { marginVertical } : {}),
+  };
 
   const handlePressIn = () => {
     Animated.spring(scale, {
@@ -183,8 +221,15 @@ export function PressableScale({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
       hitSlop={hitSlop}
+      style={outerLayoutStyle}
     >
-      <Animated.View style={[style, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[
+          innerStyle,
+          width === '100%' ? { width: '100%' } : null,
+          { transform: [{ scale }] },
+        ]}
+      >
         {children}
       </Animated.View>
     </Pressable>

@@ -117,6 +117,12 @@ export default function ScanScreen() {
 
   const handlePickFromGallery = async () => {
     try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        setErrorMessage('Photo gallery access is required to select food label photos.');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
@@ -126,15 +132,37 @@ export default function ScanScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        if (asset.uri && asset.base64) {
+        let base64 = asset.base64;
+        if (!base64 && asset.uri) {
+          // ponytail: fallback read for remote or cloud-synced photos without initial base64
+          try {
+            const blobRes = await fetch(asset.uri);
+            const blob = await blobRes.blob();
+            base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const res = reader.result as string;
+                resolve(res.includes(',') ? res.split(',')[1] : res);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          } catch (readErr) {
+            console.warn('Failed to read cloud image blob:', readErr);
+          }
+        }
+
+        if (asset.uri && base64) {
           setSelectedImageUri(asset.uri);
-          setSelectedImageBase64(asset.base64);
+          setSelectedImageBase64(base64);
           setErrorMessage(null);
+        } else {
+          setErrorMessage('Could not load image data. Please choose a local image.');
         }
       }
     } catch (err: unknown) {
       console.error('Failed to pick image from gallery:', err);
-      Alert.alert('Gallery Error', 'Could not access photo library.');
+      setErrorMessage('Could not access photo library.');
     }
   };
 
@@ -313,21 +341,24 @@ export default function ScanScreen() {
         <Text style={[styles.permissionSubtitle, { color: colors.textSecondary }]}>
           EatInformed uses your camera to scan food labels, ingredients, and nutrition tables in real time.
         </Text>
-        <Button
-          title="Enable Camera Access"
-          onPress={requestPermission}
-          variant="primary"
-          size="lg"
-          style={{ width: '100%', marginBottom: spacing.md }}
-        />
-        <Button
-          title="Pick from Photo Gallery Instead"
-          onPress={handlePickFromGallery}
-          variant="secondary"
-          size="md"
-          icon={<ImageIcon size={18} color={colors.text} />}
-          style={{ width: '100%' }}
-        />
+        <View style={styles.permissionButtonsWrapper}>
+          <Button
+            title="Enable Camera Access"
+            onPress={requestPermission}
+            variant="primary"
+            size="lg"
+            icon={<CameraIcon size={18} color={colors.onPrimary} />}
+            style={styles.fullWidthButton}
+          />
+          <Button
+            title="Pick from Photo Gallery Instead"
+            onPress={handlePickFromGallery}
+            variant="secondary"
+            size="lg"
+            icon={<ImageIcon size={18} color={colors.text} />}
+            style={styles.fullWidthButton}
+          />
+        </View>
       </Screen>
     );
   }
@@ -431,6 +462,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
+  },
+  permissionButtonsWrapper: {
+    width: '100%',
+    gap: spacing.md,
+    alignItems: 'stretch',
+    marginTop: spacing.md,
+  },
+  fullWidthButton: {
+    width: '100%',
   },
   topControls: {
     flexDirection: 'row',

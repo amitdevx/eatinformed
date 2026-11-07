@@ -236,9 +236,14 @@ export default function AuthScreen() {
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={[styles.input, { color: colors.text }]}
+                  style={[styles.input, { color: colors.text, backgroundColor: 'transparent' }]}
                   placeholder="you@example.com"
                   placeholderTextColor={colors.textMuted}
+                  selectionColor={colors.primary}
+                  underlineColorAndroid="transparent"
+                  importantForAutofill="noExcludeDescendants"
+                  autoComplete="off"
+                  autoCorrect={false}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -266,9 +271,14 @@ export default function AuthScreen() {
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={[styles.input, { color: colors.text }]}
+                  style={[styles.input, { color: colors.text, backgroundColor: 'transparent' }]}
                   placeholder="Enter password"
                   placeholderTextColor={colors.textMuted}
+                  selectionColor={colors.primary}
+                  underlineColorAndroid="transparent"
+                  importantForAutofill="noExcludeDescendants"
+                  autoComplete="off"
+                  autoCorrect={false}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry

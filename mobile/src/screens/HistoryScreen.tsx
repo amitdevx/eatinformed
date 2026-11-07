@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -19,6 +18,7 @@ import { Card } from '../components/Card';
 import { EmptyState } from '../components/States';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
@@ -33,6 +33,8 @@ export default function HistoryScreen() {
   const { colors } = useTheme();
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isClearAllModalVisible, setIsClearAllModalVisible] = useState(false);
 
   const loadHistory = useCallback(async () => {
     const items = await getScanHistory();
@@ -59,39 +61,25 @@ export default function HistoryScreen() {
   };
 
   const handleDeleteItem = (id: string, name: string) => {
-    Alert.alert(
-      'Delete Scan',
-      `Remove "${name}" from your saved scan history?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const updated = await deleteHistoryItem(id);
-            setHistoryItems(updated);
-          },
-        },
-      ]
-    );
+    setItemToDelete({ id, name });
+  };
+
+  const confirmDeleteItem = async () => {
+    if (itemToDelete) {
+      const updated = await deleteHistoryItem(itemToDelete.id);
+      setHistoryItems(updated);
+      setItemToDelete(null);
+    }
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear History',
-      'Are you sure you want to delete all saved scan reports from this device?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: async () => {
-            await clearAllHistory();
-            setHistoryItems([]);
-          },
-        },
-      ]
-    );
+    setIsClearAllModalVisible(true);
+  };
+
+  const confirmClearAll = async () => {
+    setIsClearAllModalVisible(false);
+    await clearAllHistory();
+    setHistoryItems([]);
   };
 
   const formatTimestamp = (timestamp: number): string => {
@@ -207,6 +195,28 @@ export default function HistoryScreen() {
           </FadeInView>
         ))
       )}
+
+      <ConfirmModal
+        visible={itemToDelete !== null}
+        title="Delete Scan"
+        message={itemToDelete ? `Remove "${itemToDelete.name}" from your saved scan history?` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+        destructive={true}
+        onConfirm={confirmDeleteItem}
+        onCancel={() => setItemToDelete(null)}
+      />
+
+      <ConfirmModal
+        visible={isClearAllModalVisible}
+        title="Clear History"
+        message="Are you sure you want to delete all saved scan reports from this device?"
+        confirmText="Clear All"
+        cancelText="Cancel"
+        destructive={true}
+        onConfirm={confirmClearAll}
+        onCancel={() => setIsClearAllModalVisible(false)}
+      />
     </Screen>
   );
 }
