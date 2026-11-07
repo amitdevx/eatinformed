@@ -36,7 +36,9 @@
         {
           "photosPermission": "Allow EatInformed to access your photos to select food label images."
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
     ]
   }
 }

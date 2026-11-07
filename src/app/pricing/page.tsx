@@ -74,7 +74,7 @@ const PRICING_STAGES = [
     subtitle: "Paywalled health data and corporate diet subscriptions.",
     tag: "Legacy Industry Standard",
     title: "Corporate Paywalls",
-    buttonText: "Subscribe for $100 / month",
+    buttonText: "Bypass $100 Paywall • Scan Free",
   },
   {
     id: "50",
@@ -85,7 +85,7 @@ const PRICING_STAGES = [
     subtitle: "Recurring monthly fees just to know what ingredients you consume.",
     tag: "Commercial Tier",
     title: "Subscription Access",
-    buttonText: "Subscribe for $50 / month",
+    buttonText: "Bypass $50 Paywall • Scan Free",
   },
   {
     id: "10",
@@ -96,7 +96,7 @@ const PRICING_STAGES = [
     subtitle: "Even low paywalls turn basic nutrition awareness into a luxury.",
     tag: "Consumer Tier",
     title: "Nutrition Apps",
-    buttonText: "Subscribe for $10 / month",
+    buttonText: "Bypass $10 Paywall • Scan Free",
   },
   {
     id: "0",
@@ -162,6 +162,23 @@ export default function PricingPage() {
               </p>
             </motion.div>
           </AnimatePresence>
+        </div>
+
+        {/* Stage Navigation Dots */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {PRICING_STAGES.map((stage, idx) => (
+            <button
+              key={stage.id}
+              onClick={() => setStageIndex(idx)}
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
+                stageIndex === idx
+                  ? "w-8 bg-primary"
+                  : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+              )}
+              aria-label={`Jump to ${stage.title} (${stage.price})`}
+            />
+          ))}
         </div>
 
         {/* Pricing Card */}

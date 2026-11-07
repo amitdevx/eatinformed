@@ -47,6 +47,7 @@ jobs:
         working-directory: mobile
         env:
           EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://eatinformed.amitdevx.tech' }}
+          EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_CLIENT_ID || secrets.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '' }}
           NODE_ENV: production
         run: npx expo prebuild --platform android --clean
 
@@ -58,6 +59,7 @@ jobs:
         working-directory: mobile/android
         env:
           EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://eatinformed.amitdevx.tech' }}
+          EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_CLIENT_ID || secrets.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '' }}
           NODE_ENV: production
         run: ./gradlew assembleRelease --no-daemon
 

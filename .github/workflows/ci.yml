@@ -53,6 +53,11 @@ jobs:
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
       - run: yarn typecheck
+      - name: Mobile TypeScript Check
+        run: |
+          cd mobile
+          npm ci || npm install
+          npx tsc --noEmit
 
   build:
     name: Build Check

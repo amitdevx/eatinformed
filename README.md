@@ -1,14 +1,14 @@
 #  EatInformed
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.2.6-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-AI%20Powered-4285F4?style=flat&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
-[![Firebase](https://img.shields.io/badge/Firebase-Backend-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Genkit](https://img.shields.io/badge/Genkit-1.8.0-orange?style=flat)](https://firebase.google.com/docs/genkit)
+[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA%20NIM-Nemotron%20%2B%20Qwen-76B900?style=flat&logo=nvidia&logoColor=white)](https://build.nvidia.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Expo SDK 53](https://img.shields.io/badge/Expo-SDK%2053-000020?style=flat&logo=expo&logoColor=white)](https://expo.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 <h3 align="center">
-  AI-powered web application to analyze food labels with instant insights into nutritional facts, ingredient breakdown, and potential health risks.
+  AI-powered food product analysis platform with instant insights into nutritional facts, ingredient deconstruction, NOVA processing classification, and potential health risks.
 </h3>
 
 <h3 align="center">
@@ -19,81 +19,60 @@
 
 ## Overview
 
-**EatInformed** empowers users to make healthier food choices by leveraging advanced AI to decode complex food labels. Simply upload an image of a food product label, and receive comprehensive analysis including nutritional information, ingredient breakdown, allergen warnings, and health risk assessments-all powered by Google Gemini AI with Firebase Genkit integration.
+**EatInformed** empowers consumers to make healthier food choices by leveraging state-of-the-art vision and clinical reasoning AI to decode complex food packaging. Simply upload an image of a food product label, and receive a comprehensive health report including nutritional data, ingredient purpose, allergen alerts, and international NOVA processing classification—powered by NVIDIA NIM (`nvidia/nemotron-nano-12b-v2-vl` & `qwen/qwen3.5-122b-a10b`).
 
-Built with modern web technologies and designed for performance, EatInformed delivers real-time analysis with a beautiful, responsive interface optimized for all devices.
+Available as a Next.js web application and an Expo React Native mobile app with full Apple HIG design compliance.
 
 ---
 
 ## Key Features
 
 ### AI-Powered Intelligence
-- **Google Gemini AI Integration:** Advanced multimodal AI for accurate image and text analysis
-- **Firebase Genkit Framework:** Robust AI workflow orchestration and management
-- **Real-Time Processing:** Instant analysis with streaming responses
-- **Multi-Language Support:** Analyze labels in various languages
+- **NVIDIA NIM Vision OCR:** High-precision optical character recognition and visual label parsing
+- **Clinical Nutrition Reasoning:** In-depth ingredient purpose deconstruction and dietary evaluation
+- **NOVA Classification:** International food processing categorization (Groups 1 to 4)
+- **Real-Time Processing:** Single-pass vision analysis with automated fallback orchestration
 
 ### Comprehensive Analysis
-- **Nutritional Facts Extraction:** Complete breakdown of calories, macros, vitamins, and minerals
-- **Ingredient Analysis:** Detailed examination of all ingredients with health implications
-- **Allergen Detection:** Automatic identification of common allergens (nuts, dairy, gluten, etc.)
-- **Health Risk Assessment:** AI-powered evaluation of potentially harmful additives
-- **Additive Identification:** Recognition and explanation of E-numbers and preservatives
-- **Dietary Compliance:** Check against vegan, vegetarian, keto, and other dietary restrictions
+- **Nutritional Facts Transcription:** Structured breakdown of calories, macronutrients, and sodium
+- **Ingredient Deconstruction:** Purpose analysis and additive screening for all ingredients
+- **Allergen Detection:** Automatic identification of declared allergens
+- **Health Tradeoffs:** Fact-based pros, cons, and health considerations
 
-### Modern User Experience
-- **Responsive Design:** Seamless experience across desktop, tablet, and mobile devices
-- **Beautiful UI Components:** Built with Radix UI primitives and Tailwind CSS
-- **Interactive Visualizations:** Charts and graphs using Recharts
-- **Smooth Animations:** Enhanced with TailwindCSS Animate and TSParticles
-- **Dark Mode Support:** Eye-friendly interface for all lighting conditions
-
-### Security & Authentication
-- **Firebase Authentication:** Secure user sign-up and login
-- **Email/Password & Social Auth:** Multiple authentication methods
-- **Protected Routes:** Secure access to user-specific features
-- **Admin Panel:** Firebase Admin SDK integration for backend operations
-
-### Data Management
-- **SQLite Database:** Efficient local data storage
-- **Analysis History:** Save and review past scans
-- **User Profiles:** Personalized dietary preferences and restrictions
-- **Offline Support:** Access previously analyzed products without internet
+### Modern Cross-Platform Experience
+- **Responsive Web:** Built with Next.js 15, Tailwind CSS, and Framer Motion
+- **Native Mobile App:** Built with Expo SDK 53, React Native, and Apple Fluid motion
+- **Dark & Light Modes:** System-following and user-selectable theme support
+- **Local-First Privacy:** Scan history stored securely on-device with zero third-party tracking
 
 ---
 
 ## Tech Stack
 
-### Frontend Framework
+### Web & Backend Framework
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| **[Next.js](https://nextjs.org/)** | 15.3.3 | React framework with App Router and Turbopack |
-| **[React](https://react.dev/)** | 18.3.1 | Component-based UI library |
-| **[TypeScript](https://www.typescriptlang.org/)** | 5.x | Type-safe development |
+| **[Next.js](https://nextjs.org/)** | 15.2.6 | React framework with App Router & Turbopack |
+| **[React](https://react.dev/)** | 19.x | Component UI architecture |
+| **[TypeScript](https://www.typescriptlang.org/)** | 5.x | Strict end-to-end type safety |
+| **[Tailwind CSS](https://tailwindcss.com/)** | 3.4.x | Design token styling |
+| **[Framer Motion](https://www.framer.com/motion/)** | 12.x | Fluid spring animations |
 
-### Styling & UI Components
+### Mobile Application
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| **[Tailwind CSS](https://tailwindcss.com/)** | 3.4.1 | Utility-first CSS framework |
-| **[Radix UI](https://www.radix-ui.com/)** | Various | Accessible component primitives |
-| **[Lucide React](https://lucide.dev/)** | 0.475.0 | Beautiful icon library |
-| **[TailwindCSS Animate](https://www.npmjs.com/package/tailwindcss-animate)** | 1.0.7 | Animation utilities |
-| **[TSParticles](https://particles.js.org/)** | 3.0.0+ | Interactive particle effects |
+| **[Expo](https://expo.dev/)** | 53.x | Cross-platform native runtime |
+| **[React Native](https://reactnative.dev/)** | 0.86.x | Native mobile component architecture |
+| **[AsyncStorage](https://react-native-async-storage.github.io/async-storage/)** | 2.2.x | Persistent scan history storage |
+| **[Expo Camera](https://docs.expo.dev/versions/latest/sdk/camera/)** | 53.x | Real-time label photo capture |
 
-### AI & Backend Services
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| **[Google Gemini AI](https://deepmind.google/technologies/gemini/)** | Latest | Multimodal AI for image and text analysis |
-| **[Firebase Genkit](https://firebase.google.com/docs/genkit)** | 1.8.0 | AI workflow framework |
-| **[@genkit-ai/googleai](https://www.npmjs.com/package/@genkit-ai/googleai)** | 1.8.0 | Google AI plugin for Genkit |
-| **[@genkit-ai/next](https://www.npmjs.com/package/@genkit-ai/next)** | 1.8.0 | Next.js integration for Genkit |
-
-### Authentication & Database
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| **[Firebase](https://firebase.google.com/)** | 10.12.2 | Client-side authentication and services |
-| **[Firebase Admin](https://firebase.google.com/docs/admin/setup)** | 12.2.0 | Server-side Firebase operations |
-| **[SQLite](https://www.sqlite.org/)** | Latest | Lightweight relational database |
+### AI & Services
+| Technology | Provider | Purpose |
+|-----------|----------|---------|
+| **Nemotron Nano 12B v2 VL** | NVIDIA NIM | Optical character recognition & label layout parsing |
+| **Qwen 3.5 (122B)** | NVIDIA NIM | Clinical nutrition reasoning & additive analysis |
+| **Firebase Auth** | Google | Multi-platform authentication & guest sessions |
+| **Sharp** | Node.js | EXIF auto-rotation & adaptive image normalization |
 
 ### Form Management & Validation
 | Technology | Version | Purpose |
@@ -147,7 +126,7 @@ Before you begin, ensure you have the following installed:
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/uffamit/eatinformed.git
+   git clone https://github.com/amitdevx/eatinformed.git
    cd eatinformed
    ```
 
@@ -598,14 +577,14 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ##  Contact & Support
 
-**Admin** - [@uffamit](https://github.com/uffamit)
+**Admin** - [@amitdevx](https://github.com/amitdevx)
 
-**Project Link:** [https://github.com/uffamit/eatinformed](https://github.com/uffamit/eatinformed)
+**Project Link:** [https://github.com/amitdevx/eatinformed](https://github.com/amitdevx/eatinformed)
 
 ### Get Help
--  [Report a Bug](https://github.com/uffamit/eatinformed/issues)
--  [Request a Feature](https://github.com/uffamit/eatinformed/issues)
--  [View Documentation](https://github.com/uffamit/eatinformed/tree/master/docs)
+-  [Report a Bug](https://github.com/amitdevx/eatinformed/issues)
+-  [Request a Feature](https://github.com/amitdevx/eatinformed/issues)
+-  [View Documentation](https://github.com/amitdevx/eatinformed/tree/master/docs)
 
 ---
 

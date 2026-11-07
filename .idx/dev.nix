@@ -12,7 +12,7 @@
   # a firebase.json file is written into the user's directory
   services.firebase.emulators = {
     detect = true;
-    projectId = "demo-app";
+    projectId = "eatinformed";
     services = ["auth" "firestore"];
   };
   idx = {
@@ -32,7 +32,7 @@
       enable = true;
       previews = {
         web = {
-          command = ["npm" "run" "dev" "--" "--port" "$PORT" "--hostname" "0.0.0.0"];
+          command = ["yarn" "dev" "--port" "$PORT" "--hostname" "0.0.0.0"];
           manager = "web";
         };
       };
