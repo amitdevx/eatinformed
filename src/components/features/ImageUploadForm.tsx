@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, type ChangeEvent, type DragEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 import { type ProductAnalysisOutput } from '@/ai/flows/product-analysis-types';
@@ -39,15 +40,31 @@ const LOADING_STEPS = [
 
 export function CheckPageClient() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>(LOADING_STEPS[0]);
+  const [progress, setProgress] = useState(0);
+  const [etaSeconds, setEtaSeconds] = useState(16);
   const [error, setError] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<ProductAnalysisOutput | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [recentScans, setRecentScans] = useState<HistoryItem[]>([]);
+
+  // Automatically load sample product if requested via query param
+  useEffect(() => {
+    const sampleParam = searchParams.get('sample');
+    if (sampleParam) {
+      const found = SAMPLE_PRODUCTS.find((p) => p.id === sampleParam);
+      if (found) {
+        setAnalysisData(found.data);
+        setImagePreviewUrl(null);
+        setError(null);
+      }
+    }
+  }, [searchParams]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -108,16 +125,33 @@ export function CheckPageClient() {
     }
   }, []);
 
-  // Dynamic progress step ticker during AI analysis
+  // Monotonic asymptotic progress ticker during AI analysis (never loops)
   useEffect(() => {
-    if (!isLoading) return;
-    let stepIndex = 0;
+    if (!isLoading) {
+      setProgress(0);
+      setEtaSeconds(16);
+      return;
+    }
+
+    const startTime = Date.now();
+    const ESTIMATED_MS = 16000;
+    setProgress(5);
     setLoadingStep(LOADING_STEPS[0]);
 
     const interval = setInterval(() => {
-      stepIndex = (stepIndex + 1) % LOADING_STEPS.length;
-      setLoadingStep(LOADING_STEPS[stepIndex]);
-    }, 2200);
+      const elapsed = Date.now() - startTime;
+      const targetProgress = Math.min(95, Math.floor((1 - Math.exp(-elapsed / (ESTIMATED_MS * 0.45))) * 95));
+      setProgress((prev) => Math.max(prev, targetProgress));
+
+      const stepIdx = Math.min(
+        LOADING_STEPS.length - 1,
+        Math.floor((targetProgress / 95) * LOADING_STEPS.length)
+      );
+      setLoadingStep(LOADING_STEPS[stepIdx]);
+
+      const remaining = Math.max(1, Math.ceil((ESTIMATED_MS - elapsed) / 1000));
+      setEtaSeconds(remaining);
+    }, 150);
 
     return () => clearInterval(interval);
   }, [isLoading]);
@@ -294,6 +328,15 @@ export function CheckPageClient() {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+
+      if (!video.videoWidth || !video.videoHeight) {
+        toast({
+          variant: 'destructive',
+          title: 'Camera Initializing',
+          description: 'Please wait a moment for the camera feed to activate before capturing.',
+        });
+        return;
+      }
       
       const MAX_DIM = 1024;
       let width = video.videoWidth;
@@ -346,6 +389,7 @@ export function CheckPageClient() {
         return;
       }
       
+      setProgress(100);
       setAnalysisData(result);
       saveToHistory(result, photoDataUri);
 
@@ -450,13 +494,24 @@ export function CheckPageClient() {
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center justify-center space-y-6 py-12"
               >
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
-                  <Loader2 className="h-16 w-16 animate-spin text-primary relative z-10" />
+                <div className="h-14 w-14 rounded-full border-2 border-primary/20 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-                <div className="text-center space-y-2">
-                  <p className="text-lg font-medium text-foreground transition-all duration-300">{loadingStep}</p>
-                  <p className="text-sm text-muted-foreground">Analyzing food label with NVIDIA vision & nutrition reasoning models.</p>
+                <div className="text-center space-y-1.5 max-w-sm px-4">
+                  <p className="text-base font-semibold text-foreground transition-all duration-300">{loadingStep}</p>
+                  <p className="text-xs text-muted-foreground">Analyzing food label with NVIDIA vision & nutrition reasoning models.</p>
+                </div>
+                <div className="w-full max-w-xs space-y-2 px-2">
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground font-medium">
+                    <span>{progress}%</span>
+                    <span>{progress >= 95 ? 'Wrapping up...' : `~${etaSeconds}s remaining`}</span>
+                  </div>
                 </div>
               </motion.div>
             ) : imagePreviewUrl ? (

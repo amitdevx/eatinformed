@@ -2,6 +2,9 @@
 const firebaseProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
 const nextConfig = {
+  turbopack: {
+    root: '.',
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

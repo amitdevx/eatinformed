@@ -17,6 +17,8 @@ interface LoadingStateProps {
   message?: string;
   stepMessage?: string;
   progress?: number;
+  elapsedMs?: number;
+  estimatedTotalMs?: number;
   style?: ViewStyle;
 }
 
@@ -24,66 +26,95 @@ export function LoadingState({
   message = 'Analyzing food label...',
   stepMessage,
   progress,
+  elapsedMs = 0,
+  estimatedTotalMs = 15000,
   style,
 }: LoadingStateProps) {
   const { colors } = useTheme();
-  const pulse = useRef(new Animated.Value(0.85)).current;
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+
+  const clampedProgress =
+    typeof progress === 'number' ? Math.max(0.04, Math.min(1, progress)) : null;
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1.06,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0.85,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse]);
+    if (clampedProgress !== null) {
+      Animated.timing(animatedProgress, {
+        toValue: clampedProgress,
+        duration: 240,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [clampedProgress, animatedProgress]);
+
+  const pctText =
+    clampedProgress !== null ? `${Math.round(clampedProgress * 100)}%` : null;
+
+  const remainingSec =
+    clampedProgress !== null && estimatedTotalMs > 0
+      ? Math.max(1, Math.ceil((estimatedTotalMs - elapsedMs) / 1000))
+      : null;
+
+  const etaLabel =
+    clampedProgress !== null
+      ? clampedProgress >= 0.95
+        ? 'Wrapping up...'
+        : remainingSec && elapsedMs < estimatedTotalMs
+        ? `~${remainingSec}s remaining`
+        : 'Still working — Complex label...'
+      : null;
 
   return (
     <FadeInView style={[styles.centerContainer, style]}>
-      <Animated.View
+      {/* Stationary Apple HIG Minimal Spinner Pill (No Zooming/Scaling) */}
+      <View
         style={[
           styles.spinnerContainer,
           {
-            backgroundColor: colors.primaryMuted,
-            borderColor: colors.primaryBorder,
-            transform: [{ scale: pulse }],
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
           },
         ]}
       >
-        <ActivityIndicator size="large" color={colors.primary} />
-      </Animated.View>
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
       <Text style={[styles.loadingTitle, { color: colors.text }]}>{message}</Text>
       {stepMessage ? (
-        <Text style={[styles.loadingStep, { color: colors.textSecondary }]}>
+        <Text
+          numberOfLines={2}
+          style={[styles.loadingStep, { color: colors.textSecondary }]}
+        >
           {stepMessage}
         </Text>
       ) : null}
-      {typeof progress === 'number' ? (
-        <View
-          style={[
-            styles.progressTrack,
-            { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
-          ]}
-        >
+      {clampedProgress !== null ? (
+        <View style={styles.progressSection}>
           <View
             style={[
-              styles.progressFill,
-              {
-                backgroundColor: colors.primary,
-                width: `${Math.max(10, Math.min(100, progress * 100))}%`,
-              },
+              styles.progressTrack,
+              { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
             ]}
-          />
+          >
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: colors.primary,
+                  width: animatedProgress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['4%', '100%'],
+                  }),
+                },
+              ]}
+            />
+          </View>
+          <View style={styles.progressMetaRow}>
+            <Text style={[styles.progressMetaText, { color: colors.textMuted }]}>
+              {etaLabel}
+            </Text>
+            <Text style={[styles.progressPctText, { color: colors.textSecondary }]}>
+              {pctText}
+            </Text>
+          </View>
         </View>
       ) : null}
     </FadeInView>
@@ -258,9 +289,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   spinnerContainer: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -279,17 +310,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     lineHeight: typography.lineHeights.sm,
   },
+  progressSection: {
+    width: '100%',
+    maxWidth: 240,
+    marginTop: spacing.lg,
+    alignItems: 'center',
+  },
   progressTrack: {
-    width: 220,
+    width: '100%',
     height: 6,
     borderRadius: 3,
     borderWidth: 1,
-    marginTop: spacing.lg,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  progressMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: spacing.xs + 2,
+  },
+  progressMetaText: {
+    fontSize: typography.fontSizes.caption2,
+  },
+  progressPctText: {
+    fontSize: typography.fontSizes.caption2,
+    fontWeight: typography.fontWeights.semibold,
   },
   iconCircle: {
     width: 64,

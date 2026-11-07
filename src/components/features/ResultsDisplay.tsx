@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { type ProductAnalysisOutput } from '@/ai/flows/product-analysis-types';
@@ -75,7 +75,7 @@ const BulletList = ({
     pros: <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />,
     cons: <XCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />,
     warnings: <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />,
-    suitability: <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />,
+    suitability: <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />,
   };
 
   return (
@@ -138,18 +138,59 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
     return `Food Analysis: ${analysisData.productName || 'Scanned Product'} - Health Score: ${scoreStr}. ${pro} ${con} Analyzed with EatInformed: ${url}`;
   }, [analysisData]);
 
+  const mergedIngredientAnalysis = useMemo(() => {
+    const rawList = analysisData?.ingredientAnalysis || [];
+    const ingStrings = analysisData?.ingredients || [];
+    if (!ingStrings.length) return rawList;
+
+    const matched = new Set<number>();
+    return ingStrings.map((ing) => {
+      const norm = ing.toLowerCase().trim();
+      const existingIdx = rawList.findIndex(
+        (item, idx) =>
+          !matched.has(idx) &&
+          item?.ingredient &&
+          (item.ingredient.toLowerCase().trim() === norm ||
+            norm.includes(item.ingredient.toLowerCase().trim()) ||
+            item.ingredient.toLowerCase().trim().includes(norm))
+      );
+      if (existingIdx !== -1) {
+        matched.add(existingIdx);
+        return rawList[existingIdx];
+      }
+      const isSweetener = /sugar|syrup|honey|dextrose|fructose|maltose|sucrose/i.test(ing);
+      const isOil = /\boil\b|fat|butter|shortening|palm/i.test(ing);
+      const isSalt = /\bsalt\b|sodium/i.test(ing);
+      return {
+        ingredient: ing,
+        description: isSweetener
+          ? 'Caloric sweetener contributing to product sweetness and texture.'
+          : isOil
+          ? 'Dietary lipid used for moisture, cooking, or mouthfeel.'
+          : isSalt
+          ? 'Sodium mineral seasoning used for flavor and preservation.'
+          : 'Declared food ingredient extracted from packaging label.',
+        purpose: isSweetener
+          ? 'Sweetener'
+          : isOil
+          ? 'Lipid / Texture Base'
+          : isSalt
+          ? 'Seasoning & Preservative'
+          : 'Formulation Ingredient',
+        isAllergen: /milk|dairy|whey|casein|soy|wheat|gluten|peanut|nut|coconut|egg|fish|sesame/i.test(ing),
+        isControversial: /artificial|dye|red 40|yellow 5|yellow 6|msg|monosodium|high-fructose|bha|bht|tbhq|carrageenan|polysorbate/i.test(ing),
+      };
+    });
+  }, [analysisData?.ingredientAnalysis, analysisData?.ingredients]);
+
   const captureCardCanvas = async (): Promise<HTMLCanvasElement | null> => {
     if (!resultsCardRef.current) return null;
-    // ponytail: match theme background to prevent white-on-white export in dark mode
-    const computedBg = typeof window !== 'undefined' ? window.getComputedStyle(resultsCardRef.current).backgroundColor : '';
     const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-    const fallbackBg = isDark ? '#09090b' : '#ffffff';
-
     return await html2canvas(resultsCardRef.current, {
       useCORS: true,
       scale: 2,
       logging: false,
-      backgroundColor: computedBg && computedBg !== 'rgba(0, 0, 0, 0)' && computedBg !== 'transparent' ? computedBg : fallbackBg,
+      backgroundColor: isDark ? '#161618' : '#ffffff',
     });
   };
 
@@ -287,9 +328,37 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
             <ResultSection
               title="Dietary Compatibility"
               icon={<ListChecks className="h-4 w-4" />}
-              hidden={!dietInfo?.suitability || dietInfo.suitability.length === 0}
+              hidden={!dietInfo || (!dietInfo.suitability?.length && !dietInfo.isVegetarian && !dietInfo.isVegan && !dietInfo.isGlutenFree && !dietInfo.summary)}
             >
-              <BulletList items={dietInfo?.suitability || []} variant="suitability" />
+              <div className="space-y-3">
+                {(dietInfo?.isVegetarian || dietInfo?.isVegan || dietInfo?.isGlutenFree) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {dietInfo?.isVegetarian && (
+                      <Badge variant="outline" className="text-[11px] border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                        Vegetarian
+                      </Badge>
+                    )}
+                    {dietInfo?.isVegan && (
+                      <Badge variant="outline" className="text-[11px] border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                        Vegan
+                      </Badge>
+                    )}
+                    {dietInfo?.isGlutenFree && (
+                      <Badge variant="outline" className="text-[11px] border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                        Gluten-Free
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                {dietInfo?.summary && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {dietInfo.summary}
+                  </p>
+                )}
+                {dietInfo?.suitability && dietInfo.suitability.length > 0 && (
+                  <BulletList items={dietInfo.suitability} variant="suitability" />
+                )}
+              </div>
             </ResultSection>
 
             <ResultSection
@@ -334,15 +403,26 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
           <ResultSection
             title="Ingredient Deconstruction"
             icon={<ListChecks className="h-4 w-4" />}
-            hidden={!analysisData.ingredientAnalysis || analysisData.ingredientAnalysis.length === 0}
+            hidden={!mergedIngredientAnalysis || mergedIngredientAnalysis.length === 0}
           >
             <Accordion type="single" collapsible className="w-full bg-muted/30 rounded-2xl border border-border p-2">
-              {analysisData.ingredientAnalysis.map((item, index) => (
+              {mergedIngredientAnalysis.map((item, index) => (
                 <AccordionItem value={`item-${index}`} key={index} className="border-b-border last:border-0">
                   <AccordionTrigger className="text-xs sm:text-sm font-medium hover:no-underline px-3 py-2.5 rounded-xl hover:bg-muted/60 text-foreground">
-                    <div className="flex items-center gap-2">
-                      {item.isAllergen && <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
-                      <span className="text-left">{item.ingredient}</span>
+                    <div className="flex items-center justify-between w-full pr-3 gap-2">
+                      <span className="text-left font-medium">{item.ingredient}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.isAllergen && (
+                          <Badge variant="outline" className="text-[10px] border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                            Allergen
+                          </Badge>
+                        )}
+                        {item.isControversial && (
+                          <Badge variant="outline" className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            Additive Alert
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground text-xs space-y-2 p-3 bg-card rounded-xl mt-1 border border-border">

@@ -8,8 +8,8 @@ export const getNimClient = (): OpenAI | null => {
     nimClientInstance = new OpenAI({
       apiKey,
       baseURL: (process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/+$/, ''),
-      timeout: 90 * 1000,
-      maxRetries: 2,
+      timeout: 28 * 1000, // Fail fast per model so fallback triggers within 28s, well inside 60s limit
+      maxRetries: 0,      // Let callNimWithFallback switch models immediately on 429/503/timeout
     });
   }
   return nimClientInstance;

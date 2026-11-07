@@ -212,7 +212,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link href="/check" className="group">
+          <Link href="/check?sample=sample-yogurt" className="group">
             <div className="rounded-2xl border border-border bg-card/60 p-5 hover:border-foreground/20 transition-all duration-150">
               <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mb-3">
                 NOVA 1: Whole Food
@@ -226,7 +226,7 @@ export default function HomePage() {
             </div>
           </Link>
 
-          <Link href="/check" className="group">
+          <Link href="/check?sample=sample-granola" className="group">
             <div className="rounded-2xl border border-border bg-card/60 p-5 hover:border-foreground/20 transition-all duration-150">
               <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-3">
                 NOVA 3: Processed
@@ -240,16 +240,16 @@ export default function HomePage() {
             </div>
           </Link>
 
-          <Link href="/check" className="group">
+          <Link href="/check?sample=sample-chips" className="group">
             <div className="rounded-2xl border border-border bg-card/60 p-5 hover:border-foreground/20 transition-all duration-150">
               <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 mb-3">
                 NOVA 4: Ultra-Processed
               </span>
-              <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Classic Chips</h4>
-              <p className="text-xs text-muted-foreground mt-0.5 mb-3">Lays Salted</p>
+              <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Nacho Cheese Chips</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-3">Doritos Flavored Tortilla</p>
               <div className="flex justify-between items-center text-xs pt-2.5 border-t border-border">
                 <span className="text-muted-foreground">Rating</span>
-                <span className="font-semibold text-rose-600 dark:text-rose-400">1.9 / 5.0</span>
+                <span className="font-semibold text-rose-600 dark:text-rose-400">1.6 / 5.0</span>
               </div>
             </div>
           </Link>

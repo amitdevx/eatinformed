@@ -1,6 +1,31 @@
 import axios, { AxiosError } from 'axios';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProductAnalysisOutput } from '../types';
+
+const AVG_DURATION_KEY = '@eatinformed_avg_scan_ms';
+const DEFAULT_ESTIMATED_MS = 15000;
+
+export async function getEstimatedScanDuration(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(AVG_DURATION_KEY);
+    const parsed = raw ? Number(raw) : NaN;
+    return !isNaN(parsed) && parsed >= 4000 && parsed <= 45000
+      ? parsed
+      : DEFAULT_ESTIMATED_MS;
+  } catch {
+    return DEFAULT_ESTIMATED_MS;
+  }
+}
+
+async function recordScanDuration(durationMs: number): Promise<void> {
+  try {
+    const prev = await getEstimatedScanDuration();
+    // Exponential moving average (70% historical, 30% latest scan)
+    const updated = Math.round(prev * 0.7 + Math.min(40000, Math.max(4000, durationMs)) * 0.3);
+    await AsyncStorage.setItem(AVG_DURATION_KEY, String(updated));
+  } catch {}
+}
 
 // Default development and production URLs:
 // Android Emulator maps host machine to 10.0.2.2 in development
@@ -47,7 +72,10 @@ export async function checkApiHealth(): Promise<{ ok: boolean; message: string }
   }
 }
 
-export async function scanFoodLabel(imageUriOrBase64: string): Promise<ProductAnalysisOutput> {
+export async function scanFoodLabel(
+  imageUriOrBase64: string,
+  onUploadProgress?: (fraction: number) => void
+): Promise<ProductAnalysisOutput> {
   let payload = imageUriOrBase64;
 
   // Ensure data URI prefix
@@ -55,10 +83,22 @@ export async function scanFoodLabel(imageUriOrBase64: string): Promise<ProductAn
     payload = `data:image/jpeg;base64,${payload}`;
   }
 
+  const startTime = Date.now();
   try {
-    const response = await apiClient.post<ProductAnalysisOutput>('/api/scan', {
-      image: payload,
-    });
+    const response = await apiClient.post<ProductAnalysisOutput>(
+      '/api/scan',
+      { image: payload },
+      {
+        onUploadProgress: (progressEvent) => {
+          if (onUploadProgress && progressEvent.total) {
+            onUploadProgress(Math.min(1, progressEvent.loaded / progressEvent.total));
+          } else if (onUploadProgress) {
+            onUploadProgress(1);
+          }
+        },
+      }
+    );
+    await recordScanDuration(Date.now() - startTime);
     return response.data;
   } catch (err) {
     const error = err as AxiosError<{ error?: string }>;

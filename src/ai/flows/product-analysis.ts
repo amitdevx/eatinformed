@@ -1,8 +1,18 @@
 'use server';
 
+import crypto from 'crypto';
 import sharp from 'sharp';
 import { callNimWithFallback, isNimConfigured, parseNIMResponse } from '@/ai/nim';
 import { ProductAnalysisOutput, ProductAnalysisOutputSchema } from './product-analysis-types';
+
+// Bound libvips concurrency to prevent thread thrashing under multi-user scan spikes
+sharp.cache(false);
+sharp.concurrency(2);
+
+const RESULT_CACHE = new Map<string, { timestamp: number; data: ProductAnalysisOutput }>();
+const IN_FLIGHT_SCANS = new Map<string, Promise<ProductAnalysisOutput>>();
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+const MAX_CACHE_ENTRIES = 100;
 
 const VISION_MODELS = [
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
@@ -38,22 +48,55 @@ export async function optimizeImageForOCR(dataUri: string): Promise<string> {
 
 /**
  * High-reliability, single-pass food label analysis pipeline with conditional reasoning fallback.
+ * Includes in-memory caching and concurrent in-flight scan deduplication.
  */
 export async function analyzeProduct(image: string): Promise<ProductAnalysisOutput> {
   if (!isNimConfigured()) {
     return makeErrorResult('unreadable', 'AI System Offline: NVIDIA_API_KEY is missing on the server.');
   }
 
+  const imageHash = crypto.createHash('sha256').update(image).digest('hex');
+
+  // 1. Return cached analysis immediately (<5ms) if recently scanned
+  const cached = RESULT_CACHE.get(imageHash);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  // 2. Coalesce concurrent requests for the same image so multi-user spikes don't duplicate NIM calls
+  const existingInFlight = IN_FLIGHT_SCANS.get(imageHash);
+  if (existingInFlight) {
+    return existingInFlight;
+  }
+
+  const scanPromise = executeProductAnalysis(image).then((result) => {
+    if (result.status === 'success') {
+      if (RESULT_CACHE.size >= MAX_CACHE_ENTRIES) {
+        const oldestKey = RESULT_CACHE.keys().next().value;
+        if (oldestKey) RESULT_CACHE.delete(oldestKey);
+      }
+      RESULT_CACHE.set(imageHash, { timestamp: Date.now(), data: result });
+    }
+    return result;
+  }).finally(() => {
+    IN_FLIGHT_SCANS.delete(imageHash);
+  });
+
+  IN_FLIGHT_SCANS.set(imageHash, scanPromise);
+  return scanPromise;
+}
+
+async function executeProductAnalysis(image: string): Promise<ProductAnalysisOutput> {
   const optimizedImage = await optimizeImageForOCR(image);
 
   let ocrData: any = null;
   try {
-    const ocrPrompt = `You are a precision food label OCR and clinical nutrition analyzer. Read ALL text from this food label image and return a single raw JSON object:
+    const ocrPrompt = `You are a precision food label OCR and clinical nutrition analyzer. Read ALL text accurately. Provide a detailed ingredientAnalysis entry for EVERY single extracted ingredient in the ingredients array. Return a single raw JSON object:
 {
   "productName": "Product Name",
   "brand": "Brand Name",
-  "novaGroup": 4,
-  "rating": 2.0,
+  "novaGroup": 1, // 1 for unprocessed/minimally processed foods, 2 for culinary ingredients, 3 for processed foods, 4 for ultra-processed foods with industrial additives
+  "rating": 4.5, // 1.0 (unhealthy / heavily ultra-processed) to 5.0 (nutritious whole food) based on NOVA classification, nutrient balance, sugar, sodium, and additive load
   "ingredients": ["Ingredient 1", "Ingredient 2"],
   "allergenAdvice": "Contains Milk, Soy",
   "pros": ["2-4 specific nutritional pros based on these exact ingredients"],
@@ -152,46 +195,51 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
   const rawBrand = (ocrData.brand || '').trim();
   const brand = /^(unknown|n\/a|none|not visible|null|undefined|generic)$/i.test(rawBrand) ? '' : rawBrand;
 
-  // ponytail: ensure complete ingredientAnalysis array matches all declared ingredients
-  let finalIngredientAnalysis = Array.isArray(analysisData?.ingredientAnalysis)
-    ? [...analysisData.ingredientAnalysis]
+  // ponytail: ensure complete ingredientAnalysis array has exact 1-to-1 match with declared ingredients
+  const rawAnalysisList: any[] = Array.isArray(analysisData?.ingredientAnalysis)
+    ? analysisData.ingredientAnalysis
+    : Array.isArray(ocrData?.ingredientAnalysis)
+    ? ocrData.ingredientAnalysis
     : [];
 
-  if (ingredients.length > 0 && finalIngredientAnalysis.length < ingredients.length) {
-    const existingNames = new Set(
-      finalIngredientAnalysis.map((a: any) => (a.ingredient || '').toLowerCase().trim())
+  const matchedIndices = new Set<number>();
+  const finalIngredientAnalysis = ingredients.map((rawIng) => {
+    const norm = rawIng.toLowerCase().trim();
+    const idx = rawAnalysisList.findIndex(
+      (a, i) =>
+        !matchedIndices.has(i) &&
+        typeof a?.ingredient === 'string' &&
+        (a.ingredient.toLowerCase().trim() === norm ||
+          norm.includes(a.ingredient.toLowerCase().trim()) ||
+          a.ingredient.toLowerCase().trim().includes(norm))
     );
-    for (const ing of ingredients) {
-      const norm = ing.toLowerCase().trim();
-      const alreadyPresent = Array.from(existingNames).some(
-        (existing) => existing && (existing === norm || norm.includes(existing) || existing.includes(norm))
-      );
-      if (!alreadyPresent) {
-        const isSugar = /sugar|syrup|honey|dextrose|fructose|maltose|sucrose/i.test(ing);
-        const isOil = /\boil\b|fat|butter|shortening|palm/i.test(ing);
-        const isSalt = /\bsalt\b|sodium/i.test(ing);
-        finalIngredientAnalysis.push({
-          ingredient: ing,
-          description: isSugar
-            ? 'Caloric sweetener used for taste, texture, and browning.'
-            : isOil
-            ? 'Culinary or processing lipid used for mouthfeel and texture.'
-            : isSalt
-            ? 'Mineral seasoning used for flavor and preservation.'
-            : 'Declared food ingredient extracted from product packaging label.',
-          purpose: isSugar
-            ? 'Sweetener'
-            : isOil
-            ? 'Lipid / Texture'
-            : isSalt
-            ? 'Seasoning'
-            : 'Formulation Ingredient',
-          isAllergen: /milk|dairy|whey|casein|soy|wheat|gluten|peanut|nut|coconut|egg|fish|sesame/i.test(ing),
-          isControversial: /artificial|dye|red 40|yellow 5|yellow 6|msg|monosodium|high-fructose|bha|bht|tbhq|carrageenan|polysorbate/i.test(ing),
-        });
-      }
+    if (idx !== -1) {
+      matchedIndices.add(idx);
+      return rawAnalysisList[idx];
     }
-  }
+    const isSweetener = /sugar|syrup|honey|dextrose|fructose|maltose|sucrose/i.test(rawIng);
+    const isOil = /\boil\b|fat|butter|shortening|palm/i.test(rawIng);
+    const isSalt = /\bsalt\b|sodium/i.test(rawIng);
+    return {
+      ingredient: rawIng,
+      description: isSweetener
+        ? 'Caloric sweetener contributing to product sweetness and texture.'
+        : isOil
+        ? 'Dietary lipid used for moisture, cooking, or mouthfeel.'
+        : isSalt
+        ? 'Sodium mineral seasoning used for flavor and preservation.'
+        : 'Declared food ingredient extracted from packaging label.',
+      purpose: isSweetener
+        ? 'Sweetener'
+        : isOil
+        ? 'Lipid / Texture Base'
+        : isSalt
+        ? 'Seasoning & Preservative'
+        : 'Formulation Ingredient',
+      isAllergen: /milk|dairy|whey|casein|soy|wheat|gluten|peanut|nut|coconut|egg|fish|sesame/i.test(rawIng),
+      isControversial: /artificial|dye|red 40|yellow 5|yellow 6|msg|monosodium|high-fructose|bha|bht|tbhq|carrageenan|polysorbate/i.test(rawIng),
+    };
+  });
 
   const merged = {
     productName: ocrData.productName?.trim() || 'Scanned Food Product',

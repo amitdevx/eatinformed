@@ -37,7 +37,11 @@ const NUTRIENT_DEFS: NutrientDef[] = [
   { key: 'sodium', label: 'Sodium', dailyValue: 2300, baseUnit: 'mg', aliases: ['sodium', 'salt', 'na'] },
 ];
 
-function parseNutrientAmount(raw: string | undefined, def: NutrientDef): { amount: number; display: string } {
+function parseNutrientAmount(
+  raw: string | undefined,
+  def: NutrientDef,
+  matchedNutrientName = ''
+): { amount: number; display: string } {
   if (!raw || /^(n\/a|nil|nd|-)$/i.test(raw.trim())) {
     return { amount: 0, display: '0 ' + def.baseUnit };
   }
@@ -68,11 +72,14 @@ function parseNutrientAmount(raw: string | undefined, def: NutrientDef): { amoun
   if (isNaN(num)) num = 0;
 
   if (def.key === 'sodium') {
-    if (/\bg\b/i.test(normalized) && !/mg/i.test(normalized)) {
-      num = num * 1000;
-    } else if (/salt/i.test(normalized)) {
-      num = num * 400;
+    const isSaltLabel = /salt/i.test(matchedNutrientName) || /salt/i.test(normalized);
+    if (isSaltLabel && /\bg\b/i.test(normalized) && !/mg/i.test(normalized)) {
+      num = num * 400; // 1g Salt (NaCl) ≈ 400mg Sodium
+    } else if (/\bg\b/i.test(normalized) && !/mg/i.test(normalized)) {
+      num = num * 1000; // 1g Sodium = 1000mg Sodium
     }
+  } else if (def.baseUnit === 'g' && /mg\b/i.test(normalized)) {
+    num = num / 1000; // Convert mg to g for macro nutrients (e.g. Sugars: 500mg -> 0.5g)
   }
 
   return {
@@ -94,8 +101,8 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
 
     if (!matched) return null;
 
-    const servingParsed = parseNutrientAmount(matched.perServing, def);
-    const per100Parsed = parseNutrientAmount(matched.per100mL, def);
+    const servingParsed = parseNutrientAmount(matched.perServing, def, matched.nutrient);
+    const per100Parsed = parseNutrientAmount(matched.per100mL, def, matched.nutrient);
 
     const servingPct = Number(Math.min(150, (servingParsed.amount / def.dailyValue) * 100).toFixed(1));
     const per100Pct = Number(Math.min(150, (per100Parsed.amount / def.dailyValue) * 100).toFixed(1));
@@ -178,8 +185,12 @@ export default function NutritionChart({ data, servingSizeLabel }: NutritionChar
               }
             />
             <ChartLegend content={<ChartLegendContent />} />
-            <Bar isAnimationActive={false} dataKey="servingPct" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={11} />
-            <Bar isAnimationActive={false} dataKey="per100Pct" fill="hsl(var(--muted-foreground))" fillOpacity={0.6} radius={[0, 4, 4, 0]} barSize={11} />
+            {chartData.some((d) => d.servingPct > 0) && (
+              <Bar isAnimationActive={false} dataKey="servingPct" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={11} />
+            )}
+            {chartData.some((d) => d.per100Pct > 0) && (
+              <Bar isAnimationActive={false} dataKey="per100Pct" fill="hsl(var(--muted-foreground))" fillOpacity={0.6} radius={[0, 4, 4, 0]} barSize={11} />
+            )}
           </BarChart>
         </ChartContainer>
       </CardContent>

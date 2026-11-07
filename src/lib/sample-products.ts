@@ -261,25 +261,123 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
       ],
       ingredientAnalysis: [
         {
-          ingredient: 'Monosodium Glutamate (MSG)',
-          description: 'Sodium salt of glutamic acid, an umami neurotransmitter',
-          purpose: 'Flavor enhancer to increase palatability',
+          ingredient: 'Corn',
+          description: 'Primary whole-grain milled corn providing bulk carbohydrates and structural matrix',
+          purpose: 'Base tortilla structure',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Vegetable Oil (Corn, Canola, and/or Sunflower Oil)',
+          description: 'Refined industrial vegetable oil blend high in omega-6 polyunsaturated fatty acids',
+          purpose: 'High-temperature frying medium and lipid texture base',
           isAllergen: false,
           isControversial: true
+        },
+        {
+          ingredient: 'Maltodextrin',
+          description: 'Rapidly absorbed polysaccharide with a high glycemic index (85-105)',
+          purpose: 'Seasoning carrier and mouthfeel texturizer',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Salt',
+          description: 'Refined crystalline sodium chloride contributing to elevated sodium load',
+          purpose: 'Flavor enhancement and taste preservation',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Cheddar Cheese (Milk, Cheese Cultures, Salt, Enzymes)',
+          description: 'Dehydrated cheese powder containing concentrated dairy proteins and fats',
+          purpose: 'Savory cheese flavor',
+          isAllergen: true,
+          isControversial: false
+        },
+        {
+          ingredient: 'Whey',
+          description: 'Concentrated dairy liquid byproduct rich in lactose and whey proteins',
+          purpose: 'Surface browning and flavor binding',
+          isAllergen: true,
+          isControversial: false
+        },
+        {
+          ingredient: 'Monosodium Glutamate (MSG)',
+          description: 'Sodium salt of glutamic acid, an excitatory umami neurotransmitter',
+          purpose: 'Intense savory taste and hyper-palatability enhancement',
+          isAllergen: false,
+          isControversial: true
+        },
+        {
+          ingredient: 'Buttermilk',
+          description: 'Dehydrated cultured dairy powder providing natural lactic acidity',
+          purpose: 'Tangy dairy seasoning profile',
+          isAllergen: true,
+          isControversial: false
+        },
+        {
+          ingredient: 'Romano Cheese',
+          description: 'Aged hard Italian cheese solids from cows milk',
+          purpose: 'Pungent sharp savory notes',
+          isAllergen: true,
+          isControversial: false
+        },
+        {
+          ingredient: 'Onion Powder',
+          description: 'Dehydrated and ground allium cepa bulb',
+          purpose: 'Savory aromatic seasoning',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Corn Starch',
+          description: 'Refined carbohydrate polymer extracted from corn endosperm',
+          purpose: 'Anti-caking agent and seasoning adhesion',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Natural and Artificial Flavors',
+          description: 'Proprietary synthetic and concentrated aromatic compounds',
+          purpose: 'Enhanced aroma and amplified savory taste',
+          isAllergen: false,
+          isControversial: true
+        },
+        {
+          ingredient: 'Dextrose',
+          description: 'Simple d-glucose monosaccharide contributing to palatability',
+          purpose: 'Sweetness balancing and crust caramelization',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Spices',
+          description: 'Proprietary culinary spice blend including paprika and pepper',
+          purpose: 'Warm flavor and visual speckling',
+          isAllergen: false,
+          isControversial: false
         },
         {
           ingredient: 'Artificial Color (Yellow 6, Yellow 5, Red 40)',
-          description: 'Azo dye synthetic colorants derived from petroleum',
-          purpose: 'Cosmetic appearance / vibrant cheese coloring',
+          description: 'Synthetic petroleum-derived azo food dyes subject to EU warning label requirements',
+          purpose: 'Cosmetic neon cheese coloration',
           isAllergen: false,
           isControversial: true
         },
         {
-          ingredient: 'Disodium Inosinate & Disodium Guanylate',
-          description: 'Nucleotide food additives that synergize with MSG',
-          purpose: 'Umami flavor multiplier',
+          ingredient: 'Disodium Inosinate',
+          description: 'Purine nucleotide additive that synergistically boosts umami receptors 4-8x alongside MSG',
+          purpose: 'Synthetic savory flavor multiplier',
           isAllergen: false,
-          isControversial: false
+          isControversial: true
+        },
+        {
+          ingredient: 'Disodium Guanylate',
+          description: 'Guanosine nucleotide flavor enhancer paired with MSG to amplify savory perception',
+          purpose: 'Synthetic umami multiplier',
+          isAllergen: false,
+          isControversial: true
         }
       ],
       dietaryInfo: {

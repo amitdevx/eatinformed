@@ -113,6 +113,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
   }
 
+  if (currentAction === 'logout') {
+    return handleLogout();
+  }
+
   if (!adminAuth) {
     return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
   }
@@ -168,17 +172,13 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 }
 
 async function handleLogout() {
-  if (!adminAuth) {
-    return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
-  }
-
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-    if (sessionCookie) {
+    if (adminAuth && sessionCookie) {
       const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie).catch(() => null);
       if (decodedClaims) {
-        await adminAuth.revokeRefreshTokens(decodedClaims.sub);
+        await adminAuth.revokeRefreshTokens(decodedClaims.sub).catch(() => null);
       }
     }
 

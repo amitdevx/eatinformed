@@ -35,6 +35,32 @@ interface AuthFormProps {
     initialTab?: 'login' | 'signup';
 }
 
+// ponytail: human-readable error messages without raw Firebase internal codes
+function formatAuthError(err: unknown): string {
+  if (!err) return '';
+  const code = (err as any)?.code || '';
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    return '';
+  }
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+    return 'Invalid email or password. Please check your credentials and try again.';
+  }
+  if (code === 'auth/email-already-in-use') {
+    return 'An account with this email already exists. Please log in instead.';
+  }
+  if (code === 'auth/weak-password') {
+    return 'Password must be at least 6 characters.';
+  }
+  if (code === 'auth/invalid-email') {
+    return 'Please enter a valid email address.';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'Too many attempts. Please wait a moment and try again.';
+  }
+  const rawMsg = err instanceof Error ? err.message : String(err);
+  return rawMsg.replace(/^Firebase:\s*(Error\s*)?\(auth\/[^)]+\)\.?\s*/i, '').trim() || 'Authentication failed. Please try again.';
+}
+
 export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps) {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
@@ -84,8 +110,8 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
       });
       await handleAuthSuccess(idToken);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
-      setError(errorMessage);
+      const msg = formatAuthError(err);
+      if (msg) setError(msg);
     } finally {
       setIsProcessing(false);
     }
@@ -113,8 +139,8 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
       });
       await handleAuthSuccess(idToken);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during Google Sign-In.';
-      setError(errorMessage);
+      const msg = formatAuthError(err);
+      if (msg) setError(msg);
     } finally {
       setIsProcessing(false);
     }
@@ -140,8 +166,8 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
       });
       await handleAuthSuccess(idToken);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during Guest Sign-In.';
-      setError(errorMessage);
+      const msg = formatAuthError(err);
+      if (msg) setError(msg);
     } finally {
       setIsProcessing(false);
     }

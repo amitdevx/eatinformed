@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -27,7 +27,7 @@ import { LoadingState, ErrorState } from '../components/States';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
-import { scanFoodLabel } from '../api/client';
+import { scanFoodLabel, getEstimatedScanDuration } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
 import { RootStackParamList } from '../navigation/types';
 
@@ -35,12 +35,13 @@ const { width } = Dimensions.get('window');
 const VIEWFINDER_WIDTH = width * 0.82;
 const VIEWFINDER_HEIGHT = width * 0.92;
 
-const LOADING_STEPS = [
-  'Detecting packaging and label text with Vision AI...',
-  'Extracting ingredients and nutrition facts table...',
-  'Cross-referencing food additives with safety standards...',
-  'Computing NOVA processing classification and balance...',
-  'Finalizing comprehensive health assessment...',
+const PIPELINE_STAGES = [
+  { threshold: 0.0, label: 'Optimizing label image for optical analysis...' },
+  { threshold: 0.12, label: 'Uploading food label to EatInformed AI...' },
+  { threshold: 0.28, label: 'Extracting ingredients & nutrition panel with Vision AI...' },
+  { threshold: 0.58, label: 'Cross-referencing additives & NOVA processing group...' },
+  { threshold: 0.82, label: 'Finalizing clinical nutrition assessment...' },
+  { threshold: 0.92, label: 'High server load — completing deep verification...' },
 ];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -57,11 +58,14 @@ export default function ScanScreen() {
   const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadingStepIndex, setLoadingStepIndex] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
+  const [estimatedTotalMs, setEstimatedTotalMs] = useState<number>(15000);
+  const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const cameraRef = useRef<any>(null);
   const scanLineY = useRef(new Animated.Value(12)).current;
+  const uploadDoneTimeRef = useRef<number | null>(null);
 
   // Animated scanner laser inside viewfinder
   useEffect(() => {
@@ -83,17 +87,41 @@ export default function ScanScreen() {
     return () => loop.stop();
   }, [scanLineY]);
 
-  // Progressive step ticker during AI analysis
+  // ponytail: monotonic asymptotic progress ticker (never loops or moves backward)
   useEffect(() => {
-    if (!isLoading) return;
-    setLoadingStepIndex(0);
+    if (!isLoading) {
+      setProgress(0);
+      setElapsedMs(0);
+      uploadDoneTimeRef.current = null;
+      return;
+    }
 
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      setLoadingStepIndex((prev) => (prev + 1) % LOADING_STEPS.length);
-    }, 2400);
+      const now = Date.now();
+      setElapsedMs(now - startTime);
+
+      if (uploadDoneTimeRef.current !== null) {
+        const serverElapsed = now - uploadDoneTimeRef.current;
+        // Asymptotic curve: smoothly approaches 0.95 based on rolling avg duration, never resets
+        const tau = Math.max(6000, estimatedTotalMs * 0.65);
+        const serverFraction = 1 - Math.exp(-serverElapsed / tau);
+        const targetProgress = Math.min(0.95, 0.28 + 0.67 * serverFraction);
+        setProgress((prev) => Math.max(prev, targetProgress));
+      }
+    }, 150);
 
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [isLoading, estimatedTotalMs]);
+
+  const currentStageLabel = useMemo(() => {
+    for (let i = PIPELINE_STAGES.length - 1; i >= 0; i--) {
+      if (progress >= PIPELINE_STAGES[i].threshold) {
+        return PIPELINE_STAGES[i].label;
+      }
+    }
+    return PIPELINE_STAGES[0].label;
+  }, [progress]);
 
   const handleCapturePhoto = async () => {
     if (!cameraRef.current) return;
@@ -169,11 +197,25 @@ export default function ScanScreen() {
   const handleAnalyze = async () => {
     if (!selectedImageBase64) return;
 
+    const avgMs = await getEstimatedScanDuration();
+    setEstimatedTotalMs(avgMs);
+    setProgress(0.08);
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const analysis = await scanFoodLabel(selectedImageBase64);
+      const analysis = await scanFoodLabel(selectedImageBase64, (uploadFraction) => {
+        // Real upload progress maps monotonically from 8% to 28%
+        const mapped = 0.08 + uploadFraction * 0.20;
+        setProgress((prev) => Math.max(prev, mapped));
+        if (uploadFraction >= 1 && uploadDoneTimeRef.current === null) {
+          uploadDoneTimeRef.current = Date.now();
+        }
+      });
+      if (uploadDoneTimeRef.current === null) {
+        uploadDoneTimeRef.current = Date.now();
+      }
+      setProgress(1.0); // Snap to 100% on real completion
 
       if (
         analysis.status !== 'success' &&
@@ -226,8 +268,10 @@ export default function ScanScreen() {
       <Screen style={styles.centerContainer}>
         <LoadingState
           message="Analyzing Food Product"
-          stepMessage={LOADING_STEPS[loadingStepIndex]}
-          progress={(loadingStepIndex + 1) / LOADING_STEPS.length}
+          stepMessage={currentStageLabel}
+          progress={progress}
+          elapsedMs={elapsedMs}
+          estimatedTotalMs={estimatedTotalMs}
         />
       </Screen>
     );

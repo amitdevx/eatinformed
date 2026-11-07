@@ -10,6 +10,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
 };
 
+// ponytail: lightweight in-memory per-IP sliding-window rate limiter (20 requests / 60s)
+const IP_RATE_LIMIT = 20;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const ipRequestTimestamps = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = ipRequestTimestamps.get(ip) || [];
+  const valid = timestamps.filter((t: number) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (valid.length >= IP_RATE_LIMIT) {
+    ipRequestTimestamps.set(ip, valid);
+    return true;
+  }
+  valid.push(now);
+  ipRequestTimestamps.set(ip, valid);
+  if (ipRequestTimestamps.size > 1000) {
+    ipRequestTimestamps.forEach((times, key) => {
+      if (times.every((t: number) => now - t >= RATE_LIMIT_WINDOW_MS)) {
+        ipRequestTimestamps.delete(key);
+      }
+    });
+  }
+  return false;
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
@@ -32,6 +57,18 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: 'Too many scan requests. Please wait a minute before scanning again.' },
+      {
+        status: 429,
+        headers: corsHeaders,
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const { image } = body;

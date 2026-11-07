@@ -53,12 +53,13 @@ const ThemeToggle = () => {
   );
 };
 
-const AuthButton = ({ isMobile = false }) => {
+const AuthButton = ({ isMobile = false, onAction }: { isMobile?: boolean; onAction?: () => void }) => {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
   const [openAuthDialog, setOpenAuthDialog] = useState(false);
 
   const handleSignOut = async () => {
+    onAction?.();
     if (auth) {
       await signOut(auth);
       await fetch('/api/auth/logout', { method: 'GET' });
@@ -101,7 +102,7 @@ const AuthButton = ({ isMobile = false }) => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border" />
-          <DropdownMenuItem onClick={() => router.push('/check')} className="cursor-pointer hover:bg-muted rounded-xl">
+          <DropdownMenuItem onClick={() => { onAction?.(); router.push('/check'); }} className="cursor-pointer hover:bg-muted rounded-xl">
              <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
              <span>Scanner</span>
           </DropdownMenuItem>
@@ -136,6 +137,7 @@ const AuthButton = ({ isMobile = false }) => {
           </DialogHeader>
           <AuthForm onAuthSuccess={() => {
             setOpenAuthDialog(false);
+            onAction?.();
             router.push('/check');
           }} />
         </DialogContent>
@@ -147,6 +149,7 @@ const AuthButton = ({ isMobile = false }) => {
 export default function Navbar() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -200,7 +203,7 @@ export default function Navbar() {
             <AuthButton />
 
             <div className="md:hidden">
-              <Sheet>
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Open menu" className="rounded-full h-8 w-8 text-muted-foreground hover:text-foreground">
                     <Menu className="h-5 w-5" />
@@ -209,7 +212,7 @@ export default function Navbar() {
                 <SheetContent side="right" className="w-[280px] bg-card border-l border-border p-6 text-foreground">
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-8">
-                      <Link href="/" className="flex items-center space-x-2" aria-label="EatInformed Home">
+                      <Link href="/" className="flex items-center space-x-2" aria-label="EatInformed Home" onClick={() => setMobileOpen(false)}>
                         <SheetClose asChild>
                           <div className="flex items-center space-x-2">
                             <EatInformedLogo width={24} height={24} />
@@ -225,6 +228,7 @@ export default function Navbar() {
                         <SheetClose asChild key={`mobile-${item.href}`}>
                           <Link
                             href={item.href}
+                            onClick={() => setMobileOpen(false)}
                             className={cn(
                               'text-sm font-medium py-1 transition-colors',
                               pathname === item.href ? 'text-primary font-semibold' : 'text-muted-foreground hover:text-foreground'
@@ -237,7 +241,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="mt-auto pt-6 border-t border-border">
-                      <AuthButton isMobile={true} />
+                      <AuthButton isMobile={true} onAction={() => setMobileOpen(false)} />
                     </div>
                   </div>
                 </SheetContent>

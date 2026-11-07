@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx next dev --turbopack -p 9003",
-    "build": "npx next build",
+    "build": "npx next build --webpack",
     "start": "npx next start",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "npx tsc --noEmit"
