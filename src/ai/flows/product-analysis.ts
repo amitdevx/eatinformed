@@ -15,14 +15,12 @@ const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
 const MAX_CACHE_ENTRIES = 100;
 
 const VISION_MODELS = [
-  'nvidia/nemotron-nano-12b-v2-vl',
-  'meta/llama-3.2-90b-vision-instruct',
-  'meta/llama-3.2-11b-vision-instruct',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
 ];
 
 const REASONING_MODELS = [
-  'meta/llama-3.3-70b-instruct',
-  'qwen/qwen3.5-122b-a10b',
+  'nvidia/nemotron-3.5-lightning-30b-a3b',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
 ];
 
 /**

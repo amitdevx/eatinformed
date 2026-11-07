@@ -167,8 +167,14 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
 async function handleLogout() {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    let sessionCookie: string | undefined;
+    try {
+      const cookieStore = await cookies();
+      sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    } catch (_) {
+      // In standalone API tests or non-request stores, cookies() may throw
+    }
+
     if (adminAuth && sessionCookie) {
       const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie).catch(() => null);
       if (decodedClaims) {
@@ -176,10 +182,16 @@ async function handleLogout() {
       }
     }
 
+    const response = NextResponse.json({ status: 'success' }, { status: 200 });
     const options = getCookieOptions(0);
-    cookieStore.set(options.name, '', options);
+    response.cookies.set(options.name, '', { ...options, maxAge: 0 });
 
-    return NextResponse.json({ status: 'success' }, { status: 200 });
+    try {
+      const cookieStore = await cookies();
+      cookieStore.set(options.name, '', options);
+    } catch (_) {}
+
+    return response;
   } catch (error) {
     console.error('Logout error:', error);
     return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
