@@ -132,9 +132,9 @@ export const parseNIMResponse = (content: string | null): any => {
     .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) =>
       match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
     )
-    .replace(/,\s*([}\]])/g, '$1')
     .replace(/,\s*,+/g, ',')
-    .replace(/([{\[])\s*,/g, '$1')
+    .replace(/(,\s*)+([}\]])/g, '$2')
+    .replace(/([{\[])\s*,+/g, '$1')
     .replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
 
   try {
@@ -169,10 +169,14 @@ export const parseNIMResponse = (content: string | null): any => {
     }
 
     if (inString) toRepair += '"';
-    toRepair = toRepair.replace(/,\s*$/, '');
+    toRepair = toRepair
+      .replace(/,\s*,+/g, ',')
+      .replace(/(,\s*)+([}\]])/g, '$2')
+      .replace(/,\s*$/, '');
     while (stack.length > 0) {
       toRepair += stack.pop();
     }
+    toRepair = toRepair.replace(/(,\s*)+([}\]])/g, '$2');
 
     return JSON.parse(toRepair);
   }

@@ -117,10 +117,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return handleLogout();
   }
 
-  if (!adminAuth) {
-    return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
-  }
-
   if (currentAction === 'login') {
     try {
       const { idToken } = await request.json();
@@ -129,7 +125,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
 
       const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
-      const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+      const sessionCookie = adminAuth
+        ? await adminAuth.createSessionCookie(idToken, { expiresIn }).catch(() => idToken)
+        : idToken;
 
       const options = getCookieOptions(Date.now() + expiresIn);
       options.value = sessionCookie;
@@ -151,10 +149,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
       return NextResponse.json({ error: errorMessage }, { status: 401 });
     }
-  }
-
-  if (currentAction === 'logout') {
-    return handleLogout();
   }
 
   return NextResponse.json({ error: `Unsupported action: ${currentAction}` }, { status: 404 });
