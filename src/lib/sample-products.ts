@@ -135,16 +135,58 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
           isControversial: false
         },
         {
-          ingredient: 'Cane Sugar & Brown Rice Syrup',
-          description: 'Refined caloric sweeteners',
-          purpose: 'Flavor and cluster binding',
+          ingredient: 'Cane Sugar',
+          description: 'Refined cane sucrose contributing rapid carbohydrates',
+          purpose: 'Sweetener and crisp baked texture',
           isAllergen: false,
           isControversial: false
         },
         {
           ingredient: 'Canola Oil',
-          description: 'Plant-derived cooking oil',
+          description: 'Plant-derived cooking oil low in saturated fat',
           purpose: 'Crisping and texture',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Oat Flour',
+          description: 'Milled whole oats providing cluster structure',
+          purpose: 'Baking binder',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Honey',
+          description: 'Natural sweetener with aromatic notes',
+          purpose: 'Taste and binding',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Toasted Coconut',
+          description: 'Dried toasted coconut flakes',
+          purpose: 'Flavor and crispness',
+          isAllergen: true,
+          isControversial: false
+        },
+        {
+          ingredient: 'Brown Rice Syrup',
+          description: 'Malted brown rice glucose syrup',
+          purpose: 'Cluster binding and sweetness',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Sea Salt',
+          description: 'Marine sodium chloride',
+          purpose: 'Seasoning and taste balance',
+          isAllergen: false,
+          isControversial: false
+        },
+        {
+          ingredient: 'Natural Vitamin E',
+          description: 'Mixed tocopherols antioxidant',
+          purpose: 'Fat freshness preservation',
           isAllergen: false,
           isControversial: false
         }

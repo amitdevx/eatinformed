@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
               return NextResponse.json({
                 status: 'success',
                 token,
-                user: { email: 'guest@eatinformed.local', name: 'Guest Explorer', isAnonymous: true },
+                user: { email: '', name: 'Guest Explorer', isAnonymous: true },
               });
             }
           } catch (e) {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json({
           status: 'success',
           token: `guest_token_${Date.now()}`,
-          user: { email: 'guest@eatinformed.local', name: 'Guest Explorer', isAnonymous: true },
+          user: { email: '', name: 'Guest Explorer', isAnonymous: true },
         });
       }
 
@@ -68,46 +68,44 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
       }
 
-      if (apiKey) {
-        const endpoint = type === 'signUp'
-          ? `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`
-          : `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
-
-        const fbRes = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, returnSecureToken: true }),
-        });
-        const fbData = await fbRes.json();
-        if (!fbRes.ok) {
-          const rawMsg = fbData.error?.message || 'Authentication failed';
-          const cleanMsg = rawMsg.replace(/_/g, ' ').toLowerCase();
-          return NextResponse.json(
-            { error: cleanMsg.charAt(0).toUpperCase() + cleanMsg.slice(1) },
-            { status: 400 }
-          );
-        }
-
-        const token = adminAuth
-          ? await adminAuth.createSessionCookie(fbData.idToken, { expiresIn: 60 * 60 * 24 * 14 * 1000 }).catch(() => fbData.idToken)
-          : fbData.idToken;
-
-        return NextResponse.json({
-          status: 'success',
-          token,
-          user: {
-            email: fbData.email || email,
-            name: fbData.displayName || email.split('@')[0],
-            isAnonymous: false,
-          },
-        });
+      if (!apiKey) {
+        return NextResponse.json(
+          { error: 'Authentication service is not configured on the server (missing FIREBASE_API_KEY).' },
+          { status: 503 }
+        );
       }
 
-      // Development fallback when Firebase is not initialized
+      const endpoint = type === 'signUp'
+        ? `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`
+        : `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
+
+      const fbRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      });
+      const fbData = await fbRes.json();
+      if (!fbRes.ok) {
+        const rawMsg = fbData.error?.message || 'Authentication failed';
+        const cleanMsg = rawMsg.replace(/_/g, ' ').toLowerCase();
+        return NextResponse.json(
+          { error: cleanMsg.charAt(0).toUpperCase() + cleanMsg.slice(1) },
+          { status: 400 }
+        );
+      }
+
+      const token = adminAuth
+        ? await adminAuth.createSessionCookie(fbData.idToken, { expiresIn: 60 * 60 * 24 * 14 * 1000 }).catch(() => fbData.idToken)
+        : fbData.idToken;
+
       return NextResponse.json({
         status: 'success',
-        token: `auth_token_${Date.now()}`,
-        user: { email, name: email.split('@')[0], isAnonymous: false },
+        token,
+        user: {
+          email: fbData.email || email,
+          name: fbData.displayName || email.split('@')[0],
+          isAnonymous: false,
+        },
       });
     } catch (err: unknown) {
       console.error('Mobile auth error:', err);

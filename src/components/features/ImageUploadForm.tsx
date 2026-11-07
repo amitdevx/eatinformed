@@ -233,6 +233,10 @@ export function CheckPageClient() {
         callback(dataUri);
       }
     };
+    img.onerror = () => {
+      console.warn('Failed to load image for compression');
+      callback(dataUri);
+    };
     img.src = dataUri;
   };
 
@@ -452,7 +456,7 @@ export function CheckPageClient() {
                 </div>
                 <div className="text-center space-y-2">
                   <p className="text-lg font-medium text-foreground transition-all duration-300">{loadingStep}</p>
-                  <p className="text-sm text-muted-foreground">Running dual-stage vision & reasoning models.</p>
+                  <p className="text-sm text-muted-foreground">Analyzing food label with NVIDIA vision & nutrition reasoning models.</p>
                 </div>
               </motion.div>
             ) : imagePreviewUrl ? (

@@ -115,7 +115,10 @@ export const parseNIMResponse = (content: string | null): any => {
   }
 
   // Stage 3: LIFO character repair on uncompleted/malformed JSON
-  let toRepair = cleaned.substring(firstBrace);
+  // ponytail: if outermost braces are present, restrict repair to JSON boundaries to avoid trailing commentary/fences
+  let toRepair = lastBrace > firstBrace
+    ? cleaned.substring(firstBrace, lastBrace + 1)
+    : cleaned.substring(firstBrace).replace(/```+\s*$/g, '').trim();
 
   toRepair = toRepair
     .replace(/(?<=[,{\[\]\d"true"false"null}])\s*\/\/[^\n]*/g, '')
@@ -125,6 +128,7 @@ export const parseNIMResponse = (content: string | null): any => {
     .replace(/,\s*([\]}])/g, '$1')
     .replace(/,\s*,+/g, ',')
     .replace(/([{\[])\s*,/g, '$1')
+    .replace(/,\s*$/, '')
     .replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g, '');
 
   // ponytail: LIFO Stack Tracker for exact reverse order bracket/brace closing (Trap B Fix)

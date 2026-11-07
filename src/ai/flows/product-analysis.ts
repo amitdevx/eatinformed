@@ -149,9 +149,53 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
     }
   }
 
+  const rawBrand = (ocrData.brand || '').trim();
+  const brand = /^(unknown|n\/a|none|not visible|null|undefined|generic)$/i.test(rawBrand) ? '' : rawBrand;
+
+  // ponytail: ensure complete ingredientAnalysis array matches all declared ingredients
+  let finalIngredientAnalysis = Array.isArray(analysisData?.ingredientAnalysis)
+    ? [...analysisData.ingredientAnalysis]
+    : [];
+
+  if (ingredients.length > 0 && finalIngredientAnalysis.length < ingredients.length) {
+    const existingNames = new Set(
+      finalIngredientAnalysis.map((a: any) => (a.ingredient || '').toLowerCase().trim())
+    );
+    for (const ing of ingredients) {
+      const norm = ing.toLowerCase().trim();
+      const alreadyPresent = Array.from(existingNames).some(
+        (existing) => existing && (existing === norm || norm.includes(existing) || existing.includes(norm))
+      );
+      if (!alreadyPresent) {
+        const isSugar = /sugar|syrup|honey|dextrose|fructose|maltose|sucrose/i.test(ing);
+        const isOil = /\boil\b|fat|butter|shortening|palm/i.test(ing);
+        const isSalt = /\bsalt\b|sodium/i.test(ing);
+        finalIngredientAnalysis.push({
+          ingredient: ing,
+          description: isSugar
+            ? 'Caloric sweetener used for taste, texture, and browning.'
+            : isOil
+            ? 'Culinary or processing lipid used for mouthfeel and texture.'
+            : isSalt
+            ? 'Mineral seasoning used for flavor and preservation.'
+            : 'Declared food ingredient extracted from product packaging label.',
+          purpose: isSugar
+            ? 'Sweetener'
+            : isOil
+            ? 'Lipid / Texture'
+            : isSalt
+            ? 'Seasoning'
+            : 'Formulation Ingredient',
+          isAllergen: /milk|dairy|whey|casein|soy|wheat|gluten|peanut|nut|coconut|egg|fish|sesame/i.test(ing),
+          isControversial: /artificial|dye|red 40|yellow 5|yellow 6|msg|monosodium|high-fructose|bha|bht|tbhq|carrageenan|polysorbate/i.test(ing),
+        });
+      }
+    }
+  }
+
   const merged = {
     productName: ocrData.productName?.trim() || 'Scanned Food Product',
-    brand: ocrData.brand?.trim() || '',
+    brand,
     novaGroup: analysisData?.novaGroup ?? ocrData.novaGroup ?? 4,
     ingredients,
     nutrition: {
@@ -163,8 +207,8 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
     pros: Array.isArray(analysisData?.pros) ? analysisData.pros : [],
     cons: Array.isArray(analysisData?.cons) ? analysisData.cons : [],
     warnings: Array.isArray(analysisData?.warnings) ? analysisData.warnings : [],
-    ingredientAnalysis: Array.isArray(analysisData?.ingredientAnalysis)
-      ? analysisData.ingredientAnalysis
+    ingredientAnalysis: finalIngredientAnalysis.length > 0
+      ? finalIngredientAnalysis
       : ingredients.map((ing) => ({
           ingredient: ing,
           description: 'Extracted from product packaging.',
