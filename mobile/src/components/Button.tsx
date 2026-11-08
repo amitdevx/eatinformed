@@ -86,25 +86,22 @@ export function Button({
 
   const sizeStyles: Record<
     ButtonSize,
-    { paddingVertical: number; paddingHorizontal: number; minHeight: number; fontSize: number }
+    { height: number; paddingHorizontal: number; fontSize: number }
   > = {
     sm: {
-      paddingVertical: 9,
-      paddingHorizontal: 16,
-      minHeight: 40,
-      fontSize: typography.fontSizes.sm,
+      height: 36,
+      paddingHorizontal: 14,
+      fontSize: typography.fontSizes.xs,
     },
     md: {
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      minHeight: layout.minTouchTarget,
-      fontSize: typography.fontSizes.subhead,
+      height: 44,
+      paddingHorizontal: 16,
+      fontSize: typography.fontSizes.sm,
     },
     lg: {
-      paddingVertical: 15,
-      paddingHorizontal: 26,
-      minHeight: 52,
-      fontSize: typography.fontSizes.base,
+      height: 50,
+      paddingHorizontal: 22,
+      fontSize: typography.fontSizes.subhead,
     },
   };
 
@@ -122,9 +119,8 @@ export function Button({
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
           borderWidth: hasBorder ? 1 : 0,
-          paddingVertical: currentSize.paddingVertical,
           paddingHorizontal: currentSize.paddingHorizontal,
-          minHeight: currentSize.minHeight,
+          height: currentSize.height,
         },
         style,
       ]}
@@ -135,11 +131,15 @@ export function Button({
         <View style={styles.contentRow}>
           {icon && iconPosition === 'left' && <View style={styles.leftIcon}>{icon}</View>}
           <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
             style={[
               styles.text,
               {
                 color: getTextColor(),
                 fontSize: currentSize.fontSize,
+                fontWeight: typography.fontWeights.semibold,
               },
               textStyle,
             ]}

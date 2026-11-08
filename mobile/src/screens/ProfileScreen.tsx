@@ -180,8 +180,8 @@ export default function ProfileScreen() {
                   title="Exit Guest Mode"
                   onPress={() => setSignOutModalVisible(true)}
                   variant="danger"
-                  size="md"
-                  icon={<LogOut size={16} color={colors.dangerText} />}
+                  size="sm"
+                  icon={<LogOut size={15} color={colors.dangerText} />}
                   style={styles.authButton}
                 />
               </View>
@@ -374,7 +374,7 @@ export default function ProfileScreen() {
             ? "Your temporary guest scanning session will end. You can start a new guest session or sign in anytime."
             : "Are you sure you want to sign out of your EatInformed account?"
         }
-        confirmText={isAnonymous ? "Exit Guest Mode" : "Sign Out"}
+        confirmText={isAnonymous ? "Exit" : "Sign Out"}
         cancelText="Cancel"
         destructive={true}
         onConfirm={confirmSignOut}

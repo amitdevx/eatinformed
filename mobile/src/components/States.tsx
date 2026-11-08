@@ -311,12 +311,14 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeights.sm,
   },
   progressSection: {
-    width: 240,
+    width: '88%',
+    maxWidth: 320,
     marginTop: spacing.lg,
     alignItems: 'stretch',
+    alignSelf: 'center',
   },
   progressTrack: {
-    width: 240,
+    width: '100%',
     height: 6,
     borderRadius: 3,
     borderWidth: 1,
@@ -329,7 +331,7 @@ const styles = StyleSheet.create({
   progressMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 240,
+    width: '100%',
     marginTop: spacing.xs + 2,
   },
   progressMetaText: {

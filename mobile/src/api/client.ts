@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { ProductAnalysisOutput } from '../types';
 
 const AVG_DURATION_KEY = '@eatinformed_avg_scan_ms';
@@ -28,17 +29,10 @@ async function recordScanDuration(durationMs: number): Promise<void> {
 }
 
 // Default development and production URLs:
-// Android Emulator maps host machine to 10.0.2.2 in development
-// Production release builds default to the live EatInformed domain
+// Uses explicit EXPO_PUBLIC_API_URL or defaults reliably to production domain
 const getBaseUrl = (): string => {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
-  }
-  if (__DEV__) {
-    if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:9003';
-    }
-    return 'http://localhost:9003';
   }
   return 'https://eatinformed.amitdevx.tech';
 };
@@ -49,6 +43,22 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Auto-attach stored token if Authorization header is not set
+apiClient.interceptors.request.use(async (config) => {
+  if (!config.headers['Authorization']) {
+    try {
+      const raw = await SecureStore.getItemAsync('eatinformed_user_session_v1');
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session?.token) {
+          config.headers['Authorization'] = `Bearer ${session.token}`;
+        }
+      }
+    } catch (_) {}
+  }
+  return config;
 });
 
 export const setAuthToken = (token: string | null) => {

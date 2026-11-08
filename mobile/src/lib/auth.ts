@@ -6,6 +6,7 @@ import { apiClient, setAuthToken } from '../api/client';
 WebBrowser.maybeCompleteAuthSession();
 
 const USER_SESSION_KEY = 'eatinformed_user_session_v1';
+let cachedSession: UserSessionData | null = null;
 
 export interface UserSessionData {
   email: string;
@@ -18,6 +19,13 @@ export interface UserSessionData {
 }
 
 export async function getUserSession(): Promise<UserSessionData | null> {
+  if (cachedSession && cachedSession.isLoggedIn) {
+    if (cachedSession.token) {
+      setAuthToken(cachedSession.token);
+    }
+    return cachedSession;
+  }
+
   try {
     const raw = await SecureStore.getItemAsync(USER_SESSION_KEY);
     if (!raw) {
@@ -28,10 +36,11 @@ export async function getUserSession(): Promise<UserSessionData | null> {
     if (session.token) {
       setAuthToken(session.token);
     }
+    cachedSession = session;
     return session;
   } catch (e) {
     console.warn('Error reading session from secure storage:', e);
-    return null;
+    return cachedSession;
   }
 }
 
@@ -44,16 +53,19 @@ export async function saveUserSession(
 ): Promise<UserSessionData> {
   const session: UserSessionData = {
     email,
-    name: name || (isAnonymous ? 'Guest Explorer' : email.split('@')[0]),
-    token: token || `token_${Date.now()}`,
+    name: name || (isAnonymous ? 'Guest Explorer' : email.split('@')[0] || 'Member'),
+    token: token || (isAnonymous ? `guest_session_${Date.now()}` : `token_${Date.now()}`),
     photoUrl,
     isLoggedIn: true,
     isAnonymous,
     loginDate: new Date().toLocaleDateString(),
   };
+
+  cachedSession = session;
+  setAuthToken(session.token || null);
+
   try {
     await SecureStore.setItemAsync(USER_SESSION_KEY, JSON.stringify(session));
-    setAuthToken(session.token || null);
   } catch (e) {
     console.warn('Error saving session to secure storage:', e);
   }
@@ -61,9 +73,10 @@ export async function saveUserSession(
 }
 
 export async function clearUserSession(): Promise<void> {
+  cachedSession = null;
+  setAuthToken(null);
   try {
     await SecureStore.deleteItemAsync(USER_SESSION_KEY);
-    setAuthToken(null);
   } catch (e) {
     console.warn('Error clearing session from secure storage:', e);
   }
@@ -84,6 +97,8 @@ export async function authenticateWithBackend(
       email,
       password,
       type,
+    }, {
+      timeout: 12000,
     });
 
     if (response.data && response.data.token) {
@@ -97,7 +112,7 @@ export async function authenticateWithBackend(
   }
 }
 
-// ponytail: authentic guest session synced with backend
+// ponytail: authentic guest session with fast 3.5s timeout & instant fallback
 export async function signInAsGuest(): Promise<UserSessionData> {
   try {
     const response = await apiClient.post<{
@@ -106,11 +121,13 @@ export async function signInAsGuest(): Promise<UserSessionData> {
       user: { email: string; name: string; isAnonymous: boolean };
     }>('/api/auth/mobile', {
       type: 'guest',
+    }, {
+      timeout: 3500,
     });
 
     if (response.data && response.data.token) {
       const u = response.data.user;
-      return await saveUserSession(u.email, u.name, response.data.token, true);
+      return await saveUserSession(u.email || '', u.name || 'Guest Explorer', response.data.token, true);
     }
   } catch (e) {
     console.warn('Backend guest auth failed, falling back to local guest session:', e);
@@ -119,56 +136,44 @@ export async function signInAsGuest(): Promise<UserSessionData> {
   return await saveUserSession(
     '',
     'Guest Explorer',
-    `guest_${Date.now()}`,
+    `guest_session_${Date.now()}`,
     true
   );
 }
 
-// ponytail: Google OAuth flow with system browser sheet
+// ponytail: Google OAuth flow via HTTPS Web-to-App Bridge to bypass Google Web Client custom scheme policy
 export async function signInWithGoogle(): Promise<UserSessionData> {
-  const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+  const webBaseUrl = (
+    process.env.EXPO_PUBLIC_API_URL || 'https://eatinformed.amitdevx.tech'
+  ).replace(/\/+$/, '');
 
-  if (!clientId || clientId === 'your-google-client-id.apps.googleusercontent.com') {
-    throw new Error(
-      'Google Sign-In is not configured (missing EXPO_PUBLIC_GOOGLE_CLIENT_ID in mobile/.env). Please add your Google OAuth Client ID or continue as Guest.'
-    );
-  }
-
-  const redirectUri = makeRedirectUri({
+  const appCallbackUri = makeRedirectUri({
     path: 'auth/callback',
     scheme: 'eatinformed',
   });
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
-    clientId
-  )}&response_type=token&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}`;
 
-  const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+  const bridgeUrl = `${webBaseUrl}/mobile-auth?redirect_uri=${encodeURIComponent(appCallbackUri)}`;
 
-  if (result.type !== 'success' || !result.url) {
+  const res = await WebBrowser.openAuthSessionAsync(bridgeUrl, appCallbackUri);
+
+  if (res.type !== 'success' || !res.url) {
     throw new Error('Google sign-in was cancelled.');
   }
 
-  const match = result.url.match(/access_token=([^&]+)/);
-  const accessToken = match ? match[1] : null;
-
-  if (!accessToken) {
-    throw new Error('No access token returned from Google authentication.');
+  const queryPart = res.url.split('?')[1] || res.url.split('#')[1] || '';
+  const params = new URLSearchParams(queryPart);
+  if (params.get('error')) {
+    throw new Error('Google sign-in was cancelled.');
   }
 
-  const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!userRes.ok) {
-    throw new Error('Failed to fetch user profile from Google.');
+  const token = params.get('token') || params.get('access_token') || params.get('id_token');
+  const email = params.get('email') || '';
+  const name = params.get('name') || (email ? email.split('@')[0] : 'Member');
+  const photoUrl = params.get('photoUrl') || undefined;
+
+  if (!token || !email) {
+    throw new Error('Could not retrieve Google account details. Please try again.');
   }
-  const userInfo = await userRes.json();
-  return await saveUserSession(
-    userInfo.email || '',
-    userInfo.name || userInfo.email?.split('@')[0] || 'Member',
-    accessToken,
-    false,
-    userInfo.picture
-  );
+
+  return await saveUserSession(email, name, token, false, photoUrl);
 }

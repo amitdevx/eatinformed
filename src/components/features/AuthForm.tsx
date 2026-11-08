@@ -147,24 +147,43 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
   };
 
   const handleAnonymousSignIn = async () => {
-    if (!auth) {
-      setError("Firebase is not configured. Please check your environment variables.");
-      return;
-    }
     setIsProcessing(true);
     setError(null);
     try {
-      await setPersistence(auth, browserLocalPersistence);
-      const result = await signInAnonymously(auth);
-      
-      await createUserProfileDocument(result.user);
-      const idToken = await result.user.getIdToken();
-      
-      toast({
-        title: 'Signed in as Guest',
-        description: 'Your progress will be saved for this session.',
+      if (auth) {
+        try {
+          await setPersistence(auth, browserLocalPersistence);
+          const result = await signInAnonymously(auth);
+          await createUserProfileDocument(result.user);
+          const idToken = await result.user.getIdToken();
+          
+          toast({
+            title: 'Signed in as Guest',
+            description: 'Your progress will be saved for this session.',
+          });
+          await handleAuthSuccess(idToken);
+          return;
+        } catch (fbErr) {
+          console.warn('Firebase anonymous sign-in failed, attempting backend guest session fallback:', fbErr);
+        }
+      }
+
+      // Backend fallback guest session (works even if Firebase Anonymous is disabled in console)
+      const res = await fetch('/api/auth/mobile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'guest' }),
       });
-      await handleAuthSuccess(idToken);
+      const data = await res.json();
+      if (data.token) {
+        toast({
+          title: 'Signed in as Guest',
+          description: 'Your progress will be saved for this session.',
+        });
+        await handleAuthSuccess(data.token);
+        return;
+      }
+      throw new Error(data.error || 'Failed to initialize guest session');
     } catch (err) {
       const msg = formatAuthError(err);
       if (msg) setError(msg);

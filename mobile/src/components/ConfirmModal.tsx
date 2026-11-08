@@ -118,5 +118,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+    height: 40,
   },
 });
