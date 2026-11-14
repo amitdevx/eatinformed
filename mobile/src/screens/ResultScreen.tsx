@@ -16,6 +16,7 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
@@ -135,43 +136,29 @@ export default function ResultScreen() {
 
   return (
     <Screen scrollable>
-      {/* Top Navigation Bar */}
-      <FadeInView delay={0} style={styles.topBar}>
-        <PressableScale
-          style={[
-            styles.navIconButton,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-          onPress={() => navigation.goBack()}
-          scaleTo={0.92}
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft size={20} color={colors.text} />
-        </PressableScale>
-
-        <PressableScale
-          style={[
-            styles.navIconButton,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-          onPress={handleShare}
-          scaleTo={0.92}
-          accessibilityLabel="Share report"
-        >
-          <Share2 size={19} color={colors.text} />
-        </PressableScale>
-      </FadeInView>
-
-      {/* Product Title Section */}
-      <FadeInView delay={40} style={styles.productHeader}>
-        {brand ? (
-          <Text style={[styles.brandText, { color: colors.primary }]}>
-            {brand.toUpperCase()}
-          </Text>
-        ) : null}
-        <Text style={[styles.productTitle, { color: colors.text }]}>
-          {productName}
-        </Text>
+      {/* Standard Apple HIG Screen Header with Back & Share */}
+      <FadeInView delay={0}>
+        <ScreenHeader
+          onBack={() => navigation.goBack()}
+          eyebrow={brand || undefined}
+          title={productName}
+          largeTitle={true}
+          rightElement={
+            <PressableScale
+              style={[
+                styles.navIconButton,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+              onPress={handleShare}
+              scaleTo={0.92}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Share report"
+            >
+              <Share2 size={18} color={colors.text} />
+            </PressableScale>
+          }
+        />
       </FadeInView>
 
       {/* Main Health Rating Summary Card */}
@@ -369,7 +356,10 @@ export default function ResultScreen() {
               <Card key={index} style={styles.ingredientCard}>
                 <CardContent>
                   <View style={styles.ingredientTopRow}>
-                    <Text style={[styles.ingredientName, { color: colors.text }]}>
+                    <Text
+                      selectable={true}
+                      style={[styles.ingredientName, { color: colors.text }]}
+                    >
                       {item.ingredient}
                     </Text>
                     <View style={styles.badgeRow}>
@@ -391,6 +381,7 @@ export default function ResultScreen() {
                   ) : null}
                   {item.description ? (
                     <Text
+                      selectable={true}
                       style={[
                         styles.ingredientDescription,
                         { color: colors.textSecondary },
@@ -408,6 +399,7 @@ export default function ResultScreen() {
                 {data.ingredients.map((ing, idx) => (
                   <Text
                     key={idx}
+                    selectable={true}
                     style={[styles.rawIngredientItem, { color: colors.text }]}
                   >
                     {idx + 1}. {ing}

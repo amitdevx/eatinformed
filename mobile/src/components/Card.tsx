@@ -55,7 +55,14 @@ export function CardHeader({
   return (
     <View style={[styles.header, style]}>
       <View style={styles.headerText}>
-        {title && <Text style={[styles.title, { color: colors.text }]}>{title}</Text>}
+        {title && (
+          <Text
+            accessibilityRole="header"
+            style={[styles.title, { color: colors.text }]}
+          >
+            {title}
+          </Text>
+        )}
         {subtitle && (
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
         )}
@@ -73,7 +80,14 @@ export function CardTitle({
   style?: StyleProp<TextStyle>;
 }) {
   const { colors } = useTheme();
-  return <Text style={[styles.title, { color: colors.text }, style]}>{children}</Text>;
+  return (
+    <Text
+      accessibilityRole="header"
+      style={[styles.title, { color: colors.text }, style]}
+    >
+      {children}
+    </Text>
+  );
 }
 
 export function CardDescription({

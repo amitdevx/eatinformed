@@ -1,13 +1,30 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { BookOpen, AlertTriangle } from 'lucide-react-native';
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+} from 'react-native';
+import {
+  BookOpen,
+  AlertTriangle,
+  Search,
+  X,
+  ShieldAlert,
+  ShieldCheck,
+  FlaskConical,
+} from 'lucide-react-native';
 import { Screen } from '../components/Screen';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Card, CardHeader, CardContent } from '../components/Card';
 import { NovaBadge } from '../components/NovaBadge';
+import { Badge } from '../components/Badge';
+import { SegmentedControl } from '../components/SegmentedControl';
 import { useTheme } from '../theme/ThemeContext';
 import { getNovaColor } from '../theme/colors';
-import { FadeInView } from '../theme/animations';
-import { borderRadius, spacing, typography } from '../theme/tokens';
+import { FadeInView, PressableScale } from '../theme/animations';
+import { borderRadius, layout, spacing, typography } from '../theme/tokens';
+import { ADDITIVE_DICTIONARY, AdditiveEntry } from '../lib/additive-dictionary';
 
 const NOVA_GROUPS = [
   {
@@ -64,200 +81,254 @@ const NOVA_GROUPS = [
   },
 ];
 
-const ADDITIVES = [
-  {
-    title: 'Emulsifiers (Polysorbate 80, CMC, Carrageenan)',
-    category: 'Texture Stabilizers',
-    detail:
-      'Used to blend immiscible liquids and extend shelf life. Clinical and preclinical studies suggest high intake can alter gut mucosal barriers and microbiome diversity.',
-  },
-  {
-    title: 'High-Fructose Corn Syrup (HFCS) & Maltodextrin',
-    category: 'Industrial Sweeteners & Fillers',
-    detail:
-      'Rapidly absorbed refined carbohydrates with high glycemic load, strongly linked to hepatic de novo lipogenesis, insulin resistance, and elevated triglycerides.',
-  },
-  {
-    title: 'Synthetic Azo Dyes (Red 40, Yellow 5, Yellow 6)',
-    category: 'Cosmetic Colorants',
-    detail:
-      'Petroleum-derived synthetic colorings used strictly for visual appeal and flagged by international food safety authorities for neurobehavioral sensitivity in children.',
-  },
-];
+type GuideTab = 'nova' | 'additives';
 
 export default function GuideScreen() {
   const { colors, isDark } = useTheme();
+  const [activeTab, setActiveTab] = useState<GuideTab>('nova');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // ponytail: instant offline filtering over compiled additive dictionary
+  const filteredAdditives = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return ADDITIVE_DICTIONARY;
+    return ADDITIVE_DICTIONARY.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        (item.code && item.code.toLowerCase().includes(q)) ||
+        item.category.toLowerCase().includes(q) ||
+        item.foundIn.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  const getRiskBadge = (risk: AdditiveEntry['riskLevel']) => {
+    switch (risk) {
+      case 'caution':
+        return <Badge label="Caution / Limit" variant="danger" size="sm" />;
+      case 'moderate':
+        return <Badge label="Moderate" variant="warning" size="sm" />;
+      case 'safe':
+        return <Badge label="Generally Safe" variant="success" size="sm" />;
+    }
+  };
 
   return (
     <Screen scrollable>
-      <FadeInView delay={0} style={styles.header}>
-        <View style={styles.titleRow}>
-          <View
-            style={[
-              styles.iconBadge,
-              {
-                backgroundColor: colors.primaryMuted,
-                borderColor: colors.primaryBorder,
-              },
-            ]}
-          >
-            <BookOpen size={20} color={colors.primary} />
-          </View>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Food Safety Guide
+      <FadeInView delay={0}>
+        <ScreenHeader
+          title="Food Safety Guide"
+          subtitle="NOVA classification standards & offline clinical additive dictionary"
+          largeTitle={true}
+        />
+      </FadeInView>
+
+      {/* Segmented Tab Switcher */}
+      <FadeInView delay={40} style={styles.segmentWrapper}>
+        <SegmentedControl<GuideTab>
+          options={[
+            { value: 'nova', label: 'NOVA Groups (1–4)' },
+            {
+              value: 'additives',
+              label: `Additive Dictionary (${ADDITIVE_DICTIONARY.length})`,
+            },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
+      </FadeInView>
+
+      {/* TAB 1: NOVA CLASSIFICATION */}
+      {activeTab === 'nova' && (
+        <FadeInView key="tab-nova" delay={60}>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+            Developed by epidemiologists at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of industrial processing.
           </Text>
-        </View>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Learn how to decipher food labels, identify ultra-processed additives, and choose nutrient-dense whole foods.
-        </Text>
-      </FadeInView>
 
-      {/* NOVA Section */}
-      <FadeInView delay={50}>
-        <Text style={[styles.sectionHeading, { color: colors.text }]}>
-          The NOVA Classification
-        </Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-          Developed by nutrition researchers at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of processing.
-        </Text>
-      </FadeInView>
-
-      {NOVA_GROUPS.map((item, idx) => {
-        const novaMeta = getNovaColor(item.group, !isDark);
-        return (
-          <FadeInView key={item.group} delay={90 + idx * 50}>
-            <Card
-              style={[
-                styles.novaCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <CardContent>
-                <View style={styles.novaCardHeader}>
-                  <NovaBadge novaGroup={item.group} size="md" />
-                </View>
-                <Text style={[styles.groupTitle, { color: colors.text }]}>
-                  {item.title}
-                </Text>
-                <Text
+          {NOVA_GROUPS.map((item, idx) => {
+            const novaMeta = getNovaColor(item.group, !isDark);
+            return (
+              <FadeInView key={item.group} delay={80 + idx * 40}>
+                <Card
                   style={[
-                    styles.groupDescription,
-                    { color: colors.textSecondary },
-                  ]}
-                >
-                  {item.description}
-                </Text>
-
-                <View
-                  style={[
-                    styles.examplesContainer,
+                    styles.novaCard,
                     {
-                      backgroundColor: colors.surfaceRaised,
+                      backgroundColor: colors.surface,
                       borderColor: colors.border,
                     },
                   ]}
                 >
+                  <CardContent>
+                    <View style={styles.novaCardHeader}>
+                      <NovaBadge novaGroup={item.group} size="md" />
+                    </View>
+                    <Text
+                      accessibilityRole="header"
+                      style={[styles.groupTitle, { color: colors.text }]}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.groupDescription,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {item.description}
+                    </Text>
+
+                    <View
+                      style={[
+                        styles.examplesContainer,
+                        {
+                          backgroundColor: colors.surfaceRaised,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.examplesHeading,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        TYPICAL EXAMPLES
+                      </Text>
+                      {item.examples.map((ex, i) => (
+                        <Text
+                          key={i}
+                          style={[styles.exampleItem, { color: colors.text }]}
+                        >
+                          • {ex}
+                        </Text>
+                      ))}
+                    </View>
+
+                    <View
+                      style={[
+                        styles.impactBox,
+                        { borderTopColor: colors.separator },
+                      ]}
+                    >
+                      <Text style={[styles.impactText, { color: novaMeta.text }]}>
+                        {item.impact}
+                      </Text>
+                    </View>
+                  </CardContent>
+                </Card>
+              </FadeInView>
+            );
+          })}
+        </FadeInView>
+      )}
+
+      {/* TAB 2: OFFLINE ADDITIVE DICTIONARY */}
+      {activeTab === 'additives' && (
+        <FadeInView key="tab-additives" delay={60}>
+          {/* Real-time offline search bar */}
+          <View
+            style={[
+              styles.searchBar,
+              {
+                backgroundColor: colors.surfaceRaised,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Search size={18} color={colors.textSecondary} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search by name, E-number (e.g. E407, Red 40)..."
+              placeholderTextColor={colors.textMuted}
+              style={[styles.searchInput, { color: colors.text }]}
+              returnKeyType="search"
+              clearButtonMode="never"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <PressableScale
+                onPress={() => setSearchQuery('')}
+                scaleTo={0.9}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+                style={styles.clearSearchButton}
+              >
+                <X size={15} color={colors.textSecondary} />
+              </PressableScale>
+            )}
+          </View>
+
+          <Text style={[styles.resultsCount, { color: colors.textMuted }]}>
+            {filteredAdditives.length === 1
+              ? '1 clinical entry found'
+              : `${filteredAdditives.length} clinical entries found`}
+          </Text>
+
+          {filteredAdditives.map((item, idx) => (
+            <FadeInView key={item.id} delay={40 + Math.min(idx * 30, 200)}>
+              <Card style={styles.additiveCard}>
+                <CardContent>
+                  <View style={styles.additiveTopRow}>
+                    <View style={styles.additiveTitleCol}>
+                      {item.code ? (
+                        <Text style={[styles.additiveCode, { color: colors.primary }]}>
+                          {item.code}
+                        </Text>
+                      ) : null}
+                      <Text
+                        selectable={true}
+                        accessibilityRole="header"
+                        style={[styles.additiveName, { color: colors.text }]}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text style={[styles.additiveCategory, { color: colors.textSecondary }]}>
+                        {item.category}
+                      </Text>
+                    </View>
+                    <View style={styles.badgeCol}>
+                      {getRiskBadge(item.riskLevel)}
+                    </View>
+                  </View>
+
                   <Text
+                    selectable={true}
+                    style={[styles.additiveDescription, { color: colors.textSecondary }]}
+                  >
+                    {item.description}
+                  </Text>
+
+                  <View
                     style={[
-                      styles.examplesHeading,
-                      { color: colors.textSecondary },
+                      styles.foundInBox,
+                      {
+                        backgroundColor: colors.surfaceRaised,
+                        borderColor: colors.border,
+                      },
                     ]}
                   >
-                    TYPICAL EXAMPLES
-                  </Text>
-                  {item.examples.map((ex, i) => (
-                    <Text
-                      key={i}
-                      style={[styles.exampleItem, { color: colors.text }]}
-                    >
-                      • {ex}
+                    <Text style={[styles.foundInLabel, { color: colors.textMuted }]}>
+                      COMMON SOURCES
                     </Text>
-                  ))}
-                </View>
-
-                <View
-                  style={[
-                    styles.impactBox,
-                    { borderTopColor: colors.separator },
-                  ]}
-                >
-                  <Text style={[styles.impactText, { color: novaMeta.text }]}>
-                    {item.impact}
-                  </Text>
-                </View>
-              </CardContent>
-            </Card>
-          </FadeInView>
-        );
-      })}
-
-      {/* Additives Guide */}
-      <FadeInView delay={300}>
-        <Text style={[styles.sectionHeading, { color: colors.text }]}>
-          Concerning Additives to Watch
-        </Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-          Industrial compounds frequently flagged during EatInformed label screening.
-        </Text>
-      </FadeInView>
-
-      {ADDITIVES.map((addon, idx) => (
-        <FadeInView key={idx} delay={340 + idx * 50}>
-          <Card style={styles.addonCard}>
-            <CardHeader
-              title={addon.title}
-              subtitle={addon.category}
-              rightElement={<AlertTriangle size={18} color={colors.warningText} />}
-            />
-            <CardContent>
-              <Text style={[styles.addonText, { color: colors.textSecondary }]}>
-                {addon.detail}
-              </Text>
-            </CardContent>
-          </Card>
+                    <Text style={[styles.foundInText, { color: colors.text }]}>
+                      {item.foundIn}
+                    </Text>
+                  </View>
+                </CardContent>
+              </Card>
+            </FadeInView>
+          ))}
         </FadeInView>
-      ))}
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingTop: spacing.base,
-    paddingBottom: spacing.md,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs + 2,
-  },
-  iconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm + 2,
-  },
-  title: {
-    fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.black,
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    fontSize: typography.fontSizes.subhead,
-    lineHeight: typography.lineHeights.subhead,
-  },
-  sectionHeading: {
-    fontSize: typography.fontSizes.xl,
-    fontWeight: typography.fontWeights.bold,
-    letterSpacing: -0.4,
-    marginTop: spacing.md,
-    marginBottom: 4,
+  segmentWrapper: {
+    marginBottom: spacing.base,
   },
   sectionSubtitle: {
     fontSize: typography.fontSizes.sm,
@@ -265,20 +336,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.base,
   },
   novaCard: {
-    marginBottom: spacing.base,
+    marginBottom: spacing.md,
   },
   novaCardHeader: {
     marginBottom: spacing.sm,
   },
   groupTitle: {
-    fontSize: typography.fontSizes.md,
+    fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.bold,
-    letterSpacing: -0.3,
-    marginBottom: 4,
+    letterSpacing: -0.2,
+    marginBottom: spacing.xs,
   },
   groupDescription: {
-    fontSize: typography.fontSizes.subhead,
-    lineHeight: typography.lineHeights.subhead,
+    fontSize: typography.fontSizes.sm,
+    lineHeight: typography.lineHeights.sm,
     marginBottom: spacing.md,
   },
   examplesContainer: {
@@ -290,12 +361,13 @@ const styles = StyleSheet.create({
   examplesHeading: {
     fontSize: typography.fontSizes.caption2,
     fontWeight: typography.fontWeights.bold,
-    letterSpacing: 0.6,
-    marginBottom: 6,
+    letterSpacing: 0.7,
+    marginBottom: spacing.xs + 2,
   },
   exampleItem: {
-    fontSize: typography.fontSizes.sm,
-    lineHeight: 20,
+    fontSize: typography.fontSizes.xs,
+    lineHeight: typography.lineHeights.xs + 2,
+    marginBottom: 2,
   },
   impactBox: {
     paddingTop: spacing.sm + 2,
@@ -304,13 +376,84 @@ const styles = StyleSheet.create({
   impactText: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.semibold,
-    lineHeight: 17,
+    lineHeight: typography.lineHeights.xs + 2,
   },
-  addonCard: {
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    height: layout.minTouchTarget,
+    marginBottom: spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: typography.fontSizes.sm,
+    marginLeft: spacing.sm,
+    paddingVertical: 0,
+  },
+  clearSearchButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultsCount: {
+    fontSize: typography.fontSizes.caption2,
+    marginBottom: spacing.md,
+    marginLeft: 2,
+  },
+  additiveCard: {
     marginBottom: spacing.md,
   },
-  addonText: {
-    fontSize: typography.fontSizes.subhead,
-    lineHeight: typography.lineHeights.subhead,
+  additiveTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  additiveTitleCol: {
+    flex: 1,
+    paddingRight: spacing.sm,
+  },
+  badgeCol: {
+    alignItems: 'flex-end',
+  },
+  additiveCode: {
+    fontSize: typography.fontSizes.caption2,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  additiveName: {
+    fontSize: typography.fontSizes.base,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: -0.2,
+  },
+  additiveCategory: {
+    fontSize: typography.fontSizes.xs,
+    marginTop: 2,
+  },
+  additiveDescription: {
+    fontSize: typography.fontSizes.sm,
+    lineHeight: typography.lineHeights.sm + 2,
+    marginBottom: spacing.sm + 2,
+  },
+  foundInBox: {
+    padding: spacing.sm + 2,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+  },
+  foundInLabel: {
+    fontSize: typography.fontSizes.caption2 - 1,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  foundInText: {
+    fontSize: typography.fontSizes.xs,
+    lineHeight: typography.lineHeights.xs,
   },
 });

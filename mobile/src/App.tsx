@@ -25,6 +25,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import ResultScreen from './screens/ResultScreen';
 import AuthScreen from './screens/AuthScreen';
 import { getUserSession } from './lib/auth';
+import { checkApiHealth } from './api/client';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -158,9 +159,13 @@ function TabNavigator() {
 function MainApp() {
   const { colors, isDark } = useTheme();
 
-  // ponytail: restore active user session & auth token on cold app start
+  // ponytail: restore session & pre-warm serverless API in background on cold start (mirrors SeniorPath async prewarming)
   useEffect(() => {
     getUserSession().catch(() => {});
+    const timer = setTimeout(() => {
+      checkApiHealth().catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   const navTheme = {

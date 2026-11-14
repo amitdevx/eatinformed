@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import { Share } from 'react-native';
 import { HistoryItem, ProductAnalysisOutput } from '../types';
 
 const HISTORY_STORAGE_KEY = 'eatinformed_mobile_history_v2';
@@ -95,6 +96,36 @@ export async function clearAllHistory(): Promise<boolean> {
     return true;
   } catch (error) {
     console.warn('Failed to clear scan history:', error);
+    return false;
+  }
+}
+
+// ponytail: native JSON backup export without third-party file dependencies (mirrors SeniorPath ProgressIo)
+export async function exportScanHistory(): Promise<boolean> {
+  try {
+    const history = await getScanHistory();
+    if (history.length === 0) return false;
+    const backup = {
+      schema_version: 1,
+      app: 'EatInformed',
+      exported_at: new Date().toISOString(),
+      item_count: history.length,
+      scans: history.map((item) => ({
+        timestamp: item.timestamp,
+        productName: item.productName,
+        brand: item.brand,
+        rating: item.rating,
+        novaGroup: item.novaGroup,
+        data: item.data,
+      })),
+    };
+    await Share.share({
+      title: 'EatInformed Scan History Backup',
+      message: JSON.stringify(backup, null, 2),
+    });
+    return true;
+  } catch (error) {
+    console.warn('Failed to export scan history:', error);
     return false;
   }
 }

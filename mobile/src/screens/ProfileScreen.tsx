@@ -13,8 +13,10 @@ import {
   Sparkles,
   LogOut,
   LogIn,
+  Share2,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
@@ -22,6 +24,7 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession } from '../lib/auth';
+import { exportScanHistory } from '../lib/history';
 import { useTheme, ThemeMode } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
@@ -100,13 +103,12 @@ export default function ProfileScreen() {
 
   return (
     <Screen scrollable>
-      <FadeInView delay={0} style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          Account & System
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Manage appearance preferences, session sync, and AI service diagnostics
-        </Text>
+      <FadeInView delay={0}>
+        <ScreenHeader
+          title="Account & System"
+          subtitle="Manage appearance preferences, session sync, and data exports"
+          largeTitle={true}
+        />
       </FadeInView>
 
       {/* User Card */}
@@ -221,6 +223,25 @@ export default function ProfileScreen() {
               ]}
               value={currentTheme}
               onChange={setTheme}
+            />
+          </CardContent>
+        </Card>
+      </FadeInView>
+
+      {/* Data Portability & Backup Card */}
+      <FadeInView delay={140}>
+        <Card>
+          <CardHeader
+            title="Data Portability & Backup"
+            subtitle="Export your locally saved scans as standard portable JSON"
+          />
+          <CardContent>
+            <Button
+              title="Export Scan History (.json)"
+              onPress={() => exportScanHistory()}
+              variant="outline"
+              size="md"
+              icon={<Share2 size={16} color={colors.text} />}
             />
           </CardContent>
         </Card>

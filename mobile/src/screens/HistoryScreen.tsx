@@ -12,8 +12,10 @@ import {
   Clock,
   ChevronRight,
   History as HistoryIcon,
+  Share2,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/States';
 import { NovaBadge } from '../components/NovaBadge';
@@ -21,8 +23,13 @@ import { RatingStars } from '../components/RatingStars';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
-import { borderRadius, spacing, typography } from '../theme/tokens';
-import { getScanHistory, deleteHistoryItem, clearAllHistory } from '../lib/history';
+import { borderRadius, layout, spacing, typography } from '../theme/tokens';
+import {
+  getScanHistory,
+  deleteHistoryItem,
+  clearAllHistory,
+  exportScanHistory,
+} from '../lib/history';
 import { HistoryItem } from '../types';
 import { RootStackParamList } from '../navigation/types';
 
@@ -92,6 +99,10 @@ export default function HistoryScreen() {
     });
   };
 
+  const handleExport = async () => {
+    await exportScanHistory();
+  };
+
   return (
     <Screen
       scrollable
@@ -103,35 +114,50 @@ export default function HistoryScreen() {
         />
       }
     >
-      <FadeInView delay={0} style={styles.headerRow}>
-        <View>
-          <Text style={[styles.title, { color: colors.text }]}>Scan History</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {historyItems.length}{' '}
-            {historyItems.length === 1
-              ? 'saved report on device'
-              : 'saved reports on device'}
-          </Text>
-        </View>
+      <FadeInView delay={0}>
+        <ScreenHeader
+          title="Scan History"
+          subtitle={`${historyItems.length} ${
+            historyItems.length === 1 ? 'saved report on device' : 'saved reports on device'
+          }`}
+          largeTitle={true}
+          rightElement={
+            historyItems.length > 0 ? (
+              <View style={styles.headerActions}>
+                <PressableScale
+                  style={[
+                    styles.actionIconButton,
+                    { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                  ]}
+                  onPress={handleExport}
+                  scaleTo={0.92}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Export history backup"
+                >
+                  <Share2 size={16} color={colors.text} />
+                </PressableScale>
 
-        {historyItems.length > 0 && (
-          <PressableScale
-            style={[
-              styles.clearButton,
-              {
-                backgroundColor: colors.dangerLight,
-                borderColor: colors.dangerBorder,
-              },
-            ]}
-            onPress={handleClearAll}
-            scaleTo={0.95}
-          >
-            <Trash2 size={14} color={colors.dangerText} />
-            <Text style={[styles.clearButtonText, { color: colors.dangerText }]}>
-              Clear All
-            </Text>
-          </PressableScale>
-        )}
+                <PressableScale
+                  style={[
+                    styles.actionIconButton,
+                    {
+                      backgroundColor: colors.dangerLight,
+                      borderColor: colors.dangerBorder,
+                    },
+                  ]}
+                  onPress={handleClearAll}
+                  scaleTo={0.92}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear all history"
+                >
+                  <Trash2 size={16} color={colors.dangerText} />
+                </PressableScale>
+              </View>
+            ) : undefined
+          }
+        />
       </FadeInView>
 
       {historyItems.length === 0 ? (
@@ -222,34 +248,18 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: spacing.base,
-    paddingBottom: spacing.md,
-  },
-  title: {
-    fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.black,
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    fontSize: typography.fontSizes.sm,
-    marginTop: 2,
-  },
-  clearButton: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    borderRadius: borderRadius.full,
+    gap: spacing.sm,
+  },
+  actionIconButton: {
+    width: layout.minTouchTarget,
+    height: layout.minTouchTarget,
+    borderRadius: layout.minTouchTarget / 2,
     borderWidth: 1,
-  },
-  clearButtonText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
-    marginLeft: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemCard: {
     marginBottom: spacing.md,

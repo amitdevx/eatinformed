@@ -7,6 +7,7 @@ import {
   Pressable,
   LayoutChangeEvent,
   ViewStyle,
+  AccessibilityInfo,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { SpringPresets } from '../theme/animations';
@@ -25,8 +26,8 @@ interface SegmentedControlProps<T extends string> {
 }
 
 /**
- * Apple iOS UISegmentedControl with fluid spring-animated sliding thumb
- * and elevated contrast in both Light and Dark appearances.
+ * Apple iOS UISegmentedControl with fluid spring-animated sliding thumb,
+ * reduced-motion accessibility bypass, and elevated contrast.
  */
 export function SegmentedControl<T extends string>({
   options,
@@ -46,12 +47,32 @@ export function SegmentedControl<T extends string>({
   const segmentWidth =
     containerWidth > 0 ? (containerWidth - padding * 2) / options.length : 0;
 
+  // ponytail: respect OS reduced-motion preference to avoid vestibular discomfort
   useEffect(() => {
     if (segmentWidth > 0) {
-      Animated.spring(translateX, {
-        toValue: activeIndex * segmentWidth,
-        ...SpringPresets.fluid,
-      }).start();
+      let isMounted = true;
+      AccessibilityInfo.isReduceMotionEnabled()
+        .then((reduceMotion) => {
+          if (!isMounted) return;
+          if (reduceMotion) {
+            translateX.setValue(activeIndex * segmentWidth);
+          } else {
+            Animated.spring(translateX, {
+              toValue: activeIndex * segmentWidth,
+              ...SpringPresets.fluid,
+            }).start();
+          }
+        })
+        .catch(() => {
+          Animated.spring(translateX, {
+            toValue: activeIndex * segmentWidth,
+            ...SpringPresets.fluid,
+          }).start();
+        });
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [activeIndex, segmentWidth, translateX]);
 

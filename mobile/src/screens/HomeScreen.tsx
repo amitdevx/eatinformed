@@ -73,6 +73,8 @@ export default function HomeScreen() {
             ]}
             onPress={toggleTheme}
             scaleTo={0.92}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
             accessibilityLabel="Toggle appearance mode"
           >
             {isDark ? (
@@ -83,7 +85,10 @@ export default function HomeScreen() {
           </PressableScale>
         </View>
 
-        <Text style={[styles.heroTitle, { color: colors.text }]}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.heroTitle, { color: colors.text }]}
+        >
           Food clarity.{'\n'}
           <Text style={{ color: colors.textSecondary }}>For what you eat.</Text>
         </Text>
@@ -113,7 +118,10 @@ export default function HomeScreen() {
                 <ScanLine size={22} color={colors.primary} />
               </View>
               <View style={styles.ctaTextContainer}>
-                <Text style={[styles.ctaTitle, { color: colors.text }]}>
+                <Text
+                  accessibilityRole="header"
+                  style={[styles.ctaTitle, { color: colors.text }]}
+                >
                   Scan a Product Label
                 </Text>
                 <Text style={[styles.ctaDescription, { color: colors.textSecondary }]}>
@@ -139,8 +147,10 @@ export default function HomeScreen() {
                 ]}
                 onPress={handleOpenHistory}
                 scaleTo={0.95}
+                accessibilityRole="button"
+                accessibilityLabel="View scan history"
               >
-                <History size={14} color={colors.text} />
+                <History size={15} color={colors.text} />
                 <Text style={[styles.quickNavText, { color: colors.text }]}>History</Text>
               </PressableScale>
 
@@ -151,8 +161,10 @@ export default function HomeScreen() {
                 ]}
                 onPress={handleOpenGuide}
                 scaleTo={0.95}
+                accessibilityRole="button"
+                accessibilityLabel="View NOVA guide"
               >
-                <BookOpen size={14} color={colors.text} />
+                <BookOpen size={15} color={colors.text} />
                 <Text style={[styles.quickNavText, { color: colors.text }]}>NOVA Guide</Text>
               </PressableScale>
 
@@ -163,8 +175,10 @@ export default function HomeScreen() {
                 ]}
                 onPress={handleOpenProfile}
                 scaleTo={0.95}
+                accessibilityRole="button"
+                accessibilityLabel="View account settings"
               >
-                <User size={14} color={colors.text} />
+                <User size={15} color={colors.text} />
                 <Text style={[styles.quickNavText, { color: colors.text }]}>Account</Text>
               </PressableScale>
             </View>
@@ -174,7 +188,10 @@ export default function HomeScreen() {
 
       {/* Demo Samples Section */}
       <FadeInView delay={120} style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { color: colors.text }]}
+        >
           Try Instant Samples
         </Text>
         <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
@@ -339,7 +356,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: layout.minTouchTarget,
     paddingVertical: 9,
     paddingHorizontal: 8,
     borderRadius: borderRadius.md,
