@@ -24,7 +24,7 @@ import GuideScreen from './screens/GuideScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ResultScreen from './screens/ResultScreen';
 import AuthScreen from './screens/AuthScreen';
-import { getUserSession } from './lib/auth';
+import { getUserSession, signInAsGuest } from './lib/auth';
 import { checkApiHealth } from './api/client';
 import { FloatingNavBar } from './components/FloatingNavBar';
 
@@ -70,9 +70,18 @@ function TabNavigator() {
 function MainApp() {
   const { colors, isDark } = useTheme();
 
-  // ponytail: restore session & pre-warm serverless API in background on cold start (mirrors SeniorPath async prewarming)
+  // ponytail: restore session & auto-provision guest session on cold install + pre-warm serverless API
   useEffect(() => {
-    getUserSession().catch(() => {});
+    getUserSession()
+      .then((sess) => {
+        if (!sess) {
+          signInAsGuest().catch(() => {});
+        }
+      })
+      .catch(() => {
+        signInAsGuest().catch(() => {});
+      });
+
     const timer = setTimeout(() => {
       checkApiHealth().catch(() => {});
     }, 1500);

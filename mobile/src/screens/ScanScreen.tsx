@@ -249,10 +249,15 @@ export default function ScanScreen() {
   };
 
   const handleAnalyze = async () => {
-    const currentSession = session || (await getUserSession());
+    let currentSession = session || (await getUserSession());
     if (!currentSession || !currentSession.isLoggedIn) {
-      navigation.navigate('Auth', { initialTab: 'login' });
-      return;
+      try {
+        currentSession = await signInAsGuest();
+        setSession(currentSession);
+      } catch (_) {
+        navigation.navigate('Auth', { initialTab: 'login' });
+        return;
+      }
     }
 
     if (!selectedImageBase64) return;

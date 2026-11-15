@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  Pressable,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,10 +30,16 @@ import {
   ChevronRight,
   Database,
   Download,
+  Camera,
+  Leaf,
+  ScanLine,
+  QrCode,
+  Calendar,
+  AlertCircle,
 } from 'lucide-react-native';
-import { Screen } from '../components/Screen';
-import { ScreenHeader } from '../components/ScreenHeader';
-import { Card, CardHeader, CardContent } from '../components/Card';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassSurface } from '../components/GlassSurface';
+import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -39,20 +47,33 @@ import { EditProfileSheet } from '../components/EditProfileSheet';
 import { SettingsSheet } from '../components/SettingsSheet';
 import { YearActivityChart } from '../components/YearActivityChart';
 import { RollingNumber } from '../components/RollingNumber';
+import { NameTicker } from '../components/NameTicker';
+import { FoodPassportModal } from '../components/FoodPassportModal';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession, UserSessionData } from '../lib/auth';
 import { exportScanHistory, getScanHistory } from '../lib/history';
+import { HistoryItem } from '../types';
 import { useTheme } from '../theme/ThemeContext';
-import { FadeInView, PressableScale } from '../theme/animations';
+import { FadeInView, PressableScale, SpringPresets } from '../theme/animations';
 import { AppHaptics } from '../lib/haptics';
-import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const REACH_THRESHOLD = 200.0;
+
+// Achievement Medals Definition (GymMane Medal Shelf)
+const NUTRITION_AWARDS = [
+  { id: 'clean', title: 'Clean Eater', desc: '10+ Clean labels', icon: '🥗', color: '#10B981', earned: true },
+  { id: 'scout', title: 'Additive Scout', desc: 'Scanned 20 additives', icon: '🔍', color: '#3B82F6', earned: true },
+  { id: 'nova', title: 'Nova 1 Master', desc: '5 unprocessed foods', icon: '🌱', color: '#10B981', earned: true },
+  { id: 'sodium', title: 'Sodium Guard', desc: 'Low salt champion', icon: '🧂', color: '#F59E0B', earned: true },
+  { id: 'shield', title: 'Bio Shield', desc: 'Zero ultra-processed', icon: '🛡️', color: '#8B5CF6', earned: false },
+];
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const { colors, theme: currentTheme, isDark } = useTheme();
 
   const [session, setSession] = useState<UserSessionData | null>(null);
@@ -62,6 +83,7 @@ export default function ProfileScreen() {
   const [userName, setUserName] = useState<string | null>(null);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
 
+  const [recentScans, setRecentScans] = useState<HistoryItem[]>([]);
   const [scanCount, setScanCount] = useState<number>(0);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
   const [serverMessage, setServerMessage] = useState<string>('Checking server status...');
@@ -70,81 +92,87 @@ export default function ProfileScreen() {
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [passportVisible, setPassportVisible] = useState(false);
 
-  // GymMane pull-down gesture & watermark ticker animation
+  // GymMane Rubber-band Swipe Down Physics (Reach = 200pt)
   const pullAnim = useRef(new Animated.Value(0)).current;
   const isArmedRef = useRef(false);
+  const [isArmed, setIsArmed] = useState(false);
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 10 && gesture.vy > 0,
+      onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 12 && gesture.vy > 0,
       onPanResponderMove: (_, gesture) => {
         if (gesture.dy > 0) {
-          // Rubber-band dampening math matching GymMane (0.55 factor)
-          const clampedPull = Math.min(gesture.dy * 0.55, 180);
-          pullAnim.setValue(clampedPull);
+          // Diminishing drag resistance matching GymMane (0.65 * (1 - pull / (reach * 1.45)))
+          const drag = 0.65 * Math.max(0.15, 1 - (gesture.dy / (REACH_THRESHOLD * 1.45)));
+          const currentPull = Math.min(gesture.dy * drag, REACH_THRESHOLD * 1.25);
+          pullAnim.setValue(currentPull);
 
-          if (clampedPull >= 110 && !isArmedRef.current) {
-            isArmedRef.current = true;
-            AppHaptics.impactHeavy();
-          } else if (clampedPull < 110 && isArmedRef.current) {
-            isArmedRef.current = false;
+          const armed = currentPull >= REACH_THRESHOLD * 0.95;
+          if (armed !== isArmedRef.current) {
+            isArmedRef.current = armed;
+            setIsArmed(armed);
+            if (armed) {
+              AppHaptics.impactHeavy();
+            }
           }
         }
       },
       onPanResponderRelease: () => {
         if (isArmedRef.current) {
           isArmedRef.current = false;
+          setIsArmed(false);
           AppHaptics.success();
-          setSettingsVisible(true);
+          // Open GymMane Food Passport
+          setPassportVisible(true);
         }
         Animated.spring(pullAnim, {
           toValue: 0,
-          stiffness: 260,
-          damping: 22,
-          useNativeDriver: true,
+          ...SpringPresets.fluid,
         }).start();
       },
       onPanResponderTerminate: () => {
         isArmedRef.current = false;
+        setIsArmed(false);
         Animated.spring(pullAnim, {
           toValue: 0,
-          useNativeDriver: true,
+          ...SpringPresets.fluid,
         }).start();
       },
     })
   ).current;
 
   const loadData = useCallback(async () => {
-    const s = await getUserSession();
-    setSession(s);
-    if (s && s.isLoggedIn) {
-      setIsLoggedIn(true);
-      setIsAnonymous(Boolean(s.isAnonymous));
-      setUserEmail(s.email || (s.isAnonymous ? 'Guest Explorer' : null));
-      setUserName(s.name || (s.isAnonymous ? 'Guest Explorer' : s.email?.split('@')[0] || 'Member'));
-      setUserPhoto(s.photoUrl || null);
-    } else {
-      setIsLoggedIn(false);
-      setIsAnonymous(false);
-      setUserEmail(null);
-      setUserName(null);
-      setUserPhoto(null);
-    }
+    try {
+      const activeSession = await getUserSession();
+      if (activeSession && activeSession.isLoggedIn) {
+        setSession(activeSession);
+        setIsLoggedIn(true);
+        setIsAnonymous(!!activeSession.isAnonymous);
+        setUserEmail(activeSession.email || null);
+        setUserName(activeSession.name || null);
+        setUserPhoto(activeSession.photoUrl || null);
+      } else {
+        setIsLoggedIn(false);
+        setIsAnonymous(true);
+        setUserEmail(null);
+        setUserName('Guest Explorer');
+      }
 
-    const history = await getScanHistory();
-    setScanCount(history.length);
+      const history = await getScanHistory();
+      setRecentScans(history.slice(0, 4));
+      setScanCount(history.length);
+    } catch (_) {}
   }, []);
 
   const checkBackend = useCallback(async () => {
     setIsCheckingServer(true);
-    setServerOnline(null);
-    setServerMessage('Pinging EatInformed API...');
     const start = Date.now();
     const health = await checkApiHealth();
     const elapsedMs = Date.now() - start;
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     setServerOnline(health.ok);
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     setServerMessage(
       health.ok
         ? `${health.message} (${elapsedMs}ms · Checked at ${timeStr})`
@@ -167,7 +195,7 @@ export default function ProfileScreen() {
   };
 
   const handleAuthAction = () => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !isAnonymous) {
       setSignOutModalVisible(true);
     } else {
       navigation.navigate('Auth', { initialTab: 'login' });
@@ -178,10 +206,11 @@ export default function ProfileScreen() {
     setSignOutModalVisible(false);
     await clearUserSession();
     setIsLoggedIn(false);
-    setIsAnonymous(false);
+    setIsAnonymous(true);
     setUserEmail(null);
-    setUserName(null);
+    setUserName('Guest Explorer');
     setUserPhoto(null);
+    AppHaptics.selection();
   };
 
   const handleExport = async () => {
@@ -189,503 +218,813 @@ export default function ProfileScreen() {
     await exportScanHistory();
   };
 
+  const cleanRatio = scanCount > 0 ? 88 : 0;
+  const currentLevel = scanCount >= 20 ? 'Master' : scanCount >= 5 ? 'Scout' : 'Novice';
+
   return (
-    <Screen scrollable>
-      {/* GymMane Ticker Watermark revealed on swipe-down */}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* 120Hz Continuous Ambient Moving Watermark Ticker (GymMane Gold Standard) */}
       <Animated.View
         pointerEvents="none"
         style={[
-          styles.watermarkTicker,
+          styles.watermarkWrapper,
           {
             opacity: pullAnim.interpolate({
-              inputRange: [0, 80, 150],
-              outputRange: [0, 0.45, 0.85],
+              inputRange: [0, 60, REACH_THRESHOLD],
+              outputRange: [0, 0.4, 0.95],
+              extrapolate: 'clamp',
             }),
             transform: [
               {
                 scale: pullAnim.interpolate({
-                  inputRange: [0, 150],
-                  outputRange: [0.85, 1.05],
+                  inputRange: [0, REACH_THRESHOLD],
+                  outputRange: [1.25, 1.0],
+                  extrapolate: 'clamp',
                 }),
               },
             ],
           },
         ]}
       >
-        <Text style={[styles.watermarkText, { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-          EATINFORMED
-        </Text>
+        <NameTicker
+          text={userName || 'EATINFORMED'}
+          color={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'}
+          rows={6}
+          size={78}
+          speed={36}
+        />
       </Animated.View>
 
-      <View {...panResponder.panHandlers}>
-        <FadeInView delay={0}>
-          <ScreenHeader
-            title="Profile & Settings"
-            subtitle="Swipe down anytime for system configuration"
-            largeTitle={true}
-            rightElement={
-              <PressableScale
+      {/* Swipe Down Gesture Responder Container */}
+      <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
+        <Animated.View
+          style={[
+            styles.animatedScrollContainer,
+            {
+              transform: [
+                {
+                  translateY: pullAnim.interpolate({
+                    inputRange: [0, REACH_THRESHOLD],
+                    outputRange: [0, REACH_THRESHOLD * 0.55],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+              opacity: pullAnim.interpolate({
+                inputRange: [0, REACH_THRESHOLD],
+                outputRange: [1, 0.15],
+                extrapolate: 'clamp',
+              }),
+            },
+          ]}
+        >
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingTop: insets.top + 8,
+                paddingBottom: insets.bottom + 120,
+              },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Grabber Pill Bar Indicator */}
+            <View style={styles.grabberSection}>
+              <View
+                style={[
+                  styles.grabberPill,
+                  {
+                    backgroundColor: isArmed ? colors.primary : colors.textSecondary,
+                    width: isArmed ? 52 : 36,
+                  },
+                ]}
+              />
+              <Text style={[styles.grabberText, { color: isArmed ? colors.primary : colors.textSecondary }]}>
+                {isArmed ? 'Release to open Food Passport' : 'Pull down to reveal Food Passport'}
+              </Text>
+            </View>
+
+            {/* Profile Header Block with Banner & Avatar */}
+            <View style={styles.headerBlock}>
+              {/* Settings Gear Button (Top-Right Glass Circle) */}
+              <Pressable
                 onPress={() => {
                   AppHaptics.selection();
                   setSettingsVisible(true);
                 }}
-                scaleTo={0.92}
-                style={[styles.headerSettingsBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                accessibilityRole="button"
-                accessibilityLabel="Open app settings"
-              >
-                <Settings size={20} color={colors.text} />
-              </PressableScale>
-            }
-          />
-        </FadeInView>
-
-        {/* GymMane-Grade Pinned Profile Card with Halo Ring & Quick Actions */}
-        <FadeInView delay={40}>
-          <Card
-            style={{
-              borderColor: colors.primaryBorder,
-              backgroundColor: colors.surface,
-            }}
-          >
-            <CardContent>
-              <View style={styles.userHeroRow}>
-                {/* Avatar with Halo Ring */}
-                <View
-                  style={[
-                    styles.avatarRing,
-                    {
-                      borderColor: colors.primary,
-                      backgroundColor: colors.surfaceRaised,
-                    },
-                  ]}
-                >
-                  {userPhoto ? (
-                    <Image source={{ uri: userPhoto }} style={styles.avatarImg} />
-                  ) : (
-                    <View
-                      style={[
-                        styles.avatarInner,
-                        { backgroundColor: colors.primaryMuted },
-                      ]}
-                    >
-                      <User size={30} color={colors.primary} />
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.userMetaCol}>
-                  <View style={styles.nameRow}>
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.displayName, { color: colors.text }]}
-                    >
-                      {userName || 'Guest Explorer'}
-                    </Text>
-                    <Badge
-                      label={isLoggedIn && !isAnonymous ? 'Pro Member' : 'Guest'}
-                      variant={isLoggedIn && !isAnonymous ? 'success' : 'default'}
-                      size="sm"
-                    />
-                  </View>
-                  <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
-                    @{userEmail ? userEmail.split('@')[0] : 'explorer'}
-                  </Text>
-                </View>
-
-                {/* Edit & Settings Action Buttons */}
-                <View style={styles.heroActionBtns}>
-                  <PressableScale
-                    onPress={() => {
-                      AppHaptics.selection();
-                      setEditProfileVisible(true);
-                    }}
-                    scaleTo={0.92}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={[
-                      styles.actionCircleBtn,
-                      { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
-                    ]}
-                  >
-                    <Edit3 size={15} color={colors.text} />
-                  </PressableScale>
-
-                  <PressableScale
-                    onPress={() => {
-                      AppHaptics.selection();
-                      setSettingsVisible(true);
-                    }}
-                    scaleTo={0.92}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={[
-                      styles.actionCircleBtn,
-                      { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
-                    ]}
-                  >
-                    <Settings size={15} color={colors.text} />
-                  </PressableScale>
-                </View>
-              </View>
-
-              {/* Quick Auth Trigger */}
-              <View style={[styles.authRow, { borderTopColor: colors.separator }]}>
-                {isLoggedIn ? (
-                  <Button
-                    title={isAnonymous ? 'Exit Guest Mode' : 'Sign Out'}
-                    onPress={handleAuthAction}
-                    variant="outline"
-                    size="sm"
-                    icon={<LogOut size={15} color={colors.dangerText} />}
-                  />
-                ) : (
-                  <Button
-                    title="Sign In / Create Account"
-                    onPress={handleAuthAction}
-                    variant="primary"
-                    size="sm"
-                    icon={<LogIn size={15} color={colors.onPrimary} />}
-                  />
-                )}
-              </View>
-            </CardContent>
-          </Card>
-        </FadeInView>
-
-        {/* GymMane 4 Quick Stat Pills with Tactile Haptic Long-Press */}
-        <FadeInView delay={80} style={styles.pillsRow}>
-          <PressableScale
-            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => AppHaptics.selection()}
-            onLongPress={() => AppHaptics.impactHeavy()}
-          >
-            <Activity size={16} color={colors.primary} />
-            <RollingNumber value={scanCount} style={[styles.pillValue, { color: colors.text }]} />
-            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>SCANS</Text>
-          </PressableScale>
-
-          <PressableScale
-            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => AppHaptics.selection()}
-            onLongPress={() => AppHaptics.impactHeavy()}
-          >
-            <CheckCircle size={16} color={colors.success} />
-            <Text style={[styles.pillValue, { color: colors.text }]}>84%</Text>
-            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>CLEAN</Text>
-          </PressableScale>
-
-          <PressableScale
-            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => AppHaptics.selection()}
-            onLongPress={() => AppHaptics.impactHeavy()}
-          >
-            <Shield size={16} color={colors.info} />
-            <Text style={[styles.pillValue, { color: colors.text }]}>0</Text>
-            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>ALLERGENS</Text>
-          </PressableScale>
-
-          <PressableScale
-            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => AppHaptics.selection()}
-            onLongPress={() => AppHaptics.impactHeavy()}
-          >
-            <Flame size={16} color={colors.warning} />
-            <Text style={[styles.pillValue, { color: colors.text }]}>7d</Text>
-            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>STREAK</Text>
-          </PressableScale>
-        </FadeInView>
-
-        {/* GymMane 12-Month Annual Activity Histogram */}
-        <FadeInView delay={120}>
-          <Card>
-            <CardHeader
-              title="Annual Scan Activity"
-              subtitle="Monthly nutritional verification volume across the year"
-            />
-            <CardContent>
-              <YearActivityChart totalScans={Math.max(scanCount, 42)} />
-            </CardContent>
-          </Card>
-        </FadeInView>
-
-        {/* Quick Settings Shortcut Banner */}
-        <FadeInView delay={150}>
-          <Card onPress={() => setSettingsVisible(true)}>
-            <CardContent style={styles.settingsShortcutRow}>
-              <View style={[styles.settingsShortcutIcon, { backgroundColor: colors.primaryMuted }]}>
-                <Settings size={20} color={colors.primary} />
-              </View>
-              <View style={styles.settingsShortcutText}>
-                <Text style={[styles.settingsShortcutTitle, { color: colors.text }]}>Preferences & Engine Settings</Text>
-                <Text style={[styles.settingsShortcutDesc, { color: colors.textSecondary }]}>
-                  Theme, strict allergen alerts, offline dictionary, AI health checks
-                </Text>
-              </View>
-              <ChevronRight size={18} color={colors.textSecondary} />
-            </CardContent>
-          </Card>
-        </FadeInView>
-
-        {/* Data Portability Card */}
-        <FadeInView delay={180}>
-          <Card>
-            <CardHeader
-              title="Data Portability & Backup"
-              subtitle="Clinical audit logs stored locally on device"
-            />
-            <CardContent>
-              <Button
-                title="Export Scan History (JSON)"
-                onPress={handleExport}
-                variant="outline"
-                size="md"
-                icon={<Download size={16} color={colors.primary} />}
-              />
-            </CardContent>
-          </Card>
-        </FadeInView>
-
-        {/* Server & Diagnostics */}
-        <FadeInView delay={210}>
-          <Card>
-            <CardHeader
-              title="Backend AI Status"
-              subtitle="EatInformed OCR & Llama 3.2 Vision engine diagnostic"
-              rightElement={
-                <View style={styles.statusIndicator}>
-                  <View
-                    style={[
-                      styles.statusDot,
-                      {
-                        backgroundColor:
-                          serverOnline === true
-                            ? colors.success
-                            : serverOnline === false
-                            ? colors.danger
-                            : colors.warning,
-                      },
-                    ]}
-                  />
-                  <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-                    {serverOnline === true ? 'Online' : serverOnline === false ? 'Offline' : 'Checking'}
-                  </Text>
-                </View>
-              }
-            />
-            <CardContent>
-              <View
+                hitSlop={8}
                 style={[
-                  styles.diagnosticBox,
-                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                  styles.settingsCircleBtn,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                    borderColor: colors.border,
+                  },
                 ]}
               >
-                <Server size={16} color={colors.textSecondary} />
-                <Text style={[styles.diagnosticText, { color: colors.textSecondary }]}>
-                  {serverMessage}
-                </Text>
+                <Settings size={18} color={colors.text} />
+              </Pressable>
+
+              {/* Avatar + Edit Badge */}
+              <View style={styles.avatarRow}>
+                <PressableScale
+                  onPress={() => setEditProfileVisible(true)}
+                  style={[styles.avatarCircle, { borderColor: colors.primary, backgroundColor: colors.surfaceRaised }]}
+                >
+                  {userPhoto ? (
+                    <Image source={{ uri: userPhoto }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={[styles.avatarLetter, { color: colors.primary }]}>
+                      {(userName || 'G')[0].toUpperCase()}
+                    </Text>
+                  )}
+                  <View style={[styles.avatarCameraBadge, { backgroundColor: colors.primary }]}>
+                    <Camera size={12} color="#FFFFFF" />
+                  </View>
+                </PressableScale>
+
+                {/* Identity Info */}
+                <View style={styles.identityMeta}>
+                  <View style={styles.nameRow}>
+                    <Text style={[styles.userNameText, { color: colors.text }]} numberOfLines={1}>
+                      {userName || 'Guest Explorer'}
+                    </Text>
+                  </View>
+                  <Text style={[styles.userHandleText, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {userEmail || 'Local Guest Session'}
+                  </Text>
+
+                  {/* Membership Tier Badge */}
+                  <View style={styles.tierPillsRow}>
+                    <View style={[styles.tierBadge, { backgroundColor: colors.primary + '20' }]}>
+                      <Shield size={12} color={colors.primary} />
+                      <Text style={[styles.tierBadgeText, { color: colors.primary }]}>
+                        {isAnonymous ? 'GUEST EXPLORER' : 'VERIFIED BIO-MEMBER'}
+                      </Text>
+                    </View>
+
+                    <Pressable
+                      onPress={() => setEditProfileVisible(true)}
+                      style={[styles.editProfilePill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                    >
+                      <Edit3 size={11} color={colors.textSecondary} />
+                      <Text style={[styles.editProfileText, { color: colors.textSecondary }]}>Edit</Text>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
-              <Button
-                title={isCheckingServer ? 'Checking...' : 'Check Server Status'}
-                onPress={checkBackend}
-                variant="outline"
-                size="sm"
-                loading={isCheckingServer}
-                style={{ marginTop: spacing.md }}
-              />
-            </CardContent>
-          </Card>
-        </FadeInView>
+            </View>
+
+            {/* Quick Stat Horizontal Pills Row */}
+            <View style={styles.pillsRow}>
+              <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                <ScanLine size={14} color={colors.primary} />
+                <RollingNumber value={scanCount} style={[styles.pillValue, { color: colors.text }]} />
+                <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>Scans</Text>
+              </View>
+
+              <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                <Leaf size={14} color="#10B981" />
+                <Text style={[styles.pillValue, { color: colors.text }]}>{cleanRatio}%</Text>
+                <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>Clean</Text>
+              </View>
+
+              <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                <Flame size={14} color="#EF4444" />
+                <Text style={[styles.pillValue, { color: colors.text }]}>14d</Text>
+                <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>Streak</Text>
+              </View>
+
+              <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                <Award size={14} color="#F59E0B" />
+                <Text style={[styles.pillValue, { color: colors.text }]}>{currentLevel}</Text>
+              </View>
+            </View>
+
+            {/* GYMMANE BOX 1: Achievements & Badges Shelf */}
+            <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.gymBoxDisplay,
+                  {
+                    backgroundColor: isDark ? '#000000' : colors.surfaceRaised,
+                  },
+                ]}
+              >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.medalsTrack}>
+                  {NUTRITION_AWARDS.map((award) => (
+                    <View key={award.id} style={styles.medalCard}>
+                      <View
+                        style={[
+                          styles.medalBadgeCircle,
+                          {
+                            backgroundColor: award.earned ? award.color + '22' : colors.surfaceRaised,
+                            borderColor: award.earned ? award.color : colors.border,
+                            opacity: award.earned ? 1 : 0.45,
+                          },
+                        ]}
+                      >
+                        <Text style={styles.medalIconText}>{award.icon}</Text>
+                      </View>
+                      <Text style={[styles.medalTitleText, { color: colors.text }]} numberOfLines={1}>
+                        {award.title}
+                      </Text>
+                      <Text style={[styles.medalDescText, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {award.desc}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Box Footer with Title & Count */}
+              <View style={styles.gymBoxFooter}>
+                <View style={styles.boxTitleRow}>
+                  <Text style={[styles.boxTitleText, { color: colors.text }]}>Achievements</Text>
+                  <Text style={[styles.boxCountText, { color: colors.textSecondary }]}>4/5 Unlocked</Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    AppHaptics.selection();
+                    setPassportVisible(true);
+                  }}
+                  style={[styles.seeAllPill, { backgroundColor: colors.surfaceRaised }]}
+                >
+                  <Text style={[styles.seeAllText, { color: colors.textSecondary }]}>Passport</Text>
+                  <ChevronRight size={13} color={colors.textSecondary} />
+                </Pressable>
+              </View>
+            </View>
+
+            {/* GYMMANE BOX 2: Recent Scan Snapshots Polaroid Fan */}
+            <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Pressable
+                onPress={() => navigation.navigate('Main', { screen: 'History' })}
+                style={[
+                  styles.gymBoxDisplay,
+                  {
+                    backgroundColor: isDark ? '#000000' : colors.surfaceRaised,
+                    height: 140,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}
+              >
+                {recentScans.length > 0 ? (
+                  <View style={styles.snapshotFanTrack}>
+                    {recentScans.slice(0, 4).map((scan, index) => {
+                      const rotations = ['-6deg', '4deg', '-3deg', '5deg'];
+                      const rot = rotations[index % rotations.length];
+                      return (
+                        <View
+                          key={scan.id || index}
+                          style={[
+                            styles.polaroidCard,
+                            {
+                              backgroundColor: colors.surfaceRaised,
+                              borderColor: colors.border,
+                              transform: [{ rotate: rot }],
+                              left: index * 48 - 60,
+                            },
+                          ]}
+                        >
+                          <View style={[styles.polaroidImgBox, { backgroundColor: colors.primary + '15' }]}>
+                            <ScanLine size={18} color={colors.primary} />
+                          </View>
+                          <Text style={[styles.polaroidName, { color: colors.text }]} numberOfLines={1}>
+                            {scan.productName || 'Food Item'}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <View style={styles.emptySnapshots}>
+                    <ScanLine size={28} color={colors.textSecondary} />
+                    <Text style={[styles.emptySnapshotText, { color: colors.textSecondary }]}>
+                      No scanned food snapshots yet
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+
+              <View style={styles.gymBoxFooter}>
+                <View style={styles.boxTitleRow}>
+                  <Text style={[styles.boxTitleText, { color: colors.text }]}>Recent Snapshots</Text>
+                  <Text style={[styles.boxCountText, { color: colors.textSecondary }]}>{scanCount}</Text>
+                </View>
+                <Pressable
+                  onPress={() => navigation.navigate('Main', { screen: 'History' })}
+                  style={[styles.seeAllPill, { backgroundColor: colors.surfaceRaised }]}
+                >
+                  <Text style={[styles.seeAllText, { color: colors.textSecondary }]}>History</Text>
+                  <ChevronRight size={13} color={colors.textSecondary} />
+                </Pressable>
+              </View>
+            </View>
+
+            {/* GYMMANE BOX 3: Food Passport Card */}
+            <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Pressable
+                onPress={() => {
+                  AppHaptics.selection();
+                  setPassportVisible(true);
+                }}
+                style={[
+                  styles.gymBoxDisplay,
+                  {
+                    backgroundColor: isDark ? '#000000' : colors.surfaceRaised,
+                    padding: 16,
+                  },
+                ]}
+              >
+                <View style={styles.passportCardHeader}>
+                  <View style={styles.passportCardMeta}>
+                    <Text style={[styles.passportCardTitle, { color: colors.text }]}>EATINFORMED PASSPORT</Text>
+                    <Text style={[styles.passportCardId, { color: colors.primary }]}>
+                      {isAnonymous ? 'LOCAL-GUEST-001' : 'VERIFIED BIO-PASS'}
+                    </Text>
+                  </View>
+                  <QrCode size={32} color={colors.text} />
+                </View>
+
+                <View style={styles.passportShieldRow}>
+                  <View style={[styles.passportBadge, { backgroundColor: colors.primary + '20' }]}>
+                    <CheckCircle size={14} color={colors.primary} />
+                    <Text style={[styles.passportBadgeText, { color: colors.primary }]}>Allergen Shield Active</Text>
+                  </View>
+                  <Text style={[styles.tapToInspectText, { color: colors.textSecondary }]}>Tap to open full pass</Text>
+                </View>
+              </Pressable>
+
+              <View style={styles.gymBoxFooter}>
+                <View style={styles.boxTitleRow}>
+                  <Text style={[styles.boxTitleText, { color: colors.text }]}>Nutrition Pass</Text>
+                  <Text style={[styles.boxCountText, { color: colors.primary }]}>Active</Text>
+                </View>
+                <Pressable
+                  onPress={() => setPassportVisible(true)}
+                  style={[styles.seeAllPill, { backgroundColor: colors.surfaceRaised }]}
+                >
+                  <Text style={[styles.seeAllText, { color: colors.textSecondary }]}>Open</Text>
+                  <ChevronRight size={13} color={colors.textSecondary} />
+                </Pressable>
+              </View>
+            </View>
+
+            {/* GYMMANE BOX 4: 12-Month Logging Histogram */}
+            <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.gymBoxDisplay,
+                  {
+                    backgroundColor: isDark ? '#000000' : colors.surfaceRaised,
+                  },
+                ]}
+              >
+                <YearActivityChart />
+              </View>
+
+              <View style={styles.gymBoxFooter}>
+                <View style={styles.boxTitleRow}>
+                  <Text style={[styles.boxTitleText, { color: colors.text }]}>Annual Density</Text>
+                  <Text style={[styles.boxCountText, { color: colors.textSecondary }]}>12 Months</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Server Connection & Diagnostic Card */}
+            <View style={[styles.diagnosticCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={styles.diagnosticHeader}>
+                <Server size={18} color={serverOnline ? '#10B981' : '#EF4444'} />
+                <Text style={[styles.diagnosticTitle, { color: colors.text }]}>Backend AI Health</Text>
+              </View>
+              <Text style={[styles.diagnosticMessage, { color: colors.textSecondary }]}>
+                {serverMessage}
+              </Text>
+            </View>
+
+            {/* Data Export & Account Actions */}
+            <View style={styles.actionsBlock}>
+              <Pressable
+                onPress={handleExport}
+                style={[styles.actionBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+              >
+                <Download size={16} color={colors.text} />
+                <Text style={[styles.actionBtnText, { color: colors.text }]}>Export Scan History (JSON)</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleAuthAction}
+                style={[
+                  styles.actionBtn,
+                  {
+                    backgroundColor: isAnonymous ? colors.primary + '15' : '#EF444415',
+                    borderColor: isAnonymous ? colors.primary + '40' : '#EF444440',
+                  },
+                ]}
+              >
+                {isAnonymous ? (
+                  <>
+                    <LogIn size={16} color={colors.primary} />
+                    <Text style={[styles.actionBtnText, { color: colors.primary }]}>Sign In / Create Account</Text>
+                  </>
+                ) : (
+                  <>
+                    <LogOut size={16} color="#EF4444" />
+                    <Text style={[styles.actionBtnText, { color: "#EF4444" }]}>Sign Out</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </ScrollView>
+        </Animated.View>
       </View>
 
-      {/* Edit Profile Bottom Sheet */}
-      {session && (
-        <EditProfileSheet
-          visible={editProfileVisible}
-          currentSession={session}
-          onClose={() => setEditProfileVisible(false)}
-          onProfileUpdated={handleProfileUpdated}
-        />
-      )}
+      {/* Modals & Bottom Sheets */}
+      <FoodPassportModal
+        visible={passportVisible}
+        onClose={() => setPassportVisible(false)}
+        userName={userName || 'Guest Explorer'}
+        userEmail={userEmail || ''}
+        scanCount={scanCount}
+        cleanScore={cleanRatio}
+      />
 
-      {/* Full Settings Modal Sheet */}
+      <EditProfileSheet
+        visible={editProfileVisible}
+        onClose={() => setEditProfileVisible(false)}
+        currentSession={session}
+        onProfileUpdated={handleProfileUpdated}
+      />
+
       <SettingsSheet
         visible={settingsVisible}
         onClose={() => setSettingsVisible(false)}
-        onSignOutRequest={() => setSignOutModalVisible(true)}
+        onSignOutRequest={() => {
+          setSettingsVisible(false);
+          setSignOutModalVisible(true);
+        }}
         isLoggedIn={isLoggedIn}
         isAnonymous={isAnonymous}
       />
 
-      {/* Sign Out Confirmation Modal */}
       <ConfirmModal
         visible={signOutModalVisible}
-        title={isAnonymous ? 'Exit Guest Mode' : 'Sign Out'}
-        message={
-          isAnonymous
-            ? 'Your temporary guest session will end. You can start a new session or sign in anytime.'
-            : 'Are you sure you want to sign out of your EatInformed account?'
-        }
-        confirmText={isAnonymous ? 'Exit' : 'Sign Out'}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your EatInformed account?"
+        confirmText="Sign Out"
         cancelText="Cancel"
-        destructive
-        onCancel={() => setSignOutModalVisible(false)}
+        destructive={true}
         onConfirm={confirmSignOut}
+        onCancel={() => setSignOutModalVisible(false)}
       />
-    </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  watermarkTicker: {
+  container: {
+    flex: 1,
+  },
+  watermarkWrapper: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  animatedScrollContainer: {
+    flex: 1,
+    zIndex: 2,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    gap: 18,
+  },
+  grabberSection: {
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+  },
+  grabberPill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  grabberText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  headerBlock: {
+    position: 'relative',
+    marginTop: 6,
+  },
+  settingsCircleBtn: {
     position: 'absolute',
-    top: 40,
-    alignSelf: 'center',
-    zIndex: 0,
-  },
-  watermarkText: {
-    fontSize: 54,
-    fontWeight: '900',
-    letterSpacing: 8,
-  },
-  headerSettingsBtn: {
+    top: 0,
+    right: 0,
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
-  userHeroRow: {
+  avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
   },
-  avatarRing: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  avatarCircle: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    borderWidth: 2.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  avatarImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+  },
+  avatarLetter: {
+    fontSize: 34,
+    fontWeight: '900',
+  },
+  avatarCameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    borderColor: '#000000',
   },
-  avatarImg: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarInner: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userMetaCol: {
+  identityMeta: {
     flex: 1,
-    marginLeft: spacing.md,
+    paddingRight: 40,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
   },
-  displayName: {
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.bold,
-    maxWidth: 150,
+  userNameText: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.4,
   },
-  userHandle: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.medium,
+  userHandleText: {
+    fontSize: 13,
     marginTop: 2,
   },
-  heroActionBtns: {
+  tierPillsRow: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  actionCircleBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
   },
-  authRow: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    alignItems: 'flex-start',
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  tierBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  editProfilePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  editProfileText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   pillsRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginVertical: spacing.md,
+    gap: 8,
   },
-  pillCard: {
+  statPill: {
     flex: 1,
-    borderRadius: borderRadius.lg,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: 6,
+    paddingHorizontal: 6,
   },
   pillValue: {
-    fontSize: typography.fontSizes.md,
+    fontSize: 12.5,
     fontWeight: '800',
-    letterSpacing: -0.4,
   },
   pillLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+    fontSize: 11,
+    fontWeight: '500',
   },
-  settingsShortcutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  settingsShortcutIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  settingsShortcutText: {
-    flex: 1,
-  },
-  settingsShortcutTitle: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: '700',
-  },
-  settingsShortcutDesc: {
-    fontSize: typography.fontSizes.xs,
-    marginTop: 2,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.medium,
-  },
-  diagnosticBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+  gymBox: {
+    borderRadius: 28,
     borderWidth: 1,
-    gap: spacing.sm,
+    padding: 6,
+    overflow: 'hidden',
   },
-  diagnosticText: {
-    fontSize: typography.fontSizes.xs,
-    flex: 1,
+  gymBoxDisplay: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    padding: 12,
+  },
+  gymBoxFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  boxTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  boxTitleText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  boxCountText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  seeAllPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  seeAllText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  medalsTrack: {
+    gap: 12,
+    paddingVertical: 6,
+  },
+  medalCard: {
+    width: 82,
+    alignItems: 'center',
+    gap: 4,
+  },
+  medalBadgeCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medalIconText: {
+    fontSize: 22,
+  },
+  medalTitleText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  medalDescText: {
+    fontSize: 9.5,
+    textAlign: 'center',
+  },
+  snapshotFanTrack: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: 120,
+    position: 'relative',
+  },
+  polaroidCard: {
+    position: 'absolute',
+    width: 86,
+    height: 110,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  polaroidImgBox: {
+    width: 74,
+    height: 74,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  polaroidName: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptySnapshots: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  emptySnapshotText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  passportCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  passportCardMeta: {
+    gap: 4,
+  },
+  passportCardTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  passportCardId: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  passportShieldRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  passportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  passportBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  tapToInspectText: {
+    fontSize: 10.5,
+    fontWeight: '500',
+  },
+  diagnosticCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 6,
+  },
+  diagnosticHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  diagnosticTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  diagnosticMessage: {
+    fontSize: 11,
+  },
+  actionsBlock: {
+    gap: 10,
+    marginTop: 4,
+  },
+  actionBtn: {
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
   },
 });
