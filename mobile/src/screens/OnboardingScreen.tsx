@@ -386,7 +386,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                 >
                   <User size={18} color={colors.textSecondary} />
                   <Text style={[styles.guestChoiceText, { color: colors.textSecondary }]}>
-                    Continue as Guest (25 scans per hour)
+                    Continue as Guest (4 scans per 2 hours)
                   </Text>
                 </PressableScale>
 
@@ -460,22 +460,24 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
             <View style={styles.fieldSection}>
               <Text style={[styles.formLabel, { color: colors.textSecondary }]}>DISPLAY NAME</Text>
-              <TextInput
-                value={displayName}
-                onChangeText={setDisplayName}
-                placeholder="Your Name"
-                placeholderTextColor={colors.textMuted}
-                editable={!isGuest}
-                style={[
-                  styles.inputField,
-                  {
-                    backgroundColor: colors.surfaceRaised,
-                    borderColor: colors.border,
-                    color: colors.text,
-                    opacity: isGuest ? 0.75 : 1,
-                  },
-                ]}
-              />
+              <View style={[styles.handleRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                <TextInput
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                  placeholder="Your Name"
+                  placeholderTextColor={colors.textMuted}
+                  editable={!isGuest}
+                  style={[
+                    styles.handleInput,
+                    {
+                      color: colors.text,
+                      opacity: isGuest ? 0.75 : 1,
+                      paddingLeft: 14,
+                    },
+                  ]}
+                />
+                {isGuest && <Lock size={16} color={colors.textMuted} style={{ marginRight: 12 }} />}
+              </View>
 
               <Text style={[styles.formLabel, { color: colors.textSecondary, marginTop: 16 }]}>HANDLE</Text>
               <View style={[styles.handleRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
@@ -503,9 +505,24 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               </View>
 
               {isGuest ? (
-                <Text style={[styles.helperNotice, { color: colors.textMuted }]}>
-                  Guest accounts use a standard guest identifier. You can create a member account at any time in Settings.
-                </Text>
+                <View style={styles.guestNoticeWrapper}>
+                  <Text style={[styles.helperNotice, { color: colors.textMuted }]}>
+                    Sign up with Google or email to choose your name and handle, customize your profile, and unlock higher scan limits.
+                  </Text>
+                  <PressableScale
+                    onPress={() => {
+                      AppHaptics.selection();
+                      setStep(2);
+                      setAuthMode('select');
+                    }}
+                    style={styles.guestUpgradeLinkRow}
+                  >
+                    <Sparkles size={14} color={colors.primary} />
+                    <Text style={[styles.guestUpgradeLinkText, { color: colors.primary }]}>
+                      Create an account or sign in
+                    </Text>
+                  </PressableScale>
+                </View>
               ) : (
                 <Text style={[styles.helperNotice, { color: colors.textMuted }]}>
                   Only letters, numbers, and underscores. Special characters are removed automatically.
@@ -559,7 +576,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                   </View>
                 )}
 
-                {!isGuest && (
+                {isGuest ? (
+                  <View style={[styles.cameraBadgeCircle, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Lock size={14} color={colors.textMuted} />
+                  </View>
+                ) : (
                   <View style={[styles.cameraBadgeCircle, { backgroundColor: colors.primary, borderColor: colors.background }]}>
                     <Camera size={14} color={colors.onPrimary} />
                   </View>
@@ -568,7 +589,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
               <Text style={[styles.avatarTipText, { color: colors.textSecondary }]}>
                 {isGuest
-                  ? 'Standard guest icon active'
+                  ? 'Guest avatars are fixed to standard bio-pass glyphs. Account creation unlocks full avatar customization.'
                   : photoUri
                   ? 'Tap avatar to choose a different photo'
                   : 'Tap circle to pick a profile photo'}
@@ -615,7 +636,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                     <Text style={[styles.reviewName, { color: colors.text }]}>{displayName || 'Member'}</Text>
                     <Text style={[styles.reviewHandle, { color: colors.primary }]}>@{handle || 'member'}</Text>
                     <Text style={[styles.reviewTier, { color: colors.textSecondary }]}>
-                      {isGuest ? 'Guest Explorer (25/hr)' : 'Verified Member (50/hr)'}
+                      {isGuest ? 'Guest Explorer (4 scans / 2 hr)' : 'Verified Member (50 scans / hr)'}
                     </Text>
                   </View>
                 </View>
@@ -992,5 +1013,19 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  guestNoticeWrapper: {
+    marginTop: 4,
+  },
+  guestUpgradeLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingVertical: 4,
+  },
+  guestUpgradeLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

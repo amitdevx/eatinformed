@@ -7,6 +7,7 @@ import {
   Dimensions,
   Alert,
   Animated,
+  Modal,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,6 +25,8 @@ import {
   Sparkles,
   Shield,
   LogIn,
+  X,
+  Clock,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Button } from '../components/Button';
@@ -32,7 +35,7 @@ import { LoadingState, ErrorState } from '../components/States';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
-import { scanFoodLabel, getEstimatedScanDuration, checkApiHealth } from '../api/client';
+import { scanFoodLabel, getEstimatedScanDuration, checkApiHealth, apiClient } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
 import { getUserSession, signInAsGuest, UserSessionData } from '../lib/auth';
 import { AppHaptics } from '../lib/haptics';
@@ -73,7 +76,27 @@ export default function ScanScreen() {
   const [session, setSession] = useState<UserSessionData | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
 
-  // Check user session on screen focus to restrict scans for unauthenticated users
+  interface QuotaInfo {
+    limit: number;
+    remaining: number;
+    windowDurationSeconds: number;
+    nextAvailableScanTimestamp: number | null;
+    retryAfterSeconds: number;
+    isGuest: boolean;
+  }
+  const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [quotaModalVisible, setQuotaModalVisible] = useState(false);
+
+  const refreshQuota = useCallback(async () => {
+    try {
+      const res = await apiClient.get<{ status: string; quota: QuotaInfo }>('/api/scan?quota=true');
+      if (res.data?.quota) {
+        setQuota(res.data.quota);
+      }
+    } catch (_) {}
+  }, []);
+
+  // Check user session and quota on screen focus
   useFocusEffect(
     useCallback(() => {
       let isMounted = true;
@@ -81,12 +104,13 @@ export default function ScanScreen() {
         if (isMounted) {
           setSession(s);
           setIsAuthChecking(false);
+          refreshQuota();
         }
       });
       return () => {
         isMounted = false;
       };
-    }, [])
+    }, [refreshQuota])
   );
 
   const handleQuickGuestAccess = async () => {
@@ -213,6 +237,12 @@ export default function ScanScreen() {
       return;
     }
 
+    if (currentSession?.isAnonymous && quota && quota.remaining <= 0) {
+      AppHaptics.warning();
+      setQuotaModalVisible(true);
+      return;
+    }
+
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({
@@ -243,6 +273,12 @@ export default function ScanScreen() {
     const currentSession = session || (await getUserSession());
     if (!currentSession || !currentSession.isLoggedIn) {
       navigation.navigate('Auth', { initialTab: 'login' });
+      return;
+    }
+
+    if (currentSession?.isAnonymous && quota && quota.remaining <= 0) {
+      AppHaptics.warning();
+      setQuotaModalVisible(true);
       return;
     }
 
@@ -351,6 +387,10 @@ export default function ScanScreen() {
         return;
       }
 
+      if ((analysis as any).quota) {
+        setQuota((analysis as any).quota);
+      }
+
       await saveScanToHistory(analysis, selectedImageUri);
       AppHaptics.success();
 
@@ -361,12 +401,17 @@ export default function ScanScreen() {
 
       setSelectedImageUri(null);
       setSelectedImageBase64(null);
-    } catch (err: unknown) {
+    } catch (err: any) {
       AppHaptics.warning();
+      if (err?.response?.status === 429 || err?.message?.includes('limit reached')) {
+        setQuota((prev) => (prev ? { ...prev, remaining: 0 } : null));
+        setQuotaModalVisible(true);
+      }
       const message =
-        err instanceof Error
+        err?.response?.data?.error ||
+        (err instanceof Error
           ? err.message
-          : 'Could not connect to the analysis service. Please try again.';
+          : 'Could not connect to the analysis service. Please try again.');
       setErrorMessage(message);
     } finally {
       setIsLoading(false);
@@ -592,31 +637,67 @@ export default function ScanScreen() {
           <View style={styles.topControls}>
             <PressableScale
               style={styles.controlCircle}
-              onPress={toggleTorch}
+              onPress={() => {
+                AppHaptics.selection();
+                navigation.navigate('Home' as any);
+              }}
               scaleTo={0.9}
-              accessibilityLabel="Toggle flashlight"
+              accessibilityLabel="Close camera"
             >
-              {torch ? (
-                <Zap size={20} color="#FBBF24" />
-              ) : (
-                <ZapOff size={20} color="#FFFFFF" />
-              )}
+              <X size={20} color="#FFFFFF" />
             </PressableScale>
-
-            <View style={styles.headerPill}>
-              <Text style={styles.headerPillText}>
-                {session?.isAnonymous ? 'GUEST MODE • 25/HR' : 'ALIGN FOOD LABEL'}
-              </Text>
-            </View>
 
             <PressableScale
-              style={styles.controlCircle}
-              onPress={toggleFacing}
-              scaleTo={0.9}
-              accessibilityLabel="Switch camera"
+              style={[
+                styles.headerPill,
+                quota && quota.remaining === 0 ? { borderColor: colors.danger } : {},
+              ]}
+              onPress={() => {
+                if (session?.isAnonymous) {
+                  setQuotaModalVisible(true);
+                }
+              }}
+              scaleTo={0.96}
             >
-              <SwitchCamera size={20} color="#FFFFFF" />
+              <Text
+                style={[
+                  styles.headerPillText,
+                  quota && quota.remaining === 0 ? { color: colors.danger } : {},
+                ]}
+              >
+                {session?.isAnonymous
+                  ? quota
+                    ? quota.remaining > 0
+                      ? `GUEST • ${quota.remaining} OF ${quota.limit} SCANS`
+                      : 'GUEST • LIMIT REACHED'
+                    : 'GUEST • 4 SCANS / 2 HR'
+                  : 'ALIGN FOOD LABEL'}
+              </Text>
             </PressableScale>
+
+            <View style={styles.topRightControls}>
+              <PressableScale
+                style={[styles.controlCircle, { marginRight: 8 }]}
+                onPress={toggleTorch}
+                scaleTo={0.9}
+                accessibilityLabel="Toggle flashlight"
+              >
+                {torch ? (
+                  <Zap size={18} color="#FBBF24" />
+                ) : (
+                  <ZapOff size={18} color="#FFFFFF" />
+                )}
+              </PressableScale>
+
+              <PressableScale
+                style={styles.controlCircle}
+                onPress={toggleFacing}
+                scaleTo={0.9}
+                accessibilityLabel="Switch camera"
+              >
+                <SwitchCamera size={18} color="#FFFFFF" />
+              </PressableScale>
+            </View>
           </View>
 
           {/* Viewfinder Target Area with Animated Scan Line */}
@@ -641,12 +722,13 @@ export default function ScanScreen() {
             </View>
           </View>
 
-          {/* Bottom Shutter Controls */}
-          <View style={[styles.bottomControls, { paddingBottom: Math.max(insets.bottom + 80, 104) }]}>
+          {/* Authoritative Dedicated Bottom Controls (Zero Navigation Bar Overlap) */}
+          <View style={[styles.bottomControls, { paddingBottom: Math.max(insets.bottom + 20, 32) }]}>
             <PressableScale
               style={styles.galleryButton}
               onPress={handlePickFromGallery}
               scaleTo={0.92}
+              accessibilityLabel="Pick from photo gallery"
             >
               <View style={styles.galleryIconWrapper}>
                 <ImageIcon size={22} color="#FFFFFF" />
@@ -655,18 +737,101 @@ export default function ScanScreen() {
             </PressableScale>
 
             <PressableScale
-              style={styles.shutterButtonOuter}
+              style={[
+                styles.shutterButtonOuter,
+                quota && quota.remaining === 0 && session?.isAnonymous
+                  ? { opacity: 0.45, borderColor: 'rgba(255, 69, 58, 0.5)' }
+                  : {},
+              ]}
               onPress={handleCapturePhoto}
               scaleTo={0.92}
               accessibilityLabel="Capture food label photo"
             >
-              <View style={styles.shutterButtonInner} />
+              <View
+                style={[
+                  styles.shutterButtonInner,
+                  quota && quota.remaining === 0 && session?.isAnonymous
+                    ? { backgroundColor: colors.danger }
+                    : {},
+                ]}
+              />
             </PressableScale>
 
-            <View style={styles.placeholderButton} />
+            <PressableScale
+              style={styles.galleryButton}
+              onPress={toggleFacing}
+              scaleTo={0.92}
+              accessibilityLabel="Switch camera facing"
+            >
+              <View style={styles.galleryIconWrapper}>
+                <SwitchCamera size={22} color="#FFFFFF" />
+              </View>
+              <Text style={styles.galleryButtonText}>Flip</Text>
+            </PressableScale>
           </View>
         </CameraView>
       )}
+
+      {/* Guest Quota Limit Reached Modal */}
+      <Modal
+        visible={quotaModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQuotaModalVisible(false)}
+      >
+        <View style={styles.quotaModalBackdrop}>
+          <View
+            style={[
+              styles.quotaModalCard,
+              {
+                backgroundColor: colors.surfaceRaised,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={[styles.quotaModalIconCircle, { backgroundColor: colors.danger + '20' }]}>
+              <Clock size={28} color={colors.danger} />
+            </View>
+
+            <Text style={[styles.quotaModalTitle, { color: colors.text }]}>
+              Guest Scan Limit Reached
+            </Text>
+
+            <Text style={[styles.quotaModalDesc, { color: colors.textSecondary }]}>
+              Your guest scan limit has been reached (4 scans per rolling 2-hour window).
+              {quota?.retryAfterSeconds
+                ? `\n\nYour next scan will be available in ${
+                    Math.ceil(quota.retryAfterSeconds / 60) >= 60
+                      ? `${Math.floor(Math.ceil(quota.retryAfterSeconds / 60) / 60)}h ${Math.ceil(quota.retryAfterSeconds / 60) % 60}m`
+                      : `${Math.ceil(quota.retryAfterSeconds / 60)}m`
+                  }.`
+                : ''}
+              {'\n\n'}Sign in or create an account for higher limits.
+            </Text>
+
+            <View style={styles.quotaModalActions}>
+              <Button
+                title="Sign In or Create Account"
+                onPress={() => {
+                  setQuotaModalVisible(false);
+                  navigation.navigate('Auth', { initialTab: 'login' });
+                }}
+                variant="primary"
+                size="md"
+                icon={<LogIn size={16} color={colors.onPrimary} />}
+                style={{ width: '100%', marginBottom: 10 }}
+              />
+              <Button
+                title="Dismiss"
+                onPress={() => setQuotaModalVisible(false)}
+                variant="ghost"
+                size="sm"
+                style={{ width: '100%' }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -902,5 +1067,47 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     marginTop: spacing.base,
+  },
+  topRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quotaModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  quotaModalCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  quotaModalIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  quotaModalTitle: {
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.bold,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  quotaModalDesc: {
+    fontSize: typography.fontSizes.sm,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  quotaModalActions: {
+    width: '100%',
   },
 });

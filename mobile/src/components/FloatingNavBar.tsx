@@ -135,6 +135,11 @@ export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
 
   const bottomOffset = Math.max(insets.bottom + 6, 18);
 
+  // Authoritative layout rule: dedicated camera controls on Scan screen without nav bar overlap
+  if (currentRouteName === 'Scan') {
+    return null;
+  }
+
   return (
     <>
       <View

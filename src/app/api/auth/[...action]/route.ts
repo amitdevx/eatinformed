@@ -1,4 +1,6 @@
 import { adminAuth } from '@/lib/firebase-admin';
+import { createCryptographicGuestToken } from '@/lib/quota';
+import crypto from 'crypto';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -54,9 +56,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
           }
         }
 
+        const guestUid = `guest_${crypto.randomUUID()}`;
+        const signedToken = createCryptographicGuestToken(guestUid);
+
         return NextResponse.json({
           status: 'success',
-          token: `guest_token_${Date.now()}`,
+          token: signedToken,
           user: { email: '', name: 'Guest Explorer', isAnonymous: true },
         });
       }

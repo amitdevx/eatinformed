@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { RootStackParamList, BottomTabParamList } from './navigation/types';
 
 import HomeScreen from './screens/HomeScreen';
@@ -17,8 +17,8 @@ import GuideScreen from './screens/GuideScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ResultScreen from './screens/ResultScreen';
 import AuthScreen from './screens/AuthScreen';
-import OnboardingScreen, { ONBOARDING_STORAGE_KEY } from './screens/OnboardingScreen';
-import { getUserSession } from './lib/auth';
+import OnboardingScreen from './screens/OnboardingScreen';
+import SignedOutScreen from './screens/SignedOutScreen';
 import { checkApiHealth } from './api/client';
 import { FloatingNavBar } from './components/FloatingNavBar';
 
@@ -63,31 +63,9 @@ function TabNavigator() {
 
 function MainApp() {
   const { colors, isDark } = useTheme();
-  const [isInitializing, setIsInitializing] = useState<boolean>(true);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(false);
+  const { authStatus, completeOnboarding } = useAuth();
 
   useEffect(() => {
-    async function initialize() {
-      try {
-        const [onboardingVal, session] = await Promise.all([
-          AsyncStorage.getItem(ONBOARDING_STORAGE_KEY),
-          getUserSession(),
-        ]);
-
-        if (onboardingVal === 'true' && session) {
-          setHasCompletedOnboarding(true);
-        } else {
-          setHasCompletedOnboarding(false);
-        }
-      } catch (e) {
-        setHasCompletedOnboarding(false);
-      } finally {
-        setIsInitializing(false);
-      }
-    }
-
-    initialize();
-
     const timer = setTimeout(() => {
       checkApiHealth().catch(() => {});
     }, 1500);
@@ -106,7 +84,7 @@ function MainApp() {
     },
   };
 
-  if (isInitializing) {
+  if (authStatus === 'initializing') {
     return (
       <View style={[styles.loadingScreen, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -114,11 +92,11 @@ function MainApp() {
     );
   }
 
-  if (!hasCompletedOnboarding) {
+  if (authStatus === 'onboarding') {
     return (
       <SafeAreaProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
-        <OnboardingScreen onComplete={() => setHasCompletedOnboarding(true)} />
+        <OnboardingScreen onComplete={completeOnboarding} />
       </SafeAreaProvider>
     );
   }
@@ -134,14 +112,20 @@ function MainApp() {
             animation: 'slide_from_right',
           }}
         >
-          <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen
-            name="Result"
-            component={ResultScreen}
-            options={{
-              animation: 'slide_from_bottom',
-            }}
-          />
+          {authStatus === 'signed_out' ? (
+            <Stack.Screen name="SignedOut" component={SignedOutScreen} />
+          ) : (
+            <>
+              <Stack.Screen name="Main" component={TabNavigator} />
+              <Stack.Screen
+                name="Result"
+                component={ResultScreen}
+                options={{
+                  animation: 'slide_from_bottom',
+                }}
+              />
+            </>
+          )}
           <Stack.Screen
             name="Auth"
             component={AuthScreen}
@@ -159,7 +143,9 @@ function MainApp() {
 export default function App() {
   return (
     <ThemeProvider>
-      <MainApp />
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

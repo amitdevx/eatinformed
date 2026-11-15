@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 import { isNimConfigured } from '@/ai/nim';
+import {
+  verifyUserToken,
+  inspectQuota,
+  consumeQuotaSlot,
+  refundQuotaSlot,
+  GUEST_QUOTA_LIMIT,
+  MEMBER_QUOTA_LIMIT,
+} from '@/lib/quota';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -11,18 +19,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
 };
 
-// ponytail: dual-tier sliding-window rate limiter:
-// 1. IP burst limit: max 15 requests / 60s
-// 2. Per-user hourly limit: 25 requests / hour for guests, 50 requests / hour for registered members
+// IP burst limit: max 15 requests / 60s to prevent rapid DDoS/bots
 const IP_BURST_LIMIT = 15;
 const IP_BURST_WINDOW_MS = 60 * 1000;
-const HOURLY_WINDOW_MS = 60 * 60 * 1000;
-
-const GUEST_HOURLY_LIMIT = 25;
-const MEMBER_HOURLY_LIMIT = 50;
-
 const ipBurstMap = new Map<string, number[]>();
-const userHourlyMap = new Map<string, number[]>();
 
 function isIpBurstLimited(ip: string): boolean {
   const now = Date.now();
@@ -44,48 +44,11 @@ function isIpBurstLimited(ip: string): boolean {
   return false;
 }
 
-function checkUserHourlyRateLimit(userId: string, limit: number): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const timestamps = userHourlyMap.get(userId) || [];
-  const valid = timestamps.filter((t: number) => now - t < HOURLY_WINDOW_MS);
-  if (valid.length >= limit) {
-    userHourlyMap.set(userId, valid);
-    return { allowed: false, remaining: 0 };
-  }
-  valid.push(now);
-  userHourlyMap.set(userId, valid);
-  if (userHourlyMap.size > 2000) {
-    userHourlyMap.forEach((times, key) => {
-      if (times.every((t: number) => now - t >= HOURLY_WINDOW_MS)) {
-        userHourlyMap.delete(key);
-      }
-    });
-  }
-  return { allowed: true, remaining: limit - valid.length };
-}
-
-function extractUserIdentity(request: NextRequest): {
-  userId: string | null;
-  isGuest: boolean;
-  hourlyLimit: number;
-} {
+function extractToken(request: NextRequest): string {
   const authHeader = request.headers.get('authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   const sessionCookie = request.cookies.get('session')?.value || '';
-
-  const id = token || sessionCookie;
-  if (!id) {
-    return { userId: null, isGuest: true, hourlyLimit: 0 };
-  }
-
-  const isGuest =
-    id.startsWith('guest_') ||
-    id.startsWith('guest_token_') ||
-    id.includes('anonymous') ||
-    id.length < 32;
-
-  const hourlyLimit = isGuest ? GUEST_HOURLY_LIMIT : MEMBER_HOURLY_LIMIT;
-  return { userId: id, isGuest, hourlyLimit };
+  return token || sessionCookie;
 }
 
 export async function OPTIONS() {
@@ -95,17 +58,64 @@ export async function OPTIONS() {
   });
 }
 
-export async function GET() {
-  // Pre-warm NIM client connection and serverless runtime on warmup ping
+export async function GET(request: NextRequest) {
   try {
     isNimConfigured();
   } catch (_) {}
+
+  // Quota inspection endpoint for mobile client & web client
+  const wantsQuota =
+    request.nextUrl.searchParams.get('quota') === 'true' ||
+    request.headers.get('x-inspect-quota') === 'true';
+
+  if (wantsQuota) {
+    const rawToken = extractToken(request);
+    const identity = await verifyUserToken(rawToken);
+
+    if (!identity.userId) {
+      return NextResponse.json(
+        {
+          status: 'unauthenticated',
+          error: 'Authentication token required to inspect scan quota.',
+          quota: {
+            limit: GUEST_QUOTA_LIMIT,
+            remaining: 0,
+            isGuest: true,
+          },
+        },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    const quota = inspectQuota(identity.userId, identity.isGuest);
+    return NextResponse.json(
+      {
+        status: 'success',
+        quota,
+      },
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'X-RateLimit-Limit': String(quota.limit),
+          'X-RateLimit-Remaining': String(quota.remaining),
+          ...(quota.nextAvailableScanTimestamp
+            ? { 'X-RateLimit-Reset': String(Math.floor(quota.nextAvailableScanTimestamp / 1000)) }
+            : {}),
+        },
+      }
+    );
+  }
 
   return NextResponse.json(
     {
       status: 'ok',
       endpoint: '/api/scan',
       service: 'EatInformed Food Label Analysis API',
+      quotaPolicy: {
+        guest: `${GUEST_QUOTA_LIMIT} scans per 2-hour rolling window`,
+        member: `${MEMBER_QUOTA_LIMIT} scans per 1-hour rolling window`,
+      },
     },
     {
       status: 200,
@@ -119,7 +129,7 @@ export async function POST(request: NextRequest) {
   const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
   const clientType = request.headers.get('x-eatinformed-client');
 
-  // 1. IP burst limiter (guards against rapid bot/DDoS bursts)
+  // 1. IP burst limiter
   if (clientType !== 'test' && isIpBurstLimited(ip)) {
     return NextResponse.json(
       { error: 'Too many rapid requests. Please wait a moment before scanning again.' },
@@ -133,8 +143,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 2. Auth restriction: app and web scans require either Guest or Member session
-  const identity = extractUserIdentity(request);
+  // 2. Cryptographic Auth & Identity Verification
+  const rawToken = extractToken(request);
+  const identity = await verifyUserToken(rawToken);
 
   if (!identity.userId) {
     return NextResponse.json(
@@ -149,98 +160,133 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 3. Per-user hourly rate limiter (25 requests/hour for guest, 50 requests/hour for registered members)
-  const rateLimitKey = identity.userId || `test_${ip}`;
-  const effectiveLimit = identity.userId ? identity.hourlyLimit : MEMBER_HOURLY_LIMIT;
-  const { allowed, remaining } = checkUserHourlyRateLimit(rateLimitKey, effectiveLimit);
+  // 3. True Sliding-Window Quota Admission Check
+  // Policy: 4 scans per rolling 2-hour window for guests (50/hr for members)
+  const quota = consumeQuotaSlot(identity.userId, identity.isGuest);
 
-  if (!allowed) {
+  if (!quota.allowed) {
     return NextResponse.json(
       {
-        error: `Hourly scan limit reached (${identity.isGuest ? '25 scans/hr for guests' : '50 scans/hr for members'}). Please try again later.`,
-        code: 'rate_limit_exceeded',
-        limit: effectiveLimit,
-        retryAfter: 3600,
+        error: identity.isGuest
+          ? `Your guest scan limit has been reached (4 scans per rolling 2-hour window). Please wait or sign in to continue scanning.`
+          : `Member scan limit reached (${MEMBER_QUOTA_LIMIT} scans/hr). Please try again later.`,
+        code: 'quota_limit_reached',
+        limit: quota.limit,
+        remaining: 0,
+        windowDurationSeconds: quota.windowDurationSeconds,
+        nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
+        retryAfterSeconds: quota.retryAfterSeconds,
+        isGuest: identity.isGuest,
       },
       {
         status: 429,
         headers: {
           ...corsHeaders,
-          'Retry-After': '3600',
-          'X-RateLimit-Limit': String(effectiveLimit),
+          'Retry-After': String(quota.retryAfterSeconds),
+          'X-RateLimit-Limit': String(quota.limit),
           'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.floor((quota.nextAvailableScanTimestamp || Date.now()) / 1000)),
         },
       }
     );
   }
 
+  // 4. Request Body Validation
+  let image: string;
   try {
     const body = await request.json();
-    const { image } = body;
+    image = body.image;
 
     if (!image || typeof image !== 'string') {
+      refundQuotaSlot(identity.userId);
       return NextResponse.json(
         { error: 'Image data URI is required in request body.' },
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     const dataUriPattern = /^data:image\/(png|jpeg|jpg|webp);base64,/i;
     if (!dataUriPattern.test(image)) {
+      refundQuotaSlot(identity.userId);
       return NextResponse.json(
         { error: 'Invalid image format. Expected base64 data URI (PNG, JPEG, or WEBP).' },
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     const maxBase64Length = 10 * 1024 * 1024 * 1.37;
     if (image.length > maxBase64Length) {
+      refundQuotaSlot(identity.userId);
       return NextResponse.json(
         { error: 'Image file size exceeds the 10MB limit.' },
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
+        { status: 400, headers: corsHeaders }
       );
     }
+  } catch (parseError) {
+    refundQuotaSlot(identity.userId);
+    return NextResponse.json(
+      { error: 'Malformed JSON payload in request body.' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
 
-    // Fast-path for verified automated test suite to test headers & rate limits without hitting NIM
-    if (clientType === 'test') {
-      return NextResponse.json(
-        { status: 'success', productName: 'Automated Test Label', rating: 4.5 },
-        {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            'X-RateLimit-Limit': String(effectiveLimit),
-            'X-RateLimit-Remaining': String(remaining),
-          },
-        }
-      );
-    }
-
-    // ponytail: analyzeProduct optimizes image once internally; avoid duplicate Sharp resize
-    const result = await analyzeProduct(image);
-    return NextResponse.json(result, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        'X-RateLimit-Limit': String(effectiveLimit),
-        'X-RateLimit-Remaining': String(remaining),
+  // 5. Test Harness Fast-Path
+  if (clientType === 'test') {
+    return NextResponse.json(
+      {
+        status: 'success',
+        productName: 'Automated Test Label',
+        rating: 4.5,
+        quota: {
+          limit: quota.limit,
+          remaining: quota.remaining,
+          windowDurationSeconds: quota.windowDurationSeconds,
+          nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
+          isGuest: identity.isGuest,
+        },
       },
-    });
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'X-RateLimit-Limit': String(quota.limit),
+          'X-RateLimit-Remaining': String(quota.remaining),
+        },
+      }
+    );
+  }
+
+  // 6. AI Analysis with Explicit Refund Policy on Failure
+  try {
+    const result = await analyzeProduct(image);
+    return NextResponse.json(
+      {
+        ...result,
+        quota: {
+          limit: quota.limit,
+          remaining: quota.remaining,
+          windowDurationSeconds: quota.windowDurationSeconds,
+          nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
+          isGuest: identity.isGuest,
+        },
+      },
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'X-RateLimit-Limit': String(quota.limit),
+          'X-RateLimit-Remaining': String(quota.remaining),
+        },
+      }
+    );
   } catch (error: unknown) {
+    // Explicit refund policy: If AI processing fails after acceptance, refund the slot immediately
+    refundQuotaSlot(identity.userId);
     const message =
       error instanceof Error ? error.message : 'Internal server error during food label analysis.';
-    console.error('Scan API error:', message);
+    console.error('Scan API error (slot refunded):', message);
     return NextResponse.json(
-      { error: message },
+      { error: message, slotRefunded: true },
       {
         status: 500,
         headers: corsHeaders,

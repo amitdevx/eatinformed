@@ -51,6 +51,7 @@ import { NameTicker } from '../components/NameTicker';
 import { FoodPassportModal } from '../components/FoodPassportModal';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession, UserSessionData } from '../lib/auth';
+import { useAuth } from '../context/AuthContext';
 import { exportScanHistory, getScanHistory, getYearlyHistogramData } from '../lib/history';
 import { HistoryItem } from '../types';
 import { useTheme } from '../theme/ThemeContext';
@@ -60,6 +61,7 @@ import { RootStackParamList } from '../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const RAW_PULL_THRESHOLD = 110.0;
 const REACH_THRESHOLD = 200.0;
 
 // Achievement Medals Definition (GymMane Medal Shelf with theme icons)
@@ -110,6 +112,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
   const { colors, theme: currentTheme, isDark } = useTheme();
+  const { signOut: authSignOut } = useAuth();
 
   const [session, setSession] = useState<UserSessionData | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -131,7 +134,7 @@ export default function ProfileScreen() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [passportVisible, setPassportVisible] = useState(false);
 
-  // GymMane Rubber-band Swipe Down Physics (Reach = 200pt)
+  // GymMane Rubber-band Swipe Down Physics (Threshold = 110pt raw finger distance)
   const pullAnim = useRef(new Animated.Value(0)).current;
   const isArmedRef = useRef(false);
   const [isArmed, setIsArmed] = useState(false);
@@ -140,15 +143,21 @@ export default function ProfileScreen() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gesture) => {
-        return scrollYRef.current <= 0 && gesture.dy > 12 && gesture.vy > 0;
+        return (
+          scrollYRef.current <= 0 &&
+          gesture.dy > 12 &&
+          Math.abs(gesture.dy) > Math.abs(gesture.dx) &&
+          gesture.vy > 0
+        );
       },
       onPanResponderMove: (_, gesture) => {
         if (gesture.dy > 0) {
-          const drag = 0.65 * Math.max(0.15, 1 - gesture.dy / (REACH_THRESHOLD * 1.45));
-          const currentPull = Math.min(gesture.dy * drag, REACH_THRESHOLD * 1.25);
-          pullAnim.setValue(currentPull);
+          // Physical rubber-band visual displacement (asymptote ~90pt)
+          const visualY = (1 - 1 / (gesture.dy * 0.006 + 1)) * 95;
+          pullAnim.setValue(visualY);
 
-          const armed = currentPull >= REACH_THRESHOLD * 0.95;
+          // Separate raw finger translation from rubber-band visual displacement
+          const armed = gesture.dy >= RAW_PULL_THRESHOLD;
           if (armed !== isArmedRef.current) {
             isArmedRef.current = armed;
             setIsArmed(armed);
@@ -237,13 +246,8 @@ export default function ProfileScreen() {
 
   const confirmSignOut = async () => {
     setSignOutModalVisible(false);
-    await clearUserSession();
-    setIsLoggedIn(false);
-    setIsAnonymous(true);
-    setUserEmail(null);
-    setUserName('Guest Explorer');
-    setUserPhoto(null);
     AppHaptics.selection();
+    await authSignOut();
   };
 
   const currentLevel = scanCount >= 20 ? 'Master' : scanCount >= 5 ? 'Scout' : 'Novice';
@@ -602,6 +606,7 @@ export default function ProfileScreen() {
         onClose={() => setPassportVisible(false)}
         userName={userName || 'Guest Explorer'}
         userEmail={userEmail || ''}
+        userHandle={session?.handle || (userEmail ? userEmail.split('@')[0] : 'guest')}
         userPhoto={userPhoto}
         scanCount={scanCount}
         cleanScore={cleanRatio}

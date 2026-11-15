@@ -11,6 +11,7 @@ export type BottomTabParamList = {
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<BottomTabParamList> | undefined;
+  SignedOut: undefined;
   Result: {
     data: ProductAnalysisOutput;
     imageUri?: string | null;

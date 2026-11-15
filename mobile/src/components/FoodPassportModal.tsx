@@ -10,6 +10,7 @@ import {
   Share,
   Image,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import {
   ShieldCheck,
   QrCode,
@@ -26,7 +27,6 @@ import { useTheme } from '../theme/ThemeContext';
 import { GlassSurface } from './GlassSurface';
 import { AppHaptics } from '../lib/haptics';
 import { SpringPresets } from '../theme/animations';
-import { NameTicker } from './NameTicker';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(SCREEN_WIDTH - 40, 360);
@@ -37,6 +37,7 @@ interface FoodPassportModalProps {
   onClose: () => void;
   userName: string;
   userEmail: string;
+  userHandle?: string;
   userPhoto?: string | null;
   scanCount: number;
   cleanScore?: number;
@@ -49,6 +50,7 @@ export function FoodPassportModal({
   onClose,
   userName,
   userEmail,
+  userHandle,
   userPhoto,
   scanCount,
   cleanScore = 0,
@@ -125,7 +127,7 @@ export function FoodPassportModal({
 
   if (!visible) return null;
 
-  const memberId = `EI-${Math.abs(userName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 1042)).toString().slice(0, 4)}-BIO`;
+  const displayHandle = userHandle ? (userHandle.startsWith('@') ? userHandle : `@${userHandle}`) : '@guest';
 
   return (
     <Modal
@@ -136,13 +138,19 @@ export function FoodPassportModal({
       onRequestClose={handleDismiss}
     >
       <View style={styles.backdrop}>
-        {/* GymMane background watermark ticker */}
-        <NameTicker
-          text={userName || 'EATINFORMED'}
-          color={isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)'}
-          rows={6}
-          size={84}
-          speed={32}
+        {/* Real coordinated backdrop blur (Expo BlurView) */}
+        <BlurView
+          intensity={isDark ? 65 : 45}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(240, 240, 240, 0.35)',
+            },
+          ]}
         />
 
         {/* Dismiss overlay */}
@@ -215,9 +223,13 @@ export function FoodPassportModal({
                   {userEmail || 'Local Anonymous Session'}
                 </Text>
                 <View style={styles.passportIdRow}>
-                  <Text style={[styles.memberIdText, { color: colors.primary }]}>{memberId}</Text>
+                  <Text style={[styles.memberIdText, { color: colors.primary }]}>
+                    {displayHandle}
+                  </Text>
                   <View style={[styles.statusDot, { backgroundColor: colors.primary }]} />
-                  <Text style={[styles.statusText, { color: colors.textSecondary }]}>ACTIVE</Text>
+                  <Text style={[styles.statusText, { color: colors.textSecondary }]}>
+                    VERIFIED PASS
+                  </Text>
                 </View>
               </View>
             </View>
@@ -289,7 +301,7 @@ export function FoodPassportModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },

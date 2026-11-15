@@ -18,6 +18,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { saveUserSession, signInWithGoogle, authenticateWithBackend, signInAsGuest } from '../lib/auth';
+import { useAuth } from '../context/AuthContext';
 import { AppHaptics } from '../lib/haptics';
 import { RootStackParamList } from '../navigation/types';
 import { EatInformedLogo } from '../components/EatInformedLogo';
@@ -52,6 +53,7 @@ export default function AuthScreen() {
   const route = useRoute<RouteProps>();
   const navigation = useNavigation<NavigationProp>();
   const { colors } = useTheme();
+  const { signIn: authSignIn } = useAuth();
   const initialTab = route.params?.initialTab || 'login';
 
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialTab);
@@ -79,11 +81,12 @@ export default function AuthScreen() {
     setError(null);
 
     try {
-      await authenticateWithBackend(
+      const session = await authenticateWithBackend(
         email.trim(),
         password,
         activeTab === 'login' ? 'signIn' : 'signUp'
       );
+      await authSignIn(session);
       AppHaptics.success();
       navigation.goBack();
     } catch (err: unknown) {
@@ -100,7 +103,8 @@ export default function AuthScreen() {
     setError(null);
 
     try {
-      await signInWithGoogle();
+      const session = await signInWithGoogle();
+      await authSignIn(session);
       AppHaptics.success();
       navigation.goBack();
     } catch (err: unknown) {
@@ -117,7 +121,8 @@ export default function AuthScreen() {
     setError(null);
 
     try {
-      await signInAsGuest();
+      const session = await signInAsGuest();
+      await authSignIn(session);
       AppHaptics.success();
       navigation.goBack();
     } catch {
