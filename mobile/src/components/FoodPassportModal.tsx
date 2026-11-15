@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Share,
+  Image,
 } from 'react-native';
 import {
   ShieldCheck,
@@ -20,7 +21,6 @@ import {
   Flame,
   Leaf,
 } from 'lucide-react-native';
-import Svg, { Rect, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { GlassSurface } from './GlassSurface';
@@ -37,20 +37,22 @@ interface FoodPassportModalProps {
   onClose: () => void;
   userName: string;
   userEmail: string;
+  userPhoto?: string | null;
   scanCount: number;
   cleanScore?: number;
   streakDays?: number;
 }
 
-// ponytail: GymMane Gym Pass / Recap equivalent for food & nutrition verification
+// GymMane Gym Pass / Food Passport equivalent for food & nutrition verification
 export function FoodPassportModal({
   visible,
   onClose,
   userName,
   userEmail,
+  userPhoto,
   scanCount,
-  cleanScore = 92,
-  streakDays = 14,
+  cleanScore = 0,
+  streakDays = 0,
 }: FoodPassportModalProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -196,9 +198,13 @@ export function FoodPassportModal({
             {/* Passport Identity Block */}
             <View style={styles.identityRow}>
               <View style={[styles.avatarBox, { borderColor: colors.primary }]}>
-                <Text style={[styles.avatarInitial, { color: colors.primary }]}>
-                  {(userName || 'U')[0].toUpperCase()}
-                </Text>
+                {userPhoto ? (
+                  <Image source={{ uri: userPhoto }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={[styles.avatarInitial, { color: colors.primary }]}>
+                    {(userName || 'U')[0].toUpperCase()}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.identityMeta}>
@@ -237,30 +243,30 @@ export function FoodPassportModal({
               </View>
             </View>
 
-            {/* Verification Barcode / Security Strip */}
-            <View style={styles.barcodeSection}>
-              <Svg width={CARD_WIDTH - 64} height={42} viewBox="0 0 280 42">
-                {/* Vector stylized barcode lines */}
-                {Array.from({ length: 48 }).map((_, i) => {
-                  const x = i * 5.8;
-                  const isFat = (i % 3 === 0) || (i % 7 === 0);
-                  const width = isFat ? 3.2 : 1.4;
-                  return (
-                    <Rect
-                      key={i}
-                      x={x}
-                      y={0}
-                      width={width}
-                      height={42}
-                      fill={isDark ? '#E5E5E5' : '#1A1713'}
-                      opacity={0.88}
-                    />
-                  );
-                })}
-              </Svg>
-              <Text style={[styles.barcodeCode, { color: colors.textSecondary }]}>
-                {memberId} • SHA-256 CLINICAL TRUST
-              </Text>
+            {/* Total Scans Counter Block (Replaces fake SVG barcode) */}
+            <View
+              style={[
+                styles.totalScansBox,
+                {
+                  backgroundColor: colors.surfaceRaised,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={styles.totalScansLeft}>
+                <Text style={[styles.totalScansLabel, { color: colors.textSecondary }]}>
+                  LIFETIME SCANS VERIFIED
+                </Text>
+                <Text style={[styles.totalScansNumber, { color: colors.text }]}>
+                  {scanCount}
+                </Text>
+              </View>
+              <View style={[styles.verifiedBadge, { backgroundColor: colors.primary + '20' }]}>
+                <ShieldCheck size={18} color={colors.primary} />
+                <Text style={[styles.verifiedBadgeText, { color: colors.primary }]}>
+                  BIO-PASS ACTIVE
+                </Text>
+              </View>
             </View>
 
             {/* Bottom Actions */}
@@ -347,6 +353,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarInitial: {
     fontSize: 26,
@@ -409,15 +420,40 @@ const styles = StyleSheet.create({
     width: 1,
     height: 24,
   },
-  barcodeSection: {
+  totalScansBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-    marginVertical: 8,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginVertical: 6,
   },
-  barcodeCode: {
+  totalScansLeft: {
+    gap: 2,
+  },
+  totalScansLabel: {
     fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  totalScansNumber: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  verifiedBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   cardActions: {
     marginTop: 4,

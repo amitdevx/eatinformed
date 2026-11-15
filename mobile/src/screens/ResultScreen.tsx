@@ -4,6 +4,8 @@ import {
   Text,
   StyleSheet,
   Share,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +17,9 @@ import {
   Share2,
   RefreshCw,
   Info,
+  FileText,
+  FileJson,
+  X,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -29,6 +34,8 @@ import { MacroProportionBar } from '../components/MacroProportionBar';
 import { AdditiveDetailSheet, AdditiveDetailData } from '../components/AdditiveDetailSheet';
 import { ADDITIVE_DICTIONARY } from '../lib/additive-dictionary';
 import { AppHaptics } from '../lib/haptics';
+import { exportProductAsJsonFile } from '../lib/history';
+import { getUserSession } from '../lib/auth';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
@@ -48,6 +55,16 @@ export default function ResultScreen() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [additiveSheetVisible, setAdditiveSheetVisible] = useState(false);
   const [selectedAdditive, setSelectedAdditive] = useState<AdditiveDetailData | null>(null);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [userAllergens, setUserAllergens] = useState<string[]>([]);
+
+  useEffect(() => {
+    getUserSession().then((session) => {
+      if (session?.allergens && session.allergens.length > 0) {
+        setUserAllergens(session.allergens);
+      }
+    });
+  }, []);
 
   const handleOpenAdditiveDetails = (item: any) => {
     AppHaptics.selection();
@@ -79,14 +96,43 @@ export default function ResultScreen() {
   const rating = data.rating || 0;
   const novaGroup = data.novaGroup || 4;
 
-  const handleShare = async () => {
+  const matchedPersonalAllergens = React.useMemo(() => {
+    if (!userAllergens || userAllergens.length === 0) return [];
+    const textPool = [
+      ...(data.ingredients || []),
+      ...(data.dietaryInfo?.allergens || []),
+      ...(data.warnings || []),
+    ].join(' ').toLowerCase();
+
+    return userAllergens.filter((alg) => {
+      const clean = alg.trim().toLowerCase();
+      return clean.length > 0 && textPool.includes(clean);
+    });
+  }, [userAllergens, data.ingredients, data.dietaryInfo, data.warnings]);
+
+  const handleShare = () => {
+    AppHaptics.selection();
+    setShareModalVisible(true);
+  };
+
+  const handleShareText = async () => {
+    setShareModalVisible(false);
     try {
       await Share.share({
         title: `EatInformed Health Report: ${productName}`,
-        message: `${productName} (${brand}) - Health Rating: ${rating.toFixed(1)}/5.0, NOVA Group: ${novaGroup}. Analyzed with EatInformed.`,
+        message: `${productName}${brand ? ` (${brand})` : ''}\nHealth Rating: ${rating.toFixed(1)}/5.0\nNOVA Group: ${novaGroup}\nAnalyzed with EatInformed.`,
       });
     } catch (e) {
-      console.warn('Share error:', e);
+      console.warn('Share text error:', e);
+    }
+  };
+
+  const handleShareJson = async () => {
+    setShareModalVisible(false);
+    try {
+      await exportProductAsJsonFile(data);
+    } catch (e) {
+      console.warn('Share JSON error:', e);
     }
   };
 
@@ -236,6 +282,46 @@ export default function ResultScreen() {
         </Card>
       </FadeInView>
 
+      {/* Personal Allergen Flag Banner */}
+      {matchedPersonalAllergens.length > 0 && (
+        <FadeInView delay={100}>
+          <View
+            style={[
+              styles.allergenAlertBox,
+              {
+                backgroundColor: colors.dangerLight,
+                borderColor: colors.dangerBorder,
+              },
+            ]}
+          >
+            <View style={styles.allergenAlertHeader}>
+              <AlertTriangle size={18} color={colors.dangerText} />
+              <Text style={[styles.allergenAlertTitle, { color: colors.dangerText }]}>
+                Personal Allergen Alert
+              </Text>
+            </View>
+            <Text style={[styles.allergenAlertText, { color: colors.text }]}>
+              This product contains ingredients matching your flagged allergen profile:
+            </Text>
+            <View style={styles.allergenChipsRow}>
+              {matchedPersonalAllergens.map((alg, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.allergenMatchChip,
+                    { backgroundColor: colors.dangerText },
+                  ]}
+                >
+                  <Text style={styles.allergenMatchChipText}>
+                    {alg.toUpperCase()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </FadeInView>
+      )}
+
       {/* Apple iOS Segmented Tab Switcher */}
       <FadeInView delay={120} style={styles.segmentedWrapper}>
         <SegmentedControl<ActiveTab>
@@ -259,14 +345,15 @@ export default function ResultScreen() {
           {data.warnings && data.warnings.length > 0 && (
             <Card
               style={{
-                borderColor: colors.warningBorder,
-                backgroundColor: colors.warningLight,
+                borderColor: colors.dangerBorder,
+                backgroundColor: colors.dangerLight,
+                borderWidth: 1.5,
               }}
             >
               <CardContent>
                 <View style={styles.warningHeader}>
-                  <AlertTriangle size={20} color={colors.warningText} />
-                  <Text style={[styles.warningTitle, { color: colors.warningText }]}>
+                  <AlertTriangle size={20} color={colors.dangerText} />
+                  <Text style={[styles.warningTitle, { color: colors.dangerText }]}>
                     Health Notices
                   </Text>
                 </View>
@@ -395,53 +482,70 @@ export default function ResultScreen() {
           </Text>
 
           {completeIngredientAnalysis && completeIngredientAnalysis.length > 0 ? (
-            completeIngredientAnalysis.map((item, index) => (
-              <Card
-                key={index}
-                style={styles.ingredientCard}
-                onPress={() => handleOpenAdditiveDetails(item)}
-                onLongPress={() => AppHaptics.impactHeavy()}
-              >
-                <CardContent>
-                  <View style={styles.ingredientTopRow}>
-                    <Text
-                      selectable={true}
-                      style={[styles.ingredientName, { color: colors.text }]}
-                    >
-                      {item.ingredient}
-                    </Text>
-                    <View style={styles.badgeRow}>
-                      {item.isAllergen && (
-                        <Badge label="Allergen" variant="danger" size="sm" />
-                      )}
-                      {getIngredientBadge(item)}
-                      <Info size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
+            completeIngredientAnalysis.map((item, index) => {
+              const isPersonalMatch = userAllergens.some((alg) => {
+                const clean = alg.trim().toLowerCase();
+                return clean.length > 0 && item.ingredient.toLowerCase().includes(clean);
+              });
+
+              return (
+                <Card
+                  key={index}
+                  style={[
+                    styles.ingredientCard,
+                    isPersonalMatch && {
+                      borderColor: colors.dangerBorder,
+                      backgroundColor: colors.dangerLight,
+                      borderWidth: 1.5,
+                    },
+                  ]}
+                  onPress={() => handleOpenAdditiveDetails(item)}
+                  onLongPress={() => AppHaptics.impactHeavy()}
+                >
+                  <CardContent>
+                    <View style={styles.ingredientTopRow}>
+                      <Text
+                        selectable={true}
+                        style={[styles.ingredientName, { color: colors.text }]}
+                      >
+                        {item.ingredient}
+                      </Text>
+                      <View style={styles.badgeRow}>
+                        {isPersonalMatch && (
+                          <Badge label="Personal Allergen" variant="danger" size="sm" />
+                        )}
+                        {item.isAllergen && !isPersonalMatch && (
+                          <Badge label="Allergen" variant="danger" size="sm" />
+                        )}
+                        {getIngredientBadge(item)}
+                        <Info size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
+                      </View>
                     </View>
-                  </View>
-                  {item.purpose ? (
-                    <Text
-                      style={[
-                        styles.ingredientPurpose,
-                        { color: colors.primary },
-                      ]}
-                    >
-                      Role: {item.purpose}
-                    </Text>
-                  ) : null}
-                  {item.description ? (
-                    <Text
-                      selectable={true}
-                      style={[
-                        styles.ingredientDescription,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      {item.description}
-                    </Text>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))
+                    {item.purpose ? (
+                      <Text
+                        style={[
+                          styles.ingredientPurpose,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        Role: {item.purpose}
+                      </Text>
+                    ) : null}
+                    {item.description ? (
+                      <Text
+                        selectable={true}
+                        style={[
+                          styles.ingredientDescription,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        {item.description}
+                      </Text>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              );
+            })
           ) : (
             <Card>
               <CardContent>
@@ -655,6 +759,64 @@ export default function ResultScreen() {
         additive={selectedAdditive}
         onClose={() => setAdditiveSheetVisible(false)}
       />
+
+      {/* Share Choice Modal */}
+      <Modal
+        visible={shareModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShareModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setShareModalVisible(false)}
+        >
+          <View
+            style={[
+              styles.shareModalSheet,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.shareModalHeader}>
+              <Text style={[styles.shareModalTitle, { color: colors.text }]}>Share Product Report</Text>
+              <Pressable
+                onPress={() => setShareModalVisible(false)}
+                hitSlop={8}
+              >
+                <X size={18} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <View style={styles.shareOptionsCol}>
+              <Pressable
+                style={[styles.shareOptionBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                onPress={handleShareText}
+              >
+                <FileText size={22} color={colors.primary} />
+                <View style={styles.shareOptionTexts}>
+                  <Text style={[styles.shareOptionTitle, { color: colors.text }]}>Share as Text Summary</Text>
+                  <Text style={[styles.shareOptionDesc, { color: colors.textSecondary }]}>
+                    Formatted text message with rating, NOVA group, and overview
+                  </Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                style={[styles.shareOptionBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+                onPress={handleShareJson}
+              >
+                <FileJson size={22} color="#3B82F6" />
+                <View style={styles.shareOptionTexts}>
+                  <Text style={[styles.shareOptionTitle, { color: colors.text }]}>Share as JSON File</Text>
+                  <Text style={[styles.shareOptionDesc, { color: colors.textSecondary }]}>
+                    Complete structured audit file for backup or clinical export
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -840,5 +1002,90 @@ const styles = StyleSheet.create({
   bottomActions: {
     paddingVertical: spacing.lg,
     paddingBottom: 36,
+  },
+  allergenAlertBox: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: spacing.md,
+    marginBottom: spacing.base,
+    gap: 8,
+  },
+  allergenAlertHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  allergenAlertTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  allergenAlertText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  allergenChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  allergenMatchChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  allergenMatchChipText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  shareModalSheet: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 20,
+  },
+  shareModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  shareModalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  shareOptionsCol: {
+    gap: 12,
+  },
+  shareOptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 14,
+  },
+  shareOptionTexts: {
+    flex: 1,
+  },
+  shareOptionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  shareOptionDesc: {
+    fontSize: 11.5,
+    marginTop: 2,
+    lineHeight: 15,
   },
 });

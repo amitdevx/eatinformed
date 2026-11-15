@@ -223,45 +223,8 @@ export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
               </Text>
             </Pressable>
 
-            {/* Slot 2: Radiant Center Scan FAB */}
-            <View style={[styles.fabContainer, { width: slotWidth }]}>
-              {/* Breathing Glow Halo */}
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.fabGlowHalo,
-                  {
-                    backgroundColor: colors.primary,
-                    transform: [{ scale: glowPulse }],
-                    opacity: isDark ? 0.35 : 0.22,
-                  },
-                ]}
-              />
-
-              <Pressable
-                onPressIn={handleScanPressIn}
-                onPressOut={handleScanPressOut}
-                onPress={handleScanPress}
-                onLongPress={handleScanLongPress}
-                delayLongPress={350}
-                style={styles.fabPressable}
-                accessibilityRole="button"
-                accessibilityLabel="Scan food label"
-              >
-                <Animated.View
-                  style={[
-                    styles.fabCircle,
-                    {
-                      backgroundColor: colors.primary,
-                      transform: [{ scale: fabScale }],
-                      shadowColor: colors.primary,
-                    },
-                  ]}
-                >
-                  <ScanLine size={26} color="#FFFFFF" strokeWidth={2.4} />
-                </Animated.View>
-              </Pressable>
-            </View>
+            {/* Slot 2: Spacer for Center Raised FAB */}
+            <View style={{ width: slotWidth, height: NAV_BAR_HEIGHT }} />
 
             {/* Tab 3: Guide */}
             <Pressable
@@ -316,6 +279,54 @@ export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
             </Pressable>
           </View>
         </GlassSurface>
+
+        {/* Center Raised FAB Trigger (Positioned outside overflow: hidden to avoid top clipping) */}
+        <View
+          pointerEvents="box-none"
+          style={[
+            styles.fabFloatingOverlay,
+            {
+              left: 2 * slotWidth,
+              width: slotWidth,
+            },
+          ]}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.fabGlowHalo,
+              {
+                backgroundColor: colors.primary,
+                transform: [{ scale: glowPulse }],
+                opacity: isDark ? 0.35 : 0.22,
+              },
+            ]}
+          />
+
+          <Pressable
+            onPressIn={handleScanPressIn}
+            onPressOut={handleScanPressOut}
+            onPress={handleScanPress}
+            onLongPress={handleScanLongPress}
+            delayLongPress={350}
+            style={styles.fabPressable}
+            accessibilityRole="button"
+            accessibilityLabel="Scan food label"
+          >
+            <Animated.View
+              style={[
+                styles.fabCircle,
+                {
+                  backgroundColor: colors.primary,
+                  transform: [{ scale: fabScale }],
+                  shadowColor: colors.primary,
+                },
+              ]}
+            >
+              <ScanLine size={26} color="#FFFFFF" strokeWidth={2.4} />
+            </Animated.View>
+          </Pressable>
+        </View>
       </View>
 
       {/* Long-Press Quick Scan Modal Sheet */}
@@ -430,6 +441,14 @@ const styles = StyleSheet.create({
   slotLabel: {
     fontSize: 10.5,
   },
+  fabFloatingOverlay: {
+    position: 'absolute',
+    top: 0,
+    height: NAV_BAR_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
   fabContainer: {
     height: NAV_BAR_HEIGHT,
     justifyContent: 'center',
@@ -442,7 +461,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    top: -12,
+    top: -16,
   },
   fabPressable: {
     position: 'absolute',

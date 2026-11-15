@@ -13,9 +13,18 @@ export interface UserSessionData {
   name: string;
   token?: string;
   photoUrl?: string;
+  handle?: string;
+  allergens?: string[];
   isLoggedIn: boolean;
   isAnonymous?: boolean;
   loginDate: string;
+}
+
+export function normalizeHandle(input: string): string {
+  if (!input) return 'member';
+  const raw = input.includes('@') ? input.split('@')[0] : input;
+  const clean = raw.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  return clean.slice(0, 20) || 'member';
 }
 
 export async function getUserSession(): Promise<UserSessionData | null> {
@@ -49,16 +58,26 @@ export async function saveUserSession(
   name?: string,
   token?: string,
   isAnonymous: boolean = false,
-  photoUrl?: string
+  photoUrl?: string,
+  handle?: string,
+  allergens?: string[]
 ): Promise<UserSessionData> {
+  const existingHandle = cachedSession?.handle;
+  const existingAllergens = cachedSession?.allergens;
+  const resolvedHandle =
+    handle || existingHandle || (isAnonymous ? 'guest' : normalizeHandle(email || name || 'member'));
+  const resolvedAllergens = allergens || existingAllergens || [];
+
   const session: UserSessionData = {
     email,
-    name: name || (isAnonymous ? 'Guest Explorer' : email.split('@')[0] || 'Member'),
+    name: name || (isAnonymous ? 'Guest Explorer' : email ? email.split('@')[0] : 'Member'),
     token: token || (isAnonymous ? `guest_session_${Date.now()}` : `token_${Date.now()}`),
-    photoUrl,
+    photoUrl: photoUrl !== undefined ? photoUrl : cachedSession?.photoUrl,
+    handle: resolvedHandle,
+    allergens: resolvedAllergens,
     isLoggedIn: true,
     isAnonymous,
-    loginDate: new Date().toLocaleDateString(),
+    loginDate: cachedSession?.loginDate || new Date().toLocaleDateString(),
   };
 
   cachedSession = session;
@@ -70,6 +89,27 @@ export async function saveUserSession(
     console.warn('Error saving session to secure storage:', e);
   }
   return session;
+}
+
+export async function updateUserProfile(
+  updates: Partial<UserSessionData>
+): Promise<UserSessionData> {
+  const current = await getUserSession();
+  const email = updates.email !== undefined ? updates.email : current?.email || '';
+  const name = updates.name !== undefined ? updates.name : current?.name || 'Member';
+  const token = updates.token !== undefined ? updates.token : current?.token;
+  const isAnonymous =
+    updates.isAnonymous !== undefined ? updates.isAnonymous : current?.isAnonymous ?? false;
+  const photoUrl = updates.photoUrl !== undefined ? updates.photoUrl : current?.photoUrl;
+  const handle =
+    updates.handle !== undefined
+      ? isAnonymous
+        ? 'guest'
+        : normalizeHandle(updates.handle)
+      : current?.handle;
+  const allergens = updates.allergens !== undefined ? updates.allergens : current?.allergens || [];
+
+  return await saveUserSession(email, name, token, isAnonymous, photoUrl, handle, allergens);
 }
 
 export async function clearUserSession(): Promise<void> {

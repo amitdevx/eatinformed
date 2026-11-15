@@ -60,7 +60,7 @@ export function LoadingState({
         ? 'Wrapping up...'
         : remainingSec && elapsedMs < estimatedTotalMs
         ? `~${remainingSec}s remaining`
-        : 'Still working — Complex label...'
+        : 'Still working: complex label...'
       : null;
 
   return (

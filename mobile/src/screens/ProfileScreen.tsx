@@ -51,7 +51,7 @@ import { NameTicker } from '../components/NameTicker';
 import { FoodPassportModal } from '../components/FoodPassportModal';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession, UserSessionData } from '../lib/auth';
-import { exportScanHistory, getScanHistory } from '../lib/history';
+import { exportScanHistory, getScanHistory, getYearlyHistogramData } from '../lib/history';
 import { HistoryItem } from '../types';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale, SpringPresets } from '../theme/animations';
@@ -62,13 +62,48 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const REACH_THRESHOLD = 200.0;
 
-// Achievement Medals Definition (GymMane Medal Shelf)
-const NUTRITION_AWARDS = [
-  { id: 'clean', title: 'Clean Eater', desc: '10+ Clean labels', icon: '🥗', color: '#10B981', earned: true },
-  { id: 'scout', title: 'Additive Scout', desc: 'Scanned 20 additives', icon: '🔍', color: '#3B82F6', earned: true },
-  { id: 'nova', title: 'Nova 1 Master', desc: '5 unprocessed foods', icon: '🌱', color: '#10B981', earned: true },
-  { id: 'sodium', title: 'Sodium Guard', desc: 'Low salt champion', icon: '🧂', color: '#F59E0B', earned: true },
-  { id: 'shield', title: 'Bio Shield', desc: 'Zero ultra-processed', icon: '🛡️', color: '#8B5CF6', earned: false },
+// Achievement Medals Definition (GymMane Medal Shelf with theme icons)
+const AWARDS_CONFIG = [
+  {
+    id: 'first_scan',
+    title: 'First Audit',
+    desc: '1st scan logged',
+    Icon: ScanLine,
+    color: '#10B981',
+    checkEarned: (count: number) => count >= 1,
+  },
+  {
+    id: 'clean_eater',
+    title: 'Clean Eater',
+    desc: '5+ clean items',
+    Icon: Leaf,
+    color: '#10B981',
+    checkEarned: (count: number, cleanRatio: number) => count >= 5 && cleanRatio >= 50,
+  },
+  {
+    id: 'scout',
+    title: 'Label Scout',
+    desc: '10+ products',
+    Icon: Award,
+    color: '#3B82F6',
+    checkEarned: (count: number) => count >= 10,
+  },
+  {
+    id: 'shield',
+    title: 'Bio Shield',
+    desc: '25+ products',
+    Icon: Shield,
+    color: '#8B5CF6',
+    checkEarned: (count: number) => count >= 25,
+  },
+  {
+    id: 'flame',
+    title: 'Daily Streak',
+    desc: 'Active routine',
+    Icon: Flame,
+    color: '#EF4444',
+    checkEarned: (count: number) => count >= 3,
+  },
 ];
 
 export default function ProfileScreen() {
@@ -85,9 +120,11 @@ export default function ProfileScreen() {
 
   const [recentScans, setRecentScans] = useState<HistoryItem[]>([]);
   const [scanCount, setScanCount] = useState<number>(0);
-  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-  const [serverMessage, setServerMessage] = useState<string>('Checking server status...');
-  const [isCheckingServer, setIsCheckingServer] = useState(false);
+  const [cleanRatio, setCleanRatio] = useState<number>(0);
+  const [yearStats, setYearStats] = useState<{ monthlyCounts: number[]; totalScans: number }>({
+    monthlyCounts: new Array(12).fill(0),
+    totalScans: 0,
+  });
 
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [editProfileVisible, setEditProfileVisible] = useState(false);
@@ -98,14 +135,16 @@ export default function ProfileScreen() {
   const pullAnim = useRef(new Animated.Value(0)).current;
   const isArmedRef = useRef(false);
   const [isArmed, setIsArmed] = useState(false);
+  const scrollYRef = useRef(0);
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 12 && gesture.vy > 0,
+      onMoveShouldSetPanResponder: (_, gesture) => {
+        return scrollYRef.current <= 0 && gesture.dy > 12 && gesture.vy > 0;
+      },
       onPanResponderMove: (_, gesture) => {
         if (gesture.dy > 0) {
-          // Diminishing drag resistance matching GymMane (0.65 * (1 - pull / (reach * 1.45)))
-          const drag = 0.65 * Math.max(0.15, 1 - (gesture.dy / (REACH_THRESHOLD * 1.45)));
+          const drag = 0.65 * Math.max(0.15, 1 - gesture.dy / (REACH_THRESHOLD * 1.45));
           const currentPull = Math.min(gesture.dy * drag, REACH_THRESHOLD * 1.25);
           pullAnim.setValue(currentPull);
 
@@ -124,7 +163,6 @@ export default function ProfileScreen() {
           isArmedRef.current = false;
           setIsArmed(false);
           AppHaptics.success();
-          // Open GymMane Food Passport
           setPassportVisible(true);
         }
         Animated.spring(pullAnim, {
@@ -160,32 +198,27 @@ export default function ProfileScreen() {
         setUserName('Guest Explorer');
       }
 
-      const history = await getScanHistory();
+      const [history, yearData] = await Promise.all([
+        getScanHistory(),
+        getYearlyHistogramData(),
+      ]);
       setRecentScans(history.slice(0, 4));
       setScanCount(history.length);
-    } catch (_) {}
-  }, []);
+      setYearStats(yearData);
 
-  const checkBackend = useCallback(async () => {
-    setIsCheckingServer(true);
-    const start = Date.now();
-    const health = await checkApiHealth();
-    const elapsedMs = Date.now() - start;
-    setServerOnline(health.ok);
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setServerMessage(
-      health.ok
-        ? `${health.message} (${elapsedMs}ms · Checked at ${timeStr})`
-        : `${health.message} (Checked at ${timeStr})`
-    );
-    setIsCheckingServer(false);
+      if (history.length > 0) {
+        const cleanCount = history.filter((s) => (s.novaGroup || 4) <= 2).length;
+        setCleanRatio(Math.round((cleanCount / history.length) * 100));
+      } else {
+        setCleanRatio(0);
+      }
+    } catch (_) {}
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      checkBackend();
       loadData();
-    }, [checkBackend, loadData])
+    }, [loadData])
   );
 
   const handleProfileUpdated = (updated: UserSessionData) => {
@@ -213,12 +246,6 @@ export default function ProfileScreen() {
     AppHaptics.selection();
   };
 
-  const handleExport = async () => {
-    AppHaptics.success();
-    await exportScanHistory();
-  };
-
-  const cleanRatio = scanCount > 0 ? 88 : 0;
   const currentLevel = scanCount >= 20 ? 'Master' : scanCount >= 5 ? 'Scout' : 'Novice';
 
   return (
@@ -279,6 +306,10 @@ export default function ProfileScreen() {
           ]}
         >
           <ScrollView
+            onScroll={(e) => {
+              scrollYRef.current = e.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={16}
             contentContainerStyle={[
               styles.scrollContent,
               {
@@ -390,7 +421,7 @@ export default function ProfileScreen() {
 
               <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
                 <Flame size={14} color="#EF4444" />
-                <Text style={[styles.pillValue, { color: colors.text }]}>14d</Text>
+                <Text style={[styles.pillValue, { color: colors.text }]}>{scanCount > 0 ? '1d' : '0d'}</Text>
                 <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>Streak</Text>
               </View>
 
@@ -400,7 +431,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* GYMMANE BOX 1: Achievements & Badges Shelf */}
+            {/* GYMMANE BOX 1: Achievements & Badges Shelf (Theme Icons & Real Earned Logic) */}
             <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View
                 style={[
@@ -411,28 +442,36 @@ export default function ProfileScreen() {
                 ]}
               >
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.medalsTrack}>
-                  {NUTRITION_AWARDS.map((award) => (
-                    <View key={award.id} style={styles.medalCard}>
-                      <View
-                        style={[
-                          styles.medalBadgeCircle,
-                          {
-                            backgroundColor: award.earned ? award.color + '22' : colors.surfaceRaised,
-                            borderColor: award.earned ? award.color : colors.border,
-                            opacity: award.earned ? 1 : 0.45,
-                          },
-                        ]}
-                      >
-                        <Text style={styles.medalIconText}>{award.icon}</Text>
+                  {AWARDS_CONFIG.map((award) => {
+                    const isEarned = award.checkEarned(scanCount, cleanRatio);
+                    const AwardIcon = award.Icon;
+                    return (
+                      <View key={award.id} style={styles.medalCard}>
+                        <View
+                          style={[
+                            styles.medalBadgeCircle,
+                            {
+                              backgroundColor: isEarned ? award.color + '22' : colors.surfaceRaised,
+                              borderColor: isEarned ? award.color : colors.border,
+                              opacity: isEarned ? 1 : 0.4,
+                            },
+                          ]}
+                        >
+                          <AwardIcon
+                            size={20}
+                            color={isEarned ? award.color : colors.textMuted}
+                            strokeWidth={isEarned ? 2.4 : 1.8}
+                          />
+                        </View>
+                        <Text style={[styles.medalTitleText, { color: colors.text }]} numberOfLines={1}>
+                          {award.title}
+                        </Text>
+                        <Text style={[styles.medalDescText, { color: colors.textSecondary }]} numberOfLines={1}>
+                          {award.desc}
+                        </Text>
                       </View>
-                      <Text style={[styles.medalTitleText, { color: colors.text }]} numberOfLines={1}>
-                        {award.title}
-                      </Text>
-                      <Text style={[styles.medalDescText, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {award.desc}
-                      </Text>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </ScrollView>
               </View>
 
@@ -440,7 +479,9 @@ export default function ProfileScreen() {
               <View style={styles.gymBoxFooter}>
                 <View style={styles.boxTitleRow}>
                   <Text style={[styles.boxTitleText, { color: colors.text }]}>Achievements</Text>
-                  <Text style={[styles.boxCountText, { color: colors.textSecondary }]}>4/5 Unlocked</Text>
+                  <Text style={[styles.boxCountText, { color: colors.textSecondary }]}>
+                    {AWARDS_CONFIG.filter((a) => a.checkEarned(scanCount, cleanRatio)).length}/{AWARDS_CONFIG.length} Unlocked
+                  </Text>
                 </View>
                 <Pressable
                   onPress={() => {
@@ -472,6 +513,7 @@ export default function ProfileScreen() {
                 {recentScans.length > 0 ? (
                   <View style={styles.snapshotFanTrack}>
                     {recentScans.slice(0, 4).map((scan, index) => {
+                      const count = Math.min(recentScans.length, 4);
                       const rotations = ['-6deg', '4deg', '-3deg', '5deg'];
                       const rot = rotations[index % rotations.length];
                       return (
@@ -483,12 +525,16 @@ export default function ProfileScreen() {
                               backgroundColor: colors.surfaceRaised,
                               borderColor: colors.border,
                               transform: [{ rotate: rot }],
-                              left: index * 48 - 60,
+                              left: (index - (count - 1) / 2) * 54,
                             },
                           ]}
                         >
                           <View style={[styles.polaroidImgBox, { backgroundColor: colors.primary + '15' }]}>
-                            <ScanLine size={18} color={colors.primary} />
+                            {scan.imagePreviewUrl ? (
+                              <Image source={{ uri: scan.imagePreviewUrl }} style={styles.polaroidImage} />
+                            ) : (
+                              <ScanLine size={18} color={colors.primary} />
+                            )}
                           </View>
                           <Text style={[styles.polaroidName, { color: colors.text }]} numberOfLines={1}>
                             {scan.productName || 'Food Item'}
@@ -522,56 +568,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* GYMMANE BOX 3: Food Passport Card */}
-            <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Pressable
-                onPress={() => {
-                  AppHaptics.selection();
-                  setPassportVisible(true);
-                }}
-                style={[
-                  styles.gymBoxDisplay,
-                  {
-                    backgroundColor: isDark ? '#000000' : colors.surfaceRaised,
-                    padding: 16,
-                  },
-                ]}
-              >
-                <View style={styles.passportCardHeader}>
-                  <View style={styles.passportCardMeta}>
-                    <Text style={[styles.passportCardTitle, { color: colors.text }]}>EATINFORMED PASSPORT</Text>
-                    <Text style={[styles.passportCardId, { color: colors.primary }]}>
-                      {isAnonymous ? 'LOCAL-GUEST-001' : 'VERIFIED BIO-PASS'}
-                    </Text>
-                  </View>
-                  <QrCode size={32} color={colors.text} />
-                </View>
-
-                <View style={styles.passportShieldRow}>
-                  <View style={[styles.passportBadge, { backgroundColor: colors.primary + '20' }]}>
-                    <CheckCircle size={14} color={colors.primary} />
-                    <Text style={[styles.passportBadgeText, { color: colors.primary }]}>Allergen Shield Active</Text>
-                  </View>
-                  <Text style={[styles.tapToInspectText, { color: colors.textSecondary }]}>Tap to open full pass</Text>
-                </View>
-              </Pressable>
-
-              <View style={styles.gymBoxFooter}>
-                <View style={styles.boxTitleRow}>
-                  <Text style={[styles.boxTitleText, { color: colors.text }]}>Nutrition Pass</Text>
-                  <Text style={[styles.boxCountText, { color: colors.primary }]}>Active</Text>
-                </View>
-                <Pressable
-                  onPress={() => setPassportVisible(true)}
-                  style={[styles.seeAllPill, { backgroundColor: colors.surfaceRaised }]}
-                >
-                  <Text style={[styles.seeAllText, { color: colors.textSecondary }]}>Open</Text>
-                  <ChevronRight size={13} color={colors.textSecondary} />
-                </Pressable>
-              </View>
-            </View>
-
-            {/* GYMMANE BOX 4: 12-Month Logging Histogram */}
+            {/* GYMMANE BOX 3: 12-Month Logging Histogram */}
             <View style={[styles.gymBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View
                 style={[
@@ -581,7 +578,11 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                <YearActivityChart />
+                <YearActivityChart
+                  monthlyCounts={yearStats.monthlyCounts}
+                  totalScans={yearStats.totalScans}
+                  cleanPercentage={cleanRatio}
+                />
               </View>
 
               <View style={styles.gymBoxFooter}>
@@ -590,51 +591,6 @@ export default function ProfileScreen() {
                   <Text style={[styles.boxCountText, { color: colors.textSecondary }]}>12 Months</Text>
                 </View>
               </View>
-            </View>
-
-            {/* Server Connection & Diagnostic Card */}
-            <View style={[styles.diagnosticCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.diagnosticHeader}>
-                <Server size={18} color={serverOnline ? '#10B981' : '#EF4444'} />
-                <Text style={[styles.diagnosticTitle, { color: colors.text }]}>Backend AI Health</Text>
-              </View>
-              <Text style={[styles.diagnosticMessage, { color: colors.textSecondary }]}>
-                {serverMessage}
-              </Text>
-            </View>
-
-            {/* Data Export & Account Actions */}
-            <View style={styles.actionsBlock}>
-              <Pressable
-                onPress={handleExport}
-                style={[styles.actionBtn, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
-              >
-                <Download size={16} color={colors.text} />
-                <Text style={[styles.actionBtnText, { color: colors.text }]}>Export Scan History (JSON)</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleAuthAction}
-                style={[
-                  styles.actionBtn,
-                  {
-                    backgroundColor: isAnonymous ? colors.primary + '15' : '#EF444415',
-                    borderColor: isAnonymous ? colors.primary + '40' : '#EF444440',
-                  },
-                ]}
-              >
-                {isAnonymous ? (
-                  <>
-                    <LogIn size={16} color={colors.primary} />
-                    <Text style={[styles.actionBtnText, { color: colors.primary }]}>Sign In / Create Account</Text>
-                  </>
-                ) : (
-                  <>
-                    <LogOut size={16} color="#EF4444" />
-                    <Text style={[styles.actionBtnText, { color: "#EF4444" }]}>Sign Out</Text>
-                  </>
-                )}
-              </Pressable>
             </View>
           </ScrollView>
         </Animated.View>
@@ -646,6 +602,7 @@ export default function ProfileScreen() {
         onClose={() => setPassportVisible(false)}
         userName={userName || 'Guest Explorer'}
         userEmail={userEmail || ''}
+        userPhoto={userPhoto}
         scanCount={scanCount}
         cleanScore={cleanRatio}
       />
@@ -939,6 +896,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  polaroidImage: {
+    width: '100%',
+    height: '100%',
   },
   polaroidName: {
     fontSize: 10,

@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -46,7 +48,7 @@ const PIPELINE_STAGES = [
   { threshold: 0.28, label: 'Extracting ingredients & nutrition panel with Vision AI...' },
   { threshold: 0.58, label: 'Cross-referencing additives & NOVA processing group...' },
   { threshold: 0.82, label: 'Finalizing clinical nutrition assessment...' },
-  { threshold: 0.92, label: 'High server load — completing deep verification...' },
+  { threshold: 0.92, label: 'High server load: completing deep verification...' },
 ];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -54,6 +56,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ScanScreen() {
   const navigation = useNavigation<NavigationProp>();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -109,8 +112,11 @@ export default function ScanScreen() {
   const scanLineY = useRef(new Animated.Value(12)).current;
   const uploadDoneTimeRef = useRef<number | null>(null);
 
-  // Animated scanner laser inside viewfinder
+  // Animated scanner laser inside viewfinder (pauses when inactive or previewing)
   useEffect(() => {
+    if (!isFocused || selectedImageUri || isLoading) {
+      return;
+    }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(scanLineY, {
@@ -127,7 +133,44 @@ export default function ScanScreen() {
     );
     loop.start();
     return () => loop.stop();
-  }, [scanLineY]);
+  }, [isFocused, selectedImageUri, isLoading, scanLineY]);
+
+  const cropImageToViewfinder = async (uri: string, originalWidth?: number, originalHeight?: number) => {
+    try {
+      const imgWidth = originalWidth && originalWidth > 0 ? originalWidth : 1080;
+      const imgHeight = originalHeight && originalHeight > 0 ? originalHeight : 1920;
+
+      const vfAspect = VIEWFINDER_WIDTH / VIEWFINDER_HEIGHT;
+      let cropWidth = imgWidth * 0.84;
+      let cropHeight = cropWidth / vfAspect;
+      if (cropHeight > imgHeight * 0.84) {
+        cropHeight = imgHeight * 0.84;
+        cropWidth = cropHeight * vfAspect;
+      }
+      const originX = Math.max(0, Math.floor((imgWidth - cropWidth) / 2));
+      const originY = Math.max(0, Math.floor((imgHeight - cropHeight) / 2));
+
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [
+          {
+            crop: {
+              originX,
+              originY,
+              width: Math.floor(cropWidth),
+              height: Math.floor(cropHeight),
+            },
+          },
+          { resize: { width: 1080 } },
+        ],
+        { compress: 0.72, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      return manipResult;
+    } catch (e) {
+      console.warn('Image crop failed, using uncropped image:', e);
+      return null;
+    }
+  };
 
   // ponytail: monotonic asymptotic progress ticker (advances smoothly from 8% -> 95% on Android & iOS)
   useEffect(() => {
@@ -178,10 +221,16 @@ export default function ScanScreen() {
         skipProcessing: false,
       });
 
-      if (photo?.uri && photo?.base64) {
+      if (photo?.uri) {
         AppHaptics.impactHeavy();
-        setSelectedImageUri(photo.uri);
-        setSelectedImageBase64(photo.base64);
+        const cropped = await cropImageToViewfinder(photo.uri, photo.width, photo.height);
+        if (cropped?.uri && cropped?.base64) {
+          setSelectedImageUri(cropped.uri);
+          setSelectedImageBase64(cropped.base64);
+        } else {
+          setSelectedImageUri(photo.uri);
+          setSelectedImageBase64(photo.base64 || null);
+        }
         setErrorMessage(null);
       }
     } catch (err: unknown) {
@@ -207,7 +256,7 @@ export default function ScanScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
-        quality: 0.65, // ponytail: keep under 1.5MB to avoid payload rejection
+        quality: 0.65,
         base64: true,
       });
 
@@ -215,7 +264,6 @@ export default function ScanScreen() {
         const asset = result.assets[0];
         let base64 = asset.base64;
         if (!base64 && asset.uri) {
-          // ponytail: fallback read for remote or cloud-synced photos without initial base64
           try {
             const blobRes = await fetch(asset.uri);
             const blob = await blobRes.blob();
@@ -233,10 +281,16 @@ export default function ScanScreen() {
           }
         }
 
-        if (asset.uri && base64) {
+        if (asset.uri) {
           AppHaptics.selection();
-          setSelectedImageUri(asset.uri);
-          setSelectedImageBase64(base64);
+          const cropped = await cropImageToViewfinder(asset.uri, asset.width, asset.height);
+          if (cropped?.uri && cropped?.base64) {
+            setSelectedImageUri(cropped.uri);
+            setSelectedImageBase64(cropped.base64);
+          } else if (base64) {
+            setSelectedImageUri(asset.uri);
+            setSelectedImageBase64(base64);
+          }
           setErrorMessage(null);
         } else {
           setErrorMessage('Could not load image data. Please choose a local image.');
@@ -588,7 +642,7 @@ export default function ScanScreen() {
           </View>
 
           {/* Bottom Shutter Controls */}
-          <View style={styles.bottomControls}>
+          <View style={[styles.bottomControls, { paddingBottom: Math.max(insets.bottom + 80, 104) }]}>
             <PressableScale
               style={styles.galleryButton}
               onPress={handlePickFromGallery}

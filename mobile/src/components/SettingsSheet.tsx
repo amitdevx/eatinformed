@@ -268,9 +268,8 @@ export function SettingsSheet({
                 <View style={{ padding: 12 }}>
                   <SegmentedControl<ThemeMode>
                     options={[
-                      { value: 'system', label: 'Auto' },
+                      { value: 'system', label: 'System' },
                       { value: 'dark', label: 'Dark' },
-                      { value: 'amoled', label: 'AMOLED' },
                       { value: 'light', label: 'Light' },
                     ]}
                     value={theme}

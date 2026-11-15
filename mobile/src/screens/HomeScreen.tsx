@@ -8,8 +8,6 @@ import {
   BookOpen,
   History,
   User,
-  Sun,
-  Moon,
   Sparkles,
   ShieldCheck,
   Activity,
@@ -20,12 +18,12 @@ import { Button } from '../components/Button';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
 import { HealthScoreRing } from '../components/HealthScoreRing';
-import { ProcessingTrendChart } from '../components/ProcessingTrendChart';
+import { ProcessingTrendChart, TrendDataPoint } from '../components/ProcessingTrendChart';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { SAMPLE_PRODUCTS, SampleProduct } from '../lib/sample-products';
-import { getScanHistory } from '../lib/history';
+import { getScanHistory, getSevenDayTrendData } from '../lib/history';
 import { AppHaptics } from '../lib/haptics';
 import { RootStackParamList } from '../navigation/types';
 import { EatInformedLogo } from '../components/EatInformedLogo';
@@ -34,21 +32,23 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors } = useTheme();
 
   const [historyCount, setHistoryCount] = useState(0);
-  const [avgScore, setAvgScore] = useState(4.2);
+  const [avgScore, setAvgScore] = useState(0);
+  const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
 
   useFocusEffect(
     useCallback(() => {
-      getScanHistory().then((history) => {
+      Promise.all([getScanHistory(), getSevenDayTrendData()]).then(([history, trend]) => {
         setHistoryCount(history.length);
         if (history.length > 0) {
           const total = history.reduce((acc, cur) => acc + (cur.rating || 0), 0);
           setAvgScore(Number((total / history.length).toFixed(1)));
         } else {
-          setAvgScore(4.2);
+          setAvgScore(0);
         }
+        setTrendData(trend);
       });
     }, [])
   );
@@ -83,34 +83,13 @@ export default function HomeScreen() {
 
   return (
     <Screen scrollable>
-      {/* Apple Minimal Header with Brand & Theme Toggle */}
+      {/* Apple Minimal Header with Brand */}
       <FadeInView delay={0} style={styles.header}>
         <View style={styles.topRow}>
           <View style={styles.brandRow}>
             <EatInformedLogo size={24} />
             <Text style={[styles.brandTitle, { color: colors.text, marginLeft: spacing.sm }]}>EatInformed</Text>
           </View>
-
-          <PressableScale
-            style={[
-              styles.themeToggleButton,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={toggleTheme}
-            scaleTo={0.92}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Toggle appearance mode"
-          >
-            {isDark ? (
-              <Sun size={18} color={colors.text} />
-            ) : (
-              <Moon size={18} color={colors.text} />
-            )}
-          </PressableScale>
         </View>
 
         <Text
@@ -234,7 +213,7 @@ export default function HomeScreen() {
             subtitle="Touch-scrubber tracking clinical NOVA diet index"
           />
           <CardContent>
-            <ProcessingTrendChart />
+            <ProcessingTrendChart data={trendData} />
           </CardContent>
         </Card>
       </FadeInView>
@@ -352,14 +331,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.base,
     fontWeight: typography.fontWeights.bold,
     letterSpacing: -0.3,
-  },
-  themeToggleButton: {
-    width: layout.minTouchTarget,
-    height: layout.minTouchTarget,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   heroTitle: {
     fontSize: typography.fontSizes.xxxl,

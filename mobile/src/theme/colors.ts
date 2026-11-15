@@ -83,88 +83,77 @@ export const darkColors: AppThemeColors = {
   // Brand (GymMane Vibrant Emerald & Sage Palette)
   primary: '#10B981',
   primaryButton: '#10B981',
-  onPrimary: '#0A0A0A',
+  onPrimary: '#000000',
   primaryDark: '#059669',
   primaryLight: '#34D399',
   primaryMuted: 'rgba(16, 185, 129, 0.16)',
   primaryBorder: 'rgba(16, 185, 129, 0.38)',
 
-  // Background and Surfaces (GymMane Deep Charcoal Dark Architecture)
-  background: '#0A0A0A', // GymMane bg
-  backgroundElevated: '#141414',
-  surface: '#1C1C1C', // GymMane bgRaised
-  surfaceRaised: '#2B2B2B', // GymMane bgRaised2
-  surfaceHighlight: '#383838',
-  surfaceGlass: 'rgba(28, 28, 28, 0.86)',
-
-  // Borders & Hairlines (GymMane border)
-  border: '#3E3E3E',
-  borderStrong: '#555555',
-  separator: '#2B2B2B',
-
-  // Typography (GymMane text, textSecondary, textTertiary)
-  text: '#FFFFFF',
-  textSecondary: '#9A9A9A',
-  textMuted: '#666666',
-
-  // Semantic Status (GymMane Semantic Palette)
-  success: '#10B981',
-  successText: '#34D399',
-  successLight: 'rgba(16, 185, 129, 0.15)',
-  successBorder: 'rgba(16, 185, 129, 0.35)',
-
-  danger: '#E5674C', // GymMane danger
-  dangerText: '#F87171',
-  dangerLight: 'rgba(229, 103, 76, 0.15)',
-  dangerBorder: 'rgba(229, 103, 76, 0.35)',
-
-  warning: '#E0B15A', // GymMane warn
-  warningText: '#FBBF24',
-  warningLight: 'rgba(224, 177, 90, 0.15)',
-  warningBorder: 'rgba(224, 177, 90, 0.35)',
-
-  info: '#7FA8C9', // GymMane info
-  infoText: '#93C5FD',
-  infoLight: 'rgba(127, 168, 201, 0.15)',
-  infoBorder: 'rgba(127, 168, 201, 0.35)',
-
-  starFilled: '#E0B15A',
-  starEmpty: '#383838',
-
-  // NOVA Classification (High-Contrast GymMane Badges)
-  nova1: '#34D399',
-  nova1Dot: '#10B981',
-  nova1Bg: 'rgba(16, 185, 129, 0.15)',
-  nova1Border: 'rgba(16, 185, 129, 0.35)',
-
-  nova2: '#93C5FD',
-  nova2Dot: '#7FA8C9',
-  nova2Bg: 'rgba(127, 168, 201, 0.15)',
-  nova2Border: 'rgba(127, 168, 201, 0.35)',
-
-  nova3: '#FBBF24',
-  nova3Dot: '#E0B15A',
-  nova3Bg: 'rgba(224, 177, 90, 0.15)',
-  nova3Border: 'rgba(224, 177, 90, 0.35)',
-
-  nova4: '#F87171',
-  nova4Dot: '#E5674C',
-  nova4Bg: 'rgba(229, 103, 76, 0.15)',
-  nova4Border: 'rgba(229, 103, 76, 0.35)',
-};
-
-export const amoledColors: AppThemeColors = {
-  ...darkColors,
+  // Background and Surfaces (Pure AMOLED Pitch Black)
   background: '#000000',
   backgroundElevated: '#080808',
   surface: '#111111',
   surfaceRaised: '#1E1E1E',
   surfaceHighlight: '#2A2A2A',
   surfaceGlass: 'rgba(17, 17, 17, 0.90)',
+
+  // Borders & Hairlines
   border: '#2E2E2E',
   borderStrong: '#444444',
   separator: '#1E1E1E',
+
+  // Typography
+  text: '#FFFFFF',
+  textSecondary: '#9A9A9A',
+  textMuted: '#666666',
+
+  // Semantic Status (Light-Bright Accessible Palette)
+  success: '#10B981',
+  successText: '#34D399',
+  successLight: 'rgba(16, 185, 129, 0.15)',
+  successBorder: 'rgba(16, 185, 129, 0.35)',
+
+  danger: '#EF4444',
+  dangerText: '#F87171',
+  dangerLight: 'rgba(239, 68, 68, 0.16)',
+  dangerBorder: 'rgba(239, 68, 68, 0.45)',
+
+  warning: '#F59E0B',
+  warningText: '#FBBF24',
+  warningLight: 'rgba(245, 158, 11, 0.16)',
+  warningBorder: 'rgba(245, 158, 11, 0.40)',
+
+  info: '#3B82F6',
+  infoText: '#93C5FD',
+  infoLight: 'rgba(59, 130, 246, 0.15)',
+  infoBorder: 'rgba(59, 130, 246, 0.35)',
+
+  starFilled: '#E0B15A',
+  starEmpty: '#2A2A2A',
+
+  // NOVA Classification (High-Contrast Badges)
+  nova1: '#34D399',
+  nova1Dot: '#10B981',
+  nova1Bg: 'rgba(16, 185, 129, 0.15)',
+  nova1Border: 'rgba(16, 185, 129, 0.35)',
+
+  nova2: '#93C5FD',
+  nova2Dot: '#3B82F6',
+  nova2Bg: 'rgba(59, 130, 246, 0.15)',
+  nova2Border: 'rgba(59, 130, 246, 0.35)',
+
+  nova3: '#FBBF24',
+  nova3Dot: '#F59E0B',
+  nova3Bg: 'rgba(245, 158, 11, 0.15)',
+  nova3Border: 'rgba(245, 158, 11, 0.35)',
+
+  nova4: '#F87171',
+  nova4Dot: '#EF4444',
+  nova4Bg: 'rgba(239, 68, 68, 0.15)',
+  nova4Border: 'rgba(239, 68, 68, 0.35)',
 };
+
+export const amoledColors: AppThemeColors = darkColors;
 
 export const lightColors: AppThemeColors = {
   // Brand (GymMane Accessible Emerald)

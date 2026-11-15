@@ -12,7 +12,6 @@ import {
   Clock,
   ChevronRight,
   History as HistoryIcon,
-  Share2,
   Filter,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
@@ -22,7 +21,7 @@ import { EmptyState } from '../components/States';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { ScanActivityHeatmap } from '../components/ScanActivityHeatmap';
+import { ScanActivityHeatmap, HeatmapDay } from '../components/ScanActivityHeatmap';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
@@ -31,7 +30,7 @@ import {
   getScanHistory,
   deleteHistoryItem,
   clearAllHistory,
-  exportScanHistory,
+  getThirtyDayHeatmapData,
 } from '../lib/history';
 import { HistoryItem } from '../types';
 import { RootStackParamList } from '../navigation/types';
@@ -42,14 +41,19 @@ export default function HistoryScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { colors } = useTheme();
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [heatmapDays, setHeatmapDays] = useState<HeatmapDay[]>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'clean' | 'processed' | 'ultra'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isClearAllModalVisible, setIsClearAllModalVisible] = useState(false);
 
   const loadHistory = useCallback(async () => {
-    const items = await getScanHistory();
+    const [items, days] = await Promise.all([
+      getScanHistory(),
+      getThirtyDayHeatmapData(),
+    ]);
     setHistoryItems(items);
+    setHeatmapDays(days);
   }, []);
 
   useFocusEffect(
@@ -108,11 +112,6 @@ export default function HistoryScreen() {
     });
   };
 
-  const handleExport = async () => {
-    AppHaptics.success();
-    await exportScanHistory();
-  };
-
   const filteredItems = historyItems.filter((item) => {
     if (filterMode === 'clean') return (item.novaGroup || 1) <= 2;
     if (filterMode === 'processed') return item.novaGroup === 3;
@@ -141,20 +140,6 @@ export default function HistoryScreen() {
           rightElement={
             historyItems.length > 0 ? (
               <View style={styles.headerActions}>
-                <PressableScale
-                  style={[
-                    styles.actionIconButton,
-                    { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
-                  ]}
-                  onPress={handleExport}
-                  scaleTo={0.92}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Export history backup"
-                >
-                  <Share2 size={16} color={colors.text} />
-                </PressableScale>
-
                 <PressableScale
                   style={[
                     styles.actionIconButton,
@@ -219,12 +204,12 @@ export default function HistoryScreen() {
         </FadeInView>
       )}
 
-      {/* FitBuddy-Grade 30-Day Activity Heatmap */}
+      {/* FitBuddy-Grade 30-Day Activity Heatmap with Real Scan Data */}
       {historyItems.length > 0 && (
         <FadeInView delay={50}>
           <Card style={{ marginBottom: spacing.md }}>
             <CardContent>
-              <ScanActivityHeatmap />
+              <ScanActivityHeatmap days={heatmapDays} />
             </CardContent>
           </Card>
         </FadeInView>
@@ -251,16 +236,19 @@ export default function HistoryScreen() {
       ) : (
         filteredItems.map((item, idx) => (
           <FadeInView key={item.id} delay={50 + idx * 45}>
-            <Card
-              onPress={() => handleOpenItem(item)}
-              onLongPress={() => {
-                AppHaptics.impactHeavy();
-                handleDeleteItem(item.id, item.productName);
-              }}
-              style={styles.itemCard}
-            >
+            <Card style={styles.itemCard}>
               <View style={styles.cardHeader}>
-                <View style={styles.cardTitleContainer}>
+                <PressableScale
+                  onPress={() => handleOpenItem(item)}
+                  onLongPress={() => {
+                    AppHaptics.impactHeavy();
+                    handleDeleteItem(item.id, item.productName);
+                  }}
+                  scaleTo={0.98}
+                  style={styles.cardTitleContainer}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open report for ${item.productName}`}
+                >
                   {item.brand ? (
                     <Text style={[styles.brandText, { color: colors.primary }]}>
                       {item.brand.toUpperCase()}
@@ -269,7 +257,7 @@ export default function HistoryScreen() {
                   <Text style={[styles.productName, { color: colors.text }]}>
                     {item.productName}
                   </Text>
-                </View>
+                </PressableScale>
 
                 <PressableScale
                   onPress={() => handleDeleteItem(item.id, item.productName)}
@@ -278,31 +266,40 @@ export default function HistoryScreen() {
                     { backgroundColor: colors.surfaceRaised },
                   ]}
                   scaleTo={0.9}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${item.productName}`}
                 >
                   <Trash2 size={15} color={colors.textSecondary} />
                 </PressableScale>
               </View>
 
-              <View style={styles.metaRow}>
-                <RatingStars rating={item.rating} size="sm" />
-                <NovaBadge novaGroup={item.novaGroup} size="sm" />
-              </View>
-
-              <View
-                style={[
-                  styles.cardFooter,
-                  { borderTopColor: colors.separator },
-                ]}
+              <PressableScale
+                onPress={() => handleOpenItem(item)}
+                scaleTo={0.98}
+                accessibilityRole="button"
+                accessibilityLabel={`Inspect report ${item.productName}`}
               >
-                <View style={styles.timeRow}>
-                  <Clock size={12} color={colors.textMuted} />
-                  <Text style={[styles.timeText, { color: colors.textMuted }]}>
-                    {formatTimestamp(item.timestamp)}
-                  </Text>
+                <View style={styles.metaRow}>
+                  <RatingStars rating={item.rating} size="sm" />
+                  <NovaBadge novaGroup={item.novaGroup} size="sm" />
                 </View>
-                <ChevronRight size={16} color={colors.textSecondary} />
-              </View>
+
+                <View
+                  style={[
+                    styles.cardFooter,
+                    { borderTopColor: colors.separator },
+                  ]}
+                >
+                  <View style={styles.timeRow}>
+                    <Clock size={12} color={colors.textMuted} />
+                    <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                      {formatTimestamp(item.timestamp)}
+                    </Text>
+                  </View>
+                  <ChevronRight size={16} color={colors.textSecondary} />
+                </View>
+              </PressableScale>
             </Card>
           </FadeInView>
         ))

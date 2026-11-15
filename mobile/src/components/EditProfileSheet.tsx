@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,13 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { User, Camera, X, Check, ShieldAlert } from 'lucide-react-native';
+import { User, Camera, X, Check, Plus, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from './Button';
 import { PressableScale } from '../theme/animations';
 import { AppHaptics } from '../lib/haptics';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
-import { UserSessionData, saveUserSession } from '../lib/auth';
+import { UserSessionData, updateUserProfile, normalizeHandle } from '../lib/auth';
 
 interface EditProfileSheetProps {
   visible: boolean;
@@ -27,7 +27,7 @@ interface EditProfileSheetProps {
   onProfileUpdated: (updated: UserSessionData) => void;
 }
 
-// ponytail: GymMane-style edit profile bottom sheet with avatar upload & clinical dietary preferences
+// GymMane-style edit profile bottom sheet with avatar upload & personal allergen tagging
 export function EditProfileSheet({
   visible,
   onClose,
@@ -36,20 +36,28 @@ export function EditProfileSheet({
 }: EditProfileSheetProps) {
   const { colors, isDark } = useTheme();
 
-  const [name, setName] = useState(currentSession?.name || '');
-  const [handle, setHandle] = useState(
-    currentSession?.email ? currentSession.email.split('@')[0] : 'member'
-  );
-  const [dietGoal, setDietGoal] = useState('Low Ultra-Processed Foods (NOVA 1–2)');
-  const [allergens, setAllergens] = useState('Artificial Dyes, HFCS');
-  const [photoUri, setPhotoUri] = useState<string | null>(currentSession?.photoUrl || null);
+  const [name, setName] = useState('');
+  const [handle, setHandle] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [allergensList, setAllergensList] = useState<string[]>([]);
+  const [newAllergenText, setNewAllergenText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (visible && currentSession) {
+      setName(currentSession.name || '');
+      setHandle(currentSession.handle || normalizeHandle(currentSession.email || ''));
+      setPhotoUri(currentSession.photoUrl || null);
+      setAllergensList(currentSession.allergens || []);
+      setNewAllergenText('');
+    }
+  }, [visible, currentSession]);
 
   const handlePickPhoto = async () => {
     AppHaptics.selection();
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.82,
@@ -63,17 +71,31 @@ export function EditProfileSheet({
     }
   };
 
+  const handleAddAllergen = () => {
+    const trimmed = newAllergenText.trim().replace(/^,+|,+$/g, '');
+    if (!trimmed) return;
+    AppHaptics.selection();
+    if (!allergensList.map((a) => a.toLowerCase()).includes(trimmed.toLowerCase())) {
+      setAllergensList((prev) => [...prev, trimmed]);
+    }
+    setNewAllergenText('');
+  };
+
+  const handleRemoveAllergen = (item: string) => {
+    AppHaptics.selection();
+    setAllergensList((prev) => prev.filter((a) => a !== item));
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     AppHaptics.success();
     try {
-      const updated = await saveUserSession(
-        currentSession?.email || 'guest@eatinformed.app',
-        name.trim() || 'Member',
-        currentSession?.token || 'guest-session-token',
-        currentSession?.isAnonymous ?? true,
-        photoUri || undefined
-      );
+      const updated = await updateUserProfile({
+        name: name.trim() || 'Member',
+        handle: normalizeHandle(handle),
+        photoUrl: photoUri || undefined,
+        allergens: allergensList,
+      });
       onProfileUpdated(updated);
       onClose();
     } catch (e) {
@@ -114,7 +136,7 @@ export function EditProfileSheet({
                 Edit Profile
               </Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Personalize your name, avatar, and nutritional targets
+                Personalize your name, avatar, and personal allergen flags
               </Text>
             </View>
             <PressableScale
@@ -205,44 +227,68 @@ export function EditProfileSheet({
               </View>
             </View>
 
+            {/* Allergens & Personal Ingredient Flags */}
             <View style={styles.fieldGroup}>
               <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-                PRIMARY DIETARY GOAL
+                ALLERGENS & INGREDIENT FLAGS TO HIGHLIGHT
               </Text>
-              <TextInput
-                value={dietGoal}
-                onChangeText={setDietGoal}
-                placeholder="e.g. Low Ultra-Processed Foods"
-                placeholderTextColor={colors.textMuted}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surfaceRaised,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-              />
-            </View>
+              <Text style={[styles.allergenHelper, { color: colors.textSecondary }]}>
+                Any scanned product containing these ingredients will display an immediate bright red safety alert.
+              </Text>
 
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-                ALLERGENS & RESTRICTIONS TO FLAG
-              </Text>
-              <TextInput
-                value={allergens}
-                onChangeText={setAllergens}
-                placeholder="e.g. Milk, Peanuts, Red 40, Carrageenan"
-                placeholderTextColor={colors.textMuted}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surfaceRaised,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-              />
+              {/* Tag Input Row */}
+              <View style={styles.allergenInputRow}>
+                <TextInput
+                  value={newAllergenText}
+                  onChangeText={setNewAllergenText}
+                  placeholder="e.g. Soy, Peanuts, Red 40, Palm Oil"
+                  placeholderTextColor={colors.textMuted}
+                  onSubmitEditing={handleAddAllergen}
+                  returnKeyType="done"
+                  style={[
+                    styles.allergenInput,
+                    {
+                      backgroundColor: colors.surfaceRaised,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+                <Pressable
+                  onPress={handleAddAllergen}
+                  style={[styles.addAllergenBtn, { backgroundColor: colors.primary }]}
+                >
+                  <Plus size={16} color="#FFFFFF" />
+                  <Text style={styles.addAllergenText}>Add</Text>
+                </Pressable>
+              </View>
+
+              {/* Active Allergen Chips List */}
+              <View style={styles.allergenChipsWrap}>
+                {allergensList.map((alg) => (
+                  <View
+                    key={alg}
+                    style={[
+                      styles.allergenChip,
+                      {
+                        backgroundColor: colors.dangerLight,
+                        borderColor: colors.dangerBorder,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.allergenChipText, { color: colors.dangerText }]}>
+                      {alg}
+                    </Text>
+                    <Pressable
+                      onPress={() => handleRemoveAllergen(alg)}
+                      hitSlop={6}
+                      style={styles.removeChipBtn}
+                    >
+                      <X size={13} color={colors.dangerText} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
             </View>
 
             <Button
@@ -361,6 +407,59 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: spacing.xs,
   },
+  allergenHelper: {
+    fontSize: 11.5,
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  allergenInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  allergenInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.fontSizes.sm,
+  },
+  addAllergenBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderRadius: borderRadius.md,
+    gap: 4,
+  },
+  addAllergenText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  allergenChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  allergenChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingLeft: 12,
+    paddingRight: 8,
+    borderRadius: 14,
+    borderWidth: 1.2,
+    gap: 6,
+  },
+  allergenChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  removeChipBtn: {
+    padding: 2,
+  },
   input: {
     height: 46,
     borderRadius: borderRadius.md,
@@ -388,6 +487,6 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   saveButton: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
   },
 });

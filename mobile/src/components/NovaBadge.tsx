@@ -44,7 +44,6 @@ export function NovaBadge({
           },
         ]}
       >
-        <View style={[styles.dot, { backgroundColor: meta.dot }]} />
         <Text
           style={[
             styles.label,

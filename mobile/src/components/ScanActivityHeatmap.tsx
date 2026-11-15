@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { AppHaptics } from '../lib/haptics';
 import { typography, spacing } from '../theme/tokens';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface HeatmapDay {
   dayNumber: number;
@@ -15,30 +17,34 @@ interface ScanActivityHeatmapProps {
   days?: HeatmapDay[];
 }
 
-// Generate fallback 30-day realistic activity
-function generateDefaultDays(): HeatmapDay[] {
+function generateEmptyDays(): HeatmapDay[] {
   const list: HeatmapDay[] = [];
   const now = new Date();
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 86400000);
-    // Deterministic simulation
-    const daySeed = (d.getDate() * 7) % 10;
-    const scansCount = daySeed > 3 ? (daySeed % 4) + 1 : 0;
-    const averageScore = scansCount > 0 ? Number((3.6 + (daySeed % 14) * 0.1).toFixed(1)) : undefined;
     list.push({
       dayNumber: d.getDate(),
       dateStr: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-      scansCount,
-      averageScore,
+      scansCount: 0,
+      averageScore: undefined,
     });
   }
   return list;
 }
 
-// ponytail: FitBuddy-grade 30-day nutrition density heatmap with GymMane color tokens
-export function ScanActivityHeatmap({ days = generateDefaultDays() }: ScanActivityHeatmapProps) {
+// FitBuddy-grade 30-day nutrition consistency heatmap with GymMane color tokens
+export function ScanActivityHeatmap({ days }: ScanActivityHeatmapProps) {
   const { colors, isDark } = useTheme();
+  const [containerWidth, setContainerWidth] = useState(SCREEN_WIDTH - 64);
   const [selectedDay, setSelectedDay] = useState<HeatmapDay | null>(null);
+
+  const activeDays = days && days.length > 0 ? days : generateEmptyDays();
+
+  // Grid calculation: 6 columns x 5 rows = 30 cells
+  const numColumns = 6;
+  const gap = 6;
+  const availableWidth = Math.max(containerWidth, 240);
+  const cellSize = Math.floor((availableWidth - (numColumns - 1) * gap) / numColumns);
 
   const handleCellPress = (day: HeatmapDay) => {
     AppHaptics.selection();
@@ -47,31 +53,34 @@ export function ScanActivityHeatmap({ days = generateDefaultDays() }: ScanActivi
 
   const getCellColor = (day: HeatmapDay) => {
     if (day.scansCount === 0 || day.averageScore === undefined) {
-      return isDark ? '#242424' : '#E7E2DC'; // GymMane heatEmpty token
+      return isDark ? '#242424' : '#E7E2DC';
     }
-    if (day.averageScore >= 4.2) return colors.primary; // Clean emerald
-    if (day.averageScore >= 3.0) return colors.warning; // Processed amber
-    return colors.danger; // Ultra-processed coral
+    if (day.averageScore >= 4.2) return colors.primary;
+    if (day.averageScore >= 3.0) return colors.warning;
+    return colors.danger;
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+    >
       {/* Active Day Inspection Header */}
       <View style={styles.headerRow}>
         <Text style={[styles.title, { color: colors.text }]}>30-Day Nutrition Consistency</Text>
         {selectedDay ? (
           <Text style={[styles.activeInfo, { color: colors.primary }]}>
-            {selectedDay.dateStr}: {selectedDay.scansCount} scans · {selectedDay.averageScore ? `${selectedDay.averageScore} score` : 'Rest day'}
+            {selectedDay.dateStr}: {selectedDay.scansCount} {selectedDay.scansCount === 1 ? 'scan' : 'scans'} · {selectedDay.averageScore !== undefined ? `${selectedDay.averageScore} score` : 'No scans'}
           </Text>
         ) : (
           <Text style={[styles.activeInfo, { color: colors.textSecondary }]}>Tap day to inspect</Text>
         )}
       </View>
 
-      {/* 30-Day Grid (6 columns x 5 rows) */}
-      <View style={styles.grid}>
-        {days.map((day, idx) => {
-          const isSelected = selectedDay?.dayNumber === day.dayNumber;
+      {/* 30-Day Grid (6 columns x 5 rows) with fixed pixel cell sizes */}
+      <View style={[styles.grid, { gap }]}>
+        {activeDays.map((day, idx) => {
+          const isSelected = selectedDay?.dayNumber === day.dayNumber && selectedDay?.dateStr === day.dateStr;
           return (
             <Pressable
               key={idx}
@@ -79,6 +88,8 @@ export function ScanActivityHeatmap({ days = generateDefaultDays() }: ScanActivi
               style={[
                 styles.cell,
                 {
+                  width: cellSize,
+                  height: cellSize,
                   backgroundColor: getCellColor(day),
                   borderColor: isSelected ? colors.text : 'transparent',
                   borderWidth: isSelected ? 1.5 : 0,
@@ -132,13 +143,10 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   cell: {
-    width: '14.2%', // 7 per row
-    aspectRatio: 1,
-    borderRadius: 5,
+    borderRadius: 6,
   },
   legendRow: {
     flexDirection: 'row',

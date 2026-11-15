@@ -1,20 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import {
-  Home,
-  ScanLine,
-  History,
-  BookOpen,
-  User,
-} from 'lucide-react-native';
 
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
-import { SpringPresets } from './theme/animations';
 import { RootStackParamList, BottomTabParamList } from './navigation/types';
 
 import HomeScreen from './screens/HomeScreen';
@@ -24,7 +17,8 @@ import GuideScreen from './screens/GuideScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ResultScreen from './screens/ResultScreen';
 import AuthScreen from './screens/AuthScreen';
-import { getUserSession, signInAsGuest } from './lib/auth';
+import OnboardingScreen, { ONBOARDING_STORAGE_KEY } from './screens/OnboardingScreen';
+import { getUserSession } from './lib/auth';
 import { checkApiHealth } from './api/client';
 import { FloatingNavBar } from './components/FloatingNavBar';
 
@@ -69,18 +63,30 @@ function TabNavigator() {
 
 function MainApp() {
   const { colors, isDark } = useTheme();
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(false);
 
-  // ponytail: restore session & auto-provision guest session on cold install + pre-warm serverless API
   useEffect(() => {
-    getUserSession()
-      .then((sess) => {
-        if (!sess) {
-          signInAsGuest().catch(() => {});
+    async function initialize() {
+      try {
+        const [onboardingVal, session] = await Promise.all([
+          AsyncStorage.getItem(ONBOARDING_STORAGE_KEY),
+          getUserSession(),
+        ]);
+
+        if (onboardingVal === 'true' && session) {
+          setHasCompletedOnboarding(true);
+        } else {
+          setHasCompletedOnboarding(false);
         }
-      })
-      .catch(() => {
-        signInAsGuest().catch(() => {});
-      });
+      } catch (e) {
+        setHasCompletedOnboarding(false);
+      } finally {
+        setIsInitializing(false);
+      }
+    }
+
+    initialize();
 
     const timer = setTimeout(() => {
       checkApiHealth().catch(() => {});
@@ -99,6 +105,23 @@ function MainApp() {
       border: colors.border,
     },
   };
+
+  if (isInitializing) {
+    return (
+      <View style={[styles.loadingScreen, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!hasCompletedOnboarding) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <OnboardingScreen onComplete={() => setHasCompletedOnboarding(true)} />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -141,4 +164,10 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  loadingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

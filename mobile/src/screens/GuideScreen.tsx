@@ -4,6 +4,8 @@ import {
   Text,
   StyleSheet,
   TextInput,
+  Modal,
+  Pressable,
 } from 'react-native';
 import {
   BookOpen,
@@ -90,10 +92,11 @@ export default function GuideScreen() {
   const [activeTab, setActiveTab] = useState<GuideTab>('nova');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAdditive, setSelectedAdditive] = useState<AdditiveDetailData | null>(null);
+  const [selectedNovaGroup, setSelectedNovaGroup] = useState<typeof NOVA_GROUPS[0] | null>(null);
   const [additiveSheetVisible, setAdditiveSheetVisible] = useState(false);
 
   const handleOpenAdditive = (item: AdditiveEntry) => {
-    AppHaptics.selection();
+    AppHaptics.impactHeavy();
     setSelectedAdditive({
       name: item.name,
       code: item.code,
@@ -104,6 +107,11 @@ export default function GuideScreen() {
       foundIn: item.foundIn,
     });
     setAdditiveSheetVisible(true);
+  };
+
+  const handleOpenNovaGroup = (item: typeof NOVA_GROUPS[0]) => {
+    AppHaptics.impactHeavy();
+    setSelectedNovaGroup(item);
   };
 
   // ponytail: instant offline filtering over compiled additive dictionary
@@ -144,7 +152,7 @@ export default function GuideScreen() {
       <FadeInView delay={40} style={styles.segmentWrapper}>
         <SegmentedControl<GuideTab>
           options={[
-            { value: 'nova', label: 'NOVA Groups (1–4)' },
+            { value: 'nova', label: 'NOVA Groups (1-4)' },
             {
               value: 'additives',
               label: `Additive Dictionary (${ADDITIVE_DICTIONARY.length})`,
@@ -159,7 +167,7 @@ export default function GuideScreen() {
       {activeTab === 'nova' && (
         <FadeInView key="tab-nova" delay={60}>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            Developed by epidemiologists at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of industrial processing.
+            Developed by epidemiologists at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of industrial processing. Tap or long press any card to inspect full clinical details.
           </Text>
 
           {NOVA_GROUPS.map((item, idx) => {
@@ -167,6 +175,8 @@ export default function GuideScreen() {
             return (
               <FadeInView key={item.group} delay={80 + idx * 40}>
                 <Card
+                  onPress={() => handleOpenNovaGroup(item)}
+                  onLongPress={() => handleOpenNovaGroup(item)}
                   style={[
                     styles.novaCard,
                     {
@@ -351,6 +361,81 @@ export default function GuideScreen() {
         additive={selectedAdditive}
         onClose={() => setAdditiveSheetVisible(false)}
       />
+
+      {/* Floating NOVA Group Popup Sheet */}
+      <Modal
+        visible={selectedNovaGroup !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedNovaGroup(null)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setSelectedNovaGroup(null)}
+        >
+          {selectedNovaGroup && (
+            <View
+              style={[
+                styles.novaPopupSheet,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={styles.popupHeader}>
+                <NovaBadge novaGroup={selectedNovaGroup.group} size="md" />
+                <Pressable
+                  onPress={() => setSelectedNovaGroup(null)}
+                  hitSlop={8}
+                >
+                  <X size={18} color={colors.textSecondary} />
+                </Pressable>
+              </View>
+
+              <Text style={[styles.popupTitle, { color: colors.text }]}>
+                {selectedNovaGroup.title}
+              </Text>
+              <Text style={[styles.popupDesc, { color: colors.textSecondary }]}>
+                {selectedNovaGroup.description}
+              </Text>
+
+              <View
+                style={[
+                  styles.popupSection,
+                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.popupSectionHeading, { color: colors.textSecondary }]}>
+                  COMMON FOOD EXAMPLES
+                </Text>
+                {selectedNovaGroup.examples.map((ex, i) => (
+                  <Text key={i} style={[styles.popupExampleItem, { color: colors.text }]}>
+                    • {ex}
+                  </Text>
+                ))}
+              </View>
+
+              <View
+                style={[
+                  styles.popupImpactBox,
+                  {
+                    backgroundColor: colors.surfaceRaised,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.popupImpactHeading, { color: colors.textSecondary }]}>
+                  HEALTH & METABOLIC IMPACT
+                </Text>
+                <Text style={[styles.popupImpactBody, { color: colors.text }]}>
+                  {selectedNovaGroup.impact}
+                </Text>
+              </View>
+            </View>
+          )}
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -484,5 +569,67 @@ const styles = StyleSheet.create({
   foundInText: {
     fontSize: typography.fontSizes.xs,
     lineHeight: typography.lineHeights.xs,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  novaPopupSheet: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 20,
+    gap: 12,
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  popupTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  popupDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  popupSection: {
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 4,
+  },
+  popupSectionHeading: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  popupExampleItem: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  popupImpactBox: {
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 4,
+  },
+  popupImpactHeading: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  popupImpactBody: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
   },
 });

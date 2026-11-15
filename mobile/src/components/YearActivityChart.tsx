@@ -14,19 +14,21 @@ const MONTH_INITIALS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', '
 interface YearActivityChartProps {
   monthlyCounts?: number[];
   totalScans?: number;
+  cleanPercentage?: number;
 }
 
-// ponytail: GymMane-style 12-month annual logging activity histogram
+// GymMane-style 12-month annual logging activity histogram
 export function YearActivityChart({
-  monthlyCounts = [2, 5, 8, 12, 16, 14, 18, 22, 19, 25, 28, 15],
-  totalScans = 184,
+  monthlyCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  totalScans = 0,
+  cleanPercentage = 0,
 }: YearActivityChartProps) {
   const { colors, isDark } = useTheme();
 
   const currentMonthIdx = new Date().getMonth(); // 0-based (0 = Jan, 11 = Dec)
   const peak = Math.max(1, ...monthlyCounts);
 
-  const cleanRatio = '78%';
+  const cleanRatio = `${cleanPercentage}%`;
   const activeMonths = monthlyCounts.filter((c) => c > 0).length;
 
   return (

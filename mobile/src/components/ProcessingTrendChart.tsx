@@ -6,6 +6,7 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
+import { Activity } from 'lucide-react-native';
 import Svg, {
   Path,
   Defs,
@@ -33,24 +34,16 @@ interface ProcessingTrendChartProps {
   height?: number;
 }
 
-const DEFAULT_TREND_DATA: TrendDataPoint[] = [
-  { day: 'Mon', score: 4.6, dateStr: 'May 12', scansCount: 3 },
-  { day: 'Tue', score: 3.8, dateStr: 'May 13', scansCount: 2 },
-  { day: 'Wed', score: 4.8, dateStr: 'May 14', scansCount: 4 },
-  { day: 'Thu', score: 2.9, dateStr: 'May 15', scansCount: 1 },
-  { day: 'Fri', score: 4.2, dateStr: 'May 16', scansCount: 3 },
-  { day: 'Sat', score: 4.5, dateStr: 'May 17', scansCount: 5 },
-  { day: 'Sun', score: 4.9, dateStr: 'May 18', scansCount: 4 },
-];
-
-// ponytail: FitBuddy-grade interactive cubic spline scrubber chart using pure react-native-svg (zero dependencies)
+// FitBuddy-grade interactive cubic spline scrubber chart using pure react-native-svg
 export function ProcessingTrendChart({
-  data = DEFAULT_TREND_DATA,
+  data = [],
   height = 160,
 }: ProcessingTrendChartProps) {
   const { colors, isDark } = useTheme();
   const [containerWidth, setContainerWidth] = useState(SCREEN_WIDTH - 64);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const hasRealScans = data && data.length > 0 && data.some((d) => d.scansCount > 0);
 
   const paddingHorizontal = 18;
   const paddingTop = 24;
@@ -62,7 +55,7 @@ export function ProcessingTrendChart({
 
   // Compute coordinate geometry
   const points = useMemo(() => {
-    if (data.length === 0) return [];
+    if (!hasRealScans || data.length === 0) return [];
     const stepX = data.length > 1 ? plotWidth / (data.length - 1) : 0;
     return data.map((d, i) => {
       const x = paddingHorizontal + i * stepX;
@@ -71,7 +64,7 @@ export function ProcessingTrendChart({
       const y = paddingTop + plotHeight * (1 - normalizedScore);
       return { x, y, data: d };
     });
-  }, [data, plotWidth, plotHeight, paddingHorizontal, paddingTop]);
+  }, [hasRealScans, data, plotWidth, plotHeight, paddingHorizontal, paddingTop]);
 
   // Compute smooth cubic bezier path connecting all points
   const { pathD, fillD } = useMemo(() => {
@@ -141,6 +134,27 @@ export function ProcessingTrendChart({
       AppHaptics.selection();
     }
   };
+
+  if (!hasRealScans) {
+    return (
+      <View
+        style={[
+          styles.emptyWrapper,
+          {
+            backgroundColor: colors.surfaceRaised,
+            borderColor: colors.border,
+            height,
+          },
+        ]}
+      >
+        <Activity size={26} color={colors.primary} />
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>No Scans in Last 7 Days</Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+          Scan your first food product to start tracking your daily nutritional clarity trend.
+        </Text>
+      </View>
+    );
+  }
 
   const activePoint = selectedIndex !== null ? points[selectedIndex] : points[points.length - 1];
 
@@ -373,5 +387,23 @@ const styles = StyleSheet.create({
   dayLabelText: {
     fontSize: 10,
     letterSpacing: -0.1,
+  },
+  emptyWrapper: {
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 });
