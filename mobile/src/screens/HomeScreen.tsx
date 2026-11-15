@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   ScanLine,
@@ -11,16 +11,22 @@ import {
   Sun,
   Moon,
   Sparkles,
+  ShieldCheck,
+  Activity,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
-import { Card, CardContent } from '../components/Card';
+import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
+import { HealthScoreRing } from '../components/HealthScoreRing';
+import { ProcessingTrendChart } from '../components/ProcessingTrendChart';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { SAMPLE_PRODUCTS, SampleProduct } from '../lib/sample-products';
+import { getScanHistory } from '../lib/history';
+import { AppHaptics } from '../lib/haptics';
 import { RootStackParamList } from '../navigation/types';
 import { EatInformedLogo } from '../components/EatInformedLogo';
 
@@ -30,11 +36,30 @@ export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { colors, isDark, toggleTheme } = useTheme();
 
+  const [historyCount, setHistoryCount] = useState(0);
+  const [avgScore, setAvgScore] = useState(4.2);
+
+  useFocusEffect(
+    useCallback(() => {
+      getScanHistory().then((history) => {
+        setHistoryCount(history.length);
+        if (history.length > 0) {
+          const total = history.reduce((acc, cur) => acc + (cur.rating || 0), 0);
+          setAvgScore(Number((total / history.length).toFixed(1)));
+        } else {
+          setAvgScore(4.2);
+        }
+      });
+    }, [])
+  );
+
   const handleStartScan = () => {
+    AppHaptics.impactHeavy();
     (navigation as any).navigate('Scan');
   };
 
   const handleOpenSample = (sample: SampleProduct) => {
+    AppHaptics.selection();
     navigation.navigate('Result', {
       data: sample.data,
       imageUri: null,
@@ -42,14 +67,17 @@ export default function HomeScreen() {
   };
 
   const handleOpenGuide = () => {
+    AppHaptics.selection();
     (navigation as any).navigate('Guide');
   };
 
   const handleOpenHistory = () => {
+    AppHaptics.selection();
     (navigation as any).navigate('History');
   };
 
   const handleOpenProfile = () => {
+    AppHaptics.selection();
     (navigation as any).navigate('Profile');
   };
 
@@ -97,7 +125,7 @@ export default function HomeScreen() {
         </Text>
       </FadeInView>
 
-      {/* Main Scan Action Card */}
+      {/* Main Scan Action Card with FitBuddy Health Ring */}
       <FadeInView delay={60}>
         <Card
           style={{
@@ -105,28 +133,40 @@ export default function HomeScreen() {
           }}
         >
           <CardContent>
-            <View style={styles.ctaTopRow}>
-              <View
-                style={[
-                  styles.ctaIconContainer,
-                  {
-                    backgroundColor: colors.primaryMuted,
-                    borderColor: colors.primaryBorder,
-                  },
-                ]}
-              >
-                <ScanLine size={22} color={colors.primary} />
-              </View>
-              <View style={styles.ctaTextContainer}>
+            <View style={styles.heroGaugeRow}>
+              <HealthScoreRing
+                score={avgScore}
+                size={82}
+                strokeWidth={8}
+                label="SCORE"
+              />
+              <View style={styles.heroGaugeTextCol}>
                 <Text
                   accessibilityRole="header"
-                  style={[styles.ctaTitle, { color: colors.text }]}
+                  style={[styles.heroGaugeTitle, { color: colors.text }]}
                 >
-                  Scan a Product Label
+                  Dietary Clarity Index
                 </Text>
-                <Text style={[styles.ctaDescription, { color: colors.textSecondary }]}>
-                  Instant camera capture or photo library upload
+                <Text style={[styles.heroGaugeSubtitle, { color: colors.textSecondary }]}>
+                  {historyCount > 0
+                    ? `${historyCount} product audits logged`
+                    : 'Instant clinical label OCR & NOVA classification'}
                 </Text>
+
+                <View style={styles.heroStatChipsRow}>
+                  <View style={[styles.heroStatChip, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                    <ShieldCheck size={12} color={colors.primary} />
+                    <Text style={[styles.heroStatChipText, { color: colors.textSecondary }]}>
+                      {historyCount > 0 ? `${historyCount} Audits` : 'Zero Additive Cache'}
+                    </Text>
+                  </View>
+                  <View style={[styles.heroStatChip, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+                    <Activity size={12} color={colors.warning} />
+                    <Text style={[styles.heroStatChipText, { color: colors.textSecondary }]}>
+                      NOVA 1-4 Ranked
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -186,8 +226,21 @@ export default function HomeScreen() {
         </Card>
       </FadeInView>
 
+      {/* FitBuddy-Grade 7-Day Interactive Cubic Spline Scrubber Graph */}
+      <FadeInView delay={100}>
+        <Card style={{ marginTop: spacing.md }}>
+          <CardHeader
+            title="7-Day Nutritional Clarity"
+            subtitle="Touch-scrubber tracking clinical NOVA diet index"
+          />
+          <CardContent>
+            <ProcessingTrendChart />
+          </CardContent>
+        </Card>
+      </FadeInView>
+
       {/* Demo Samples Section */}
-      <FadeInView delay={120} style={styles.sectionHeader}>
+      <FadeInView delay={140} style={styles.sectionHeader}>
         <Text
           accessibilityRole="header"
           style={[styles.sectionTitle, { color: colors.text }]}
@@ -201,7 +254,11 @@ export default function HomeScreen() {
 
       {SAMPLE_PRODUCTS.map((sample, index) => (
         <FadeInView key={sample.id} delay={160 + index * 50}>
-          <Card onPress={() => handleOpenSample(sample)} style={styles.sampleCard}>
+          <Card
+            onPress={() => handleOpenSample(sample)}
+            onLongPress={() => AppHaptics.impactHeavy()}
+            style={styles.sampleCard}
+          >
             <View style={styles.sampleHeader}>
               <View style={styles.sampleInfo}>
                 <Text style={[styles.sampleTitle, { color: colors.text }]}>
@@ -315,6 +372,44 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.subhead,
     lineHeight: typography.lineHeights.subhead,
     marginTop: 4,
+  },
+  heroGaugeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.base,
+    gap: spacing.md,
+  },
+  heroGaugeTextCol: {
+    flex: 1,
+  },
+  heroGaugeTitle: {
+    fontSize: typography.fontSizes.md,
+    fontWeight: typography.fontWeights.bold,
+    letterSpacing: -0.3,
+  },
+  heroGaugeSubtitle: {
+    fontSize: typography.fontSizes.xs,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  heroStatChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  heroStatChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  heroStatChipText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   ctaTopRow: {
     flexDirection: 'row',

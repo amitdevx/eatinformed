@@ -10,6 +10,7 @@ import {
   StyleSheet,
   AccessibilityInfo,
 } from 'react-native';
+import { AppHaptics } from '../lib/haptics';
 
 export const SpringPresets = {
   // Critically damped (zeta ~ 1.0): fast, responsive micro-interactions & press feedback
@@ -137,8 +138,10 @@ export function FadeInView({
 interface PressableScaleProps {
   children: React.ReactNode;
   onPress?: () => void;
+  onLongPress?: () => void;
   disabled?: boolean;
   scaleTo?: number;
+  haptic?: 'selection' | 'light' | 'medium' | 'heavy' | 'none';
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
   accessibilityRole?: 'button' | 'tab' | 'link';
@@ -148,12 +151,15 @@ interface PressableScaleProps {
 /**
  * Tactile iOS spring pressable wrapper.
  * Compresses smoothly to `scaleTo` (default 0.97) on touch-down and springs back on release.
+ * Features built-in GymMane-grade haptic clicks on press & long press.
  */
 export function PressableScale({
   children,
   onPress,
+  onLongPress,
   disabled = false,
   scaleTo = 0.97,
+  haptic = 'selection',
   style,
   accessibilityLabel,
   accessibilityRole = 'button',
@@ -212,9 +218,25 @@ export function PressableScale({
     }).start();
   };
 
+  const handlePress = () => {
+    if (disabled) return;
+    if (haptic === 'selection') AppHaptics.selection();
+    else if (haptic === 'light') AppHaptics.impactLight();
+    else if (haptic === 'medium') AppHaptics.impactMedium();
+    else if (haptic === 'heavy') AppHaptics.impactHeavy();
+    onPress?.();
+  };
+
+  const handleLongPress = () => {
+    if (disabled || !onLongPress) return;
+    AppHaptics.impactHeavy();
+    onLongPress();
+  };
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={onPress ? handlePress : undefined}
+      onLongPress={onLongPress ? handleLongPress : undefined}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}

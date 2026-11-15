@@ -25,6 +25,8 @@ import { getNovaColor } from '../theme/colors';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { ADDITIVE_DICTIONARY, AdditiveEntry } from '../lib/additive-dictionary';
+import { AdditiveDetailSheet, AdditiveDetailData } from '../components/AdditiveDetailSheet';
+import { AppHaptics } from '../lib/haptics';
 
 const NOVA_GROUPS = [
   {
@@ -87,6 +89,22 @@ export default function GuideScreen() {
   const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<GuideTab>('nova');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedAdditive, setSelectedAdditive] = useState<AdditiveDetailData | null>(null);
+  const [additiveSheetVisible, setAdditiveSheetVisible] = useState(false);
+
+  const handleOpenAdditive = (item: AdditiveEntry) => {
+    AppHaptics.selection();
+    setSelectedAdditive({
+      name: item.name,
+      code: item.code,
+      category: item.category,
+      riskLevel: item.riskLevel,
+      novaGroup: item.novaGroup,
+      description: item.description,
+      foundIn: item.foundIn,
+    });
+    setAdditiveSheetVisible(true);
+  };
 
   // ponytail: instant offline filtering over compiled additive dictionary
   const filteredAdditives = useMemo(() => {
@@ -268,7 +286,11 @@ export default function GuideScreen() {
 
           {filteredAdditives.map((item, idx) => (
             <FadeInView key={item.id} delay={40 + Math.min(idx * 30, 200)}>
-              <Card style={styles.additiveCard}>
+              <Card
+                onPress={() => handleOpenAdditive(item)}
+                onLongPress={() => AppHaptics.impactHeavy()}
+                style={styles.additiveCard}
+              >
                 <CardContent>
                   <View style={styles.additiveTopRow}>
                     <View style={styles.additiveTitleCol}>
@@ -322,6 +344,13 @@ export default function GuideScreen() {
           ))}
         </FadeInView>
       )}
+
+      {/* GymMane-Grade Additive Clinical Detail Sheet */}
+      <AdditiveDetailSheet
+        visible={additiveSheetVisible}
+        additive={selectedAdditive}
+        onClose={() => setAdditiveSheetVisible(false)}
+      />
     </Screen>
   );
 }

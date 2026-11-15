@@ -33,6 +33,7 @@ import { borderRadius, spacing, typography } from '../theme/tokens';
 import { scanFoodLabel, getEstimatedScanDuration, checkApiHealth } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
 import { getUserSession, signInAsGuest, UserSessionData } from '../lib/auth';
+import { AppHaptics } from '../lib/haptics';
 import { RootStackParamList } from '../navigation/types';
 
 const { width } = Dimensions.get('window');
@@ -178,6 +179,7 @@ export default function ScanScreen() {
       });
 
       if (photo?.uri && photo?.base64) {
+        AppHaptics.impactHeavy();
         setSelectedImageUri(photo.uri);
         setSelectedImageBase64(photo.base64);
         setErrorMessage(null);
@@ -232,6 +234,7 @@ export default function ScanScreen() {
         }
 
         if (asset.uri && base64) {
+          AppHaptics.selection();
           setSelectedImageUri(asset.uri);
           setSelectedImageBase64(base64);
           setErrorMessage(null);
@@ -290,6 +293,7 @@ export default function ScanScreen() {
       }
 
       await saveScanToHistory(analysis, selectedImageUri);
+      AppHaptics.success();
 
       navigation.navigate('Result', {
         data: analysis,
@@ -299,6 +303,7 @@ export default function ScanScreen() {
       setSelectedImageUri(null);
       setSelectedImageBase64(null);
     } catch (err: unknown) {
+      AppHaptics.warning();
       const message =
         err instanceof Error
           ? err.message
@@ -310,14 +315,21 @@ export default function ScanScreen() {
   };
 
   const handleRetake = () => {
+    AppHaptics.selection();
     setSelectedImageUri(null);
     setSelectedImageBase64(null);
     setErrorMessage(null);
   };
 
-  const toggleTorch = () => setTorch((prev) => !prev);
-  const toggleFacing = () =>
+  const toggleTorch = () => {
+    AppHaptics.selection();
+    setTorch((prev) => !prev);
+  };
+
+  const toggleFacing = () => {
+    AppHaptics.selection();
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
+  };
 
   // Loading state overlay
   if (isLoading) {

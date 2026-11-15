@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useColorScheme } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { darkColors, lightColors } from './colors';
+import { darkColors, amoledColors, lightColors } from './colors';
 
-export type ThemeMode = 'system' | 'dark' | 'light';
+export type ThemeMode = 'system' | 'dark' | 'amoled' | 'light';
 
 interface ThemeContextType {
   theme: ThemeMode;
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     SecureStore.getItemAsync(THEME_STORAGE_KEY)
       .then((saved) => {
-        if (saved === 'dark' || saved === 'light' || saved === 'system') {
+        if (saved === 'dark' || saved === 'amoled' || saved === 'light' || saved === 'system') {
           setThemeMode(saved);
         }
       })
@@ -48,14 +48,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const isDark = themeMode === 'system' ? systemScheme !== 'light' : themeMode === 'dark';
+  const isDark =
+    themeMode === 'system'
+      ? systemScheme !== 'light'
+      : themeMode === 'dark' || themeMode === 'amoled';
 
   const toggleTheme = useCallback(() => {
     const nextMode: ThemeMode = isDark ? 'light' : 'dark';
     setTheme(nextMode);
   }, [isDark, setTheme]);
 
-  const activeColors = isDark ? darkColors : lightColors;
+  const activeColors =
+    themeMode === 'amoled'
+      ? amoledColors
+      : isDark
+      ? darkColors
+      : lightColors;
 
   return (
     <ThemeContext.Provider

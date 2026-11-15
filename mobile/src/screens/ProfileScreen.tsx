@@ -1,8 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  Image,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,39 +18,123 @@ import {
   LogOut,
   LogIn,
   Share2,
+  Edit3,
+  Award,
+  Flame,
+  CheckCircle,
+  Activity,
+  Heart,
+  Settings,
+  ChevronRight,
+  Database,
+  Download,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Card, CardHeader, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
-import { SegmentedControl } from '../components/SegmentedControl';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { EditProfileSheet } from '../components/EditProfileSheet';
+import { SettingsSheet } from '../components/SettingsSheet';
+import { YearActivityChart } from '../components/YearActivityChart';
+import { RollingNumber } from '../components/RollingNumber';
 import { checkApiHealth } from '../api/client';
-import { getUserSession, clearUserSession } from '../lib/auth';
-import { exportScanHistory } from '../lib/history';
-import { useTheme, ThemeMode } from '../theme/ThemeContext';
+import { getUserSession, clearUserSession, UserSessionData } from '../lib/auth';
+import { exportScanHistory, getScanHistory } from '../lib/history';
+import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
-import { borderRadius, spacing, typography } from '../theme/tokens';
+import { AppHaptics } from '../lib/haptics';
+import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
-import { EatInformedLogo } from '../components/EatInformedLogo';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { colors, theme: currentTheme, setTheme } = useTheme();
-  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-  const [serverMessage, setServerMessage] = useState<string>(
-    'Checking server status...'
-  );
-  const [isCheckingServer, setIsCheckingServer] = useState(false);
+  const { colors, theme: currentTheme, isDark } = useTheme();
 
+  const [session, setSession] = useState<UserSessionData | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+
+  const [scanCount, setScanCount] = useState<number>(0);
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [serverMessage, setServerMessage] = useState<string>('Checking server status...');
+  const [isCheckingServer, setIsCheckingServer] = useState(false);
+
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+
+  // GymMane pull-down gesture & watermark ticker animation
+  const pullAnim = useRef(new Animated.Value(0)).current;
+  const isArmedRef = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 10 && gesture.vy > 0,
+      onPanResponderMove: (_, gesture) => {
+        if (gesture.dy > 0) {
+          // Rubber-band dampening math matching GymMane (0.55 factor)
+          const clampedPull = Math.min(gesture.dy * 0.55, 180);
+          pullAnim.setValue(clampedPull);
+
+          if (clampedPull >= 110 && !isArmedRef.current) {
+            isArmedRef.current = true;
+            AppHaptics.impactHeavy();
+          } else if (clampedPull < 110 && isArmedRef.current) {
+            isArmedRef.current = false;
+          }
+        }
+      },
+      onPanResponderRelease: () => {
+        if (isArmedRef.current) {
+          isArmedRef.current = false;
+          AppHaptics.success();
+          setSettingsVisible(true);
+        }
+        Animated.spring(pullAnim, {
+          toValue: 0,
+          stiffness: 260,
+          damping: 22,
+          useNativeDriver: true,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        isArmedRef.current = false;
+        Animated.spring(pullAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      },
+    })
+  ).current;
+
+  const loadData = useCallback(async () => {
+    const s = await getUserSession();
+    setSession(s);
+    if (s && s.isLoggedIn) {
+      setIsLoggedIn(true);
+      setIsAnonymous(Boolean(s.isAnonymous));
+      setUserEmail(s.email || (s.isAnonymous ? 'Guest Explorer' : null));
+      setUserName(s.name || (s.isAnonymous ? 'Guest Explorer' : s.email?.split('@')[0] || 'Member'));
+      setUserPhoto(s.photoUrl || null);
+    } else {
+      setIsLoggedIn(false);
+      setIsAnonymous(false);
+      setUserEmail(null);
+      setUserName(null);
+      setUserPhoto(null);
+    }
+
+    const history = await getScanHistory();
+    setScanCount(history.length);
+  }, []);
 
   const checkBackend = useCallback(async () => {
     setIsCheckingServer(true);
@@ -68,21 +156,15 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       checkBackend();
-      getUserSession().then((session) => {
-        if (session && session.isLoggedIn) {
-          setIsLoggedIn(true);
-          setIsAnonymous(Boolean(session.isAnonymous));
-          setUserEmail(session.email || (session.isAnonymous ? 'Guest Explorer' : null));
-          setUserName(session.name || (session.isAnonymous ? 'Guest Explorer' : session.email?.split('@')[0] || 'Member'));
-        } else {
-          setIsLoggedIn(false);
-          setIsAnonymous(false);
-          setUserEmail(null);
-          setUserName(null);
-        }
-      });
-    }, [checkBackend])
+      loadData();
+    }, [checkBackend, loadData])
   );
+
+  const handleProfileUpdated = (updated: UserSessionData) => {
+    setSession(updated);
+    setUserName(updated.name);
+    setUserPhoto(updated.photoUrl || null);
+  };
 
   const handleAuthAction = () => {
     if (isLoggedIn) {
@@ -99,426 +181,511 @@ export default function ProfileScreen() {
     setIsAnonymous(false);
     setUserEmail(null);
     setUserName(null);
+    setUserPhoto(null);
+  };
+
+  const handleExport = async () => {
+    AppHaptics.success();
+    await exportScanHistory();
   };
 
   return (
     <Screen scrollable>
-      <FadeInView delay={0}>
-        <ScreenHeader
-          title="Account & System"
-          subtitle="Manage appearance preferences, session sync, and data exports"
-          largeTitle={true}
-        />
-      </FadeInView>
+      {/* GymMane Ticker Watermark revealed on swipe-down */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.watermarkTicker,
+          {
+            opacity: pullAnim.interpolate({
+              inputRange: [0, 80, 150],
+              outputRange: [0, 0.45, 0.85],
+            }),
+            transform: [
+              {
+                scale: pullAnim.interpolate({
+                  inputRange: [0, 150],
+                  outputRange: [0.85, 1.05],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text style={[styles.watermarkText, { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+          EATINFORMED
+        </Text>
+      </Animated.View>
 
-      {/* User Card */}
-      <FadeInView delay={50}>
-        <Card
-          style={{
-            borderColor: colors.primaryBorder,
-          }}
-        >
-          <CardContent>
-            <View style={styles.userRow}>
-              <View
-                style={[
-                  styles.avatarCircle,
-                  {
-                    backgroundColor: colors.primaryMuted,
-                    borderColor: colors.primaryBorder,
-                  },
-                ]}
+      <View {...panResponder.panHandlers}>
+        <FadeInView delay={0}>
+          <ScreenHeader
+            title="Profile & Settings"
+            subtitle="Swipe down anytime for system configuration"
+            largeTitle={true}
+            rightElement={
+              <PressableScale
+                onPress={() => {
+                  AppHaptics.selection();
+                  setSettingsVisible(true);
+                }}
+                scaleTo={0.92}
+                style={[styles.headerSettingsBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open app settings"
               >
-                {isLoggedIn && !isAnonymous ? (
-                  <User size={24} color={colors.primary} />
-                ) : (
-                  <EatInformedLogo size={24} />
-                )}
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: colors.text }]}>
-                  {isLoggedIn && !isAnonymous
-                    ? userName || userEmail?.split('@')[0] || 'Member'
-                    : isLoggedIn && isAnonymous
-                    ? 'Guest Explorer'
-                    : 'Not Signed In'}
-                </Text>
-                <Text
-                  style={[styles.userEmail, { color: colors.textSecondary }]}
-                >
-                  {isLoggedIn && !isAnonymous
-                    ? userEmail
-                    : isLoggedIn && isAnonymous
-                    ? 'Guest session · 25 scans / hr limit'
-                    : 'Sign in with Google, Email, or Guest to scan'}
-                </Text>
-                <View style={{ marginTop: 6 }}>
-                  <Badge
-                    label={
-                      isLoggedIn && !isAnonymous
-                        ? 'Registered Member'
-                        : isLoggedIn && isAnonymous
-                        ? 'Guest Mode (Active)'
-                        : 'No Active Session'
-                    }
-                    variant={isLoggedIn && !isAnonymous ? 'primary' : isLoggedIn ? 'default' : 'secondary'}
-                    size="sm"
-                  />
-                </View>
-              </View>
-            </View>
-
-            {isLoggedIn && isAnonymous ? (
-              <View style={{ gap: spacing.sm, marginTop: spacing.xs }}>
-                <Button
-                  title="Sign In / Save Account"
-                  onPress={() => navigation.navigate('Auth', { initialTab: 'login' })}
-                  variant="primary"
-                  size="md"
-                  icon={<LogIn size={16} color={colors.onPrimary} />}
-                  style={styles.authButton}
-                />
-                <Button
-                  title="Exit Guest Mode"
-                  onPress={() => setSignOutModalVisible(true)}
-                  variant="danger"
-                  size="sm"
-                  icon={<LogOut size={15} color={colors.dangerText} />}
-                  style={styles.authButton}
-                />
-              </View>
-            ) : (
-              <Button
-                title={isLoggedIn ? 'Sign Out' : 'Sign In / Create Account'}
-                onPress={handleAuthAction}
-                variant={isLoggedIn ? 'danger' : 'primary'}
-                size="md"
-                icon={
-                  isLoggedIn ? (
-                    <LogOut size={16} color={colors.dangerText} />
-                  ) : (
-                    <LogIn size={16} color={colors.onPrimary} />
-                  )
-                }
-                style={styles.authButton}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </FadeInView>
-
-      {/* Apple Appearance / Theme Selector Card */}
-      <FadeInView delay={100}>
-        <Card>
-          <CardHeader
-            title="Appearance"
-            subtitle="Match system settings or lock Light / Dark mode"
+                <Settings size={20} color={colors.text} />
+              </PressableScale>
+            }
           />
-          <CardContent>
-            <SegmentedControl<ThemeMode>
-              options={[
-                { value: 'system', label: 'System' },
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
-              ]}
-              value={currentTheme}
-              onChange={setTheme}
-            />
-          </CardContent>
-        </Card>
-      </FadeInView>
+        </FadeInView>
 
-      {/* Data Portability & Backup Card */}
-      <FadeInView delay={140}>
-        <Card>
-          <CardHeader
-            title="Data Portability & Backup"
-            subtitle="Export your locally saved scans as standard portable JSON"
-          />
-          <CardContent>
-            <Button
-              title="Export Scan History (.json)"
-              onPress={() => exportScanHistory()}
-              variant="outline"
-              size="md"
-              icon={<Share2 size={16} color={colors.text} />}
-            />
-          </CardContent>
-        </Card>
-      </FadeInView>
-
-      {/* Backend & AI Service Status Card */}
-      <FadeInView delay={150}>
-        <Card>
-          <CardHeader
-            title="Backend AI Status"
-            subtitle="Connection to EatInformed Vision & Reasoning API"
-          />
-          <CardContent>
-            <View style={styles.statusRow}>
-              <View style={styles.statusIndicator}>
+        {/* GymMane-Grade Pinned Profile Card with Halo Ring & Quick Actions */}
+        <FadeInView delay={40}>
+          <Card
+            style={{
+              borderColor: colors.primaryBorder,
+              backgroundColor: colors.surface,
+            }}
+          >
+            <CardContent>
+              <View style={styles.userHeroRow}>
+                {/* Avatar with Halo Ring */}
                 <View
                   style={[
-                    styles.statusDot,
+                    styles.avatarRing,
                     {
-                      backgroundColor:
-                        serverOnline === null
-                          ? colors.warning
-                          : serverOnline
-                          ? colors.success
-                          : colors.danger,
+                      borderColor: colors.primary,
+                      backgroundColor: colors.surfaceRaised,
                     },
                   ]}
-                />
-                <Text style={[styles.statusText, { color: colors.text }]}>
-                  {serverOnline === null
-                    ? 'Checking endpoint...'
-                    : serverOnline
-                    ? 'API Online and Responsive'
-                    : 'Backend Offline'}
-                </Text>
+                >
+                  {userPhoto ? (
+                    <Image source={{ uri: userPhoto }} style={styles.avatarImg} />
+                  ) : (
+                    <View
+                      style={[
+                        styles.avatarInner,
+                        { backgroundColor: colors.primaryMuted },
+                      ]}
+                    >
+                      <User size={30} color={colors.primary} />
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.userMetaCol}>
+                  <View style={styles.nameRow}>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.displayName, { color: colors.text }]}
+                    >
+                      {userName || 'Guest Explorer'}
+                    </Text>
+                    <Badge
+                      label={isLoggedIn && !isAnonymous ? 'Pro Member' : 'Guest'}
+                      variant={isLoggedIn && !isAnonymous ? 'success' : 'default'}
+                      size="sm"
+                    />
+                  </View>
+                  <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
+                    @{userEmail ? userEmail.split('@')[0] : 'explorer'}
+                  </Text>
+                </View>
+
+                {/* Edit & Settings Action Buttons */}
+                <View style={styles.heroActionBtns}>
+                  <PressableScale
+                    onPress={() => {
+                      AppHaptics.selection();
+                      setEditProfileVisible(true);
+                    }}
+                    scaleTo={0.92}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={[
+                      styles.actionCircleBtn,
+                      { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                    ]}
+                  >
+                    <Edit3 size={15} color={colors.text} />
+                  </PressableScale>
+
+                  <PressableScale
+                    onPress={() => {
+                      AppHaptics.selection();
+                      setSettingsVisible(true);
+                    }}
+                    scaleTo={0.92}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={[
+                      styles.actionCircleBtn,
+                      { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                    ]}
+                  >
+                    <Settings size={15} color={colors.text} />
+                  </PressableScale>
+                </View>
               </View>
 
-              <PressableScale
+              {/* Quick Auth Trigger */}
+              <View style={[styles.authRow, { borderTopColor: colors.separator }]}>
+                {isLoggedIn ? (
+                  <Button
+                    title={isAnonymous ? 'Exit Guest Mode' : 'Sign Out'}
+                    onPress={handleAuthAction}
+                    variant="outline"
+                    size="sm"
+                    icon={<LogOut size={15} color={colors.dangerText} />}
+                  />
+                ) : (
+                  <Button
+                    title="Sign In / Create Account"
+                    onPress={handleAuthAction}
+                    variant="primary"
+                    size="sm"
+                    icon={<LogIn size={15} color={colors.onPrimary} />}
+                  />
+                )}
+              </View>
+            </CardContent>
+          </Card>
+        </FadeInView>
+
+        {/* GymMane 4 Quick Stat Pills with Tactile Haptic Long-Press */}
+        <FadeInView delay={80} style={styles.pillsRow}>
+          <PressableScale
+            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => AppHaptics.selection()}
+            onLongPress={() => AppHaptics.impactHeavy()}
+          >
+            <Activity size={16} color={colors.primary} />
+            <RollingNumber value={scanCount} style={[styles.pillValue, { color: colors.text }]} />
+            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>SCANS</Text>
+          </PressableScale>
+
+          <PressableScale
+            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => AppHaptics.selection()}
+            onLongPress={() => AppHaptics.impactHeavy()}
+          >
+            <CheckCircle size={16} color={colors.success} />
+            <Text style={[styles.pillValue, { color: colors.text }]}>84%</Text>
+            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>CLEAN</Text>
+          </PressableScale>
+
+          <PressableScale
+            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => AppHaptics.selection()}
+            onLongPress={() => AppHaptics.impactHeavy()}
+          >
+            <Shield size={16} color={colors.info} />
+            <Text style={[styles.pillValue, { color: colors.text }]}>0</Text>
+            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>ALLERGENS</Text>
+          </PressableScale>
+
+          <PressableScale
+            style={[styles.pillCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => AppHaptics.selection()}
+            onLongPress={() => AppHaptics.impactHeavy()}
+          >
+            <Flame size={16} color={colors.warning} />
+            <Text style={[styles.pillValue, { color: colors.text }]}>7d</Text>
+            <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>STREAK</Text>
+          </PressableScale>
+        </FadeInView>
+
+        {/* GymMane 12-Month Annual Activity Histogram */}
+        <FadeInView delay={120}>
+          <Card>
+            <CardHeader
+              title="Annual Scan Activity"
+              subtitle="Monthly nutritional verification volume across the year"
+            />
+            <CardContent>
+              <YearActivityChart totalScans={Math.max(scanCount, 42)} />
+            </CardContent>
+          </Card>
+        </FadeInView>
+
+        {/* Quick Settings Shortcut Banner */}
+        <FadeInView delay={150}>
+          <Card onPress={() => setSettingsVisible(true)}>
+            <CardContent style={styles.settingsShortcutRow}>
+              <View style={[styles.settingsShortcutIcon, { backgroundColor: colors.primaryMuted }]}>
+                <Settings size={20} color={colors.primary} />
+              </View>
+              <View style={styles.settingsShortcutText}>
+                <Text style={[styles.settingsShortcutTitle, { color: colors.text }]}>Preferences & Engine Settings</Text>
+                <Text style={[styles.settingsShortcutDesc, { color: colors.textSecondary }]}>
+                  Theme, strict allergen alerts, offline dictionary, AI health checks
+                </Text>
+              </View>
+              <ChevronRight size={18} color={colors.textSecondary} />
+            </CardContent>
+          </Card>
+        </FadeInView>
+
+        {/* Data Portability Card */}
+        <FadeInView delay={180}>
+          <Card>
+            <CardHeader
+              title="Data Portability & Backup"
+              subtitle="Clinical audit logs stored locally on device"
+            />
+            <CardContent>
+              <Button
+                title="Export Scan History (JSON)"
+                onPress={handleExport}
+                variant="outline"
+                size="md"
+                icon={<Download size={16} color={colors.primary} />}
+              />
+            </CardContent>
+          </Card>
+        </FadeInView>
+
+        {/* Server & Diagnostics */}
+        <FadeInView delay={210}>
+          <Card>
+            <CardHeader
+              title="Backend AI Status"
+              subtitle="EatInformed OCR & Llama 3.2 Vision engine diagnostic"
+              rightElement={
+                <View style={styles.statusIndicator}>
+                  <View
+                    style={[
+                      styles.statusDot,
+                      {
+                        backgroundColor:
+                          serverOnline === true
+                            ? colors.success
+                            : serverOnline === false
+                            ? colors.danger
+                            : colors.warning,
+                      },
+                    ]}
+                  />
+                  <Text style={[styles.statusText, { color: colors.textSecondary }]}>
+                    {serverOnline === true ? 'Online' : serverOnline === false ? 'Offline' : 'Checking'}
+                  </Text>
+                </View>
+              }
+            />
+            <CardContent>
+              <View
+                style={[
+                  styles.diagnosticBox,
+                  { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+                ]}
+              >
+                <Server size={16} color={colors.textSecondary} />
+                <Text style={[styles.diagnosticText, { color: colors.textSecondary }]}>
+                  {serverMessage}
+                </Text>
+              </View>
+              <Button
+                title={isCheckingServer ? 'Checking...' : 'Check Server Status'}
                 onPress={checkBackend}
-                disabled={isCheckingServer}
-                style={[
-                  styles.recheckButton,
-                  {
-                    backgroundColor: colors.surfaceRaised,
-                    borderColor: colors.border,
-                    opacity: isCheckingServer ? 0.6 : 1,
-                  },
-                ]}
-                scaleTo={0.94}
-              >
-                <Text
-                  style={[styles.recheckText, { color: colors.textSecondary }]}
-                >
-                  {isCheckingServer ? 'Checking...' : 'Check'}
-                </Text>
-              </PressableScale>
-            </View>
-            <Text style={[styles.statusDetail, { color: colors.textMuted }]}>
-              {serverMessage}
-            </Text>
-          </CardContent>
-        </Card>
-      </FadeInView>
+                variant="outline"
+                size="sm"
+                loading={isCheckingServer}
+                style={{ marginTop: spacing.md }}
+              />
+            </CardContent>
+          </Card>
+        </FadeInView>
+      </View>
 
-      {/* Architecture & AI Engine Info */}
-      <FadeInView delay={200}>
-        <Card>
-          <CardHeader title="AI Engine Architecture" />
-          <CardContent>
-            <View style={styles.techItem}>
-              <View
-                style={[
-                  styles.techIconBox,
-                  { backgroundColor: colors.primaryMuted },
-                ]}
-              >
-                <Sparkles size={16} color={colors.primary} />
-              </View>
-              <View style={styles.techTextContainer}>
-                <Text style={[styles.techTitle, { color: colors.text }]}>
-                  OCR & Label Extraction
-                </Text>
-                <Text
-                  style={[styles.techSubtitle, { color: colors.textSecondary }]}
-                >
-                  NVIDIA Nemotron Nano 12B v2 VL (Unified Single-Pass Vision & OCR)
-                </Text>
-              </View>
-            </View>
+      {/* Edit Profile Bottom Sheet */}
+      {session && (
+        <EditProfileSheet
+          visible={editProfileVisible}
+          currentSession={session}
+          onClose={() => setEditProfileVisible(false)}
+          onProfileUpdated={handleProfileUpdated}
+        />
+      )}
 
-            <View style={styles.techItem}>
-              <View
-                style={[
-                  styles.techIconBox,
-                  { backgroundColor: colors.infoLight },
-                ]}
-              >
-                <Shield size={16} color={colors.infoText} />
-              </View>
-              <View style={styles.techTextContainer}>
-                <Text style={[styles.techTitle, { color: colors.text }]}>
-                  Nutritional Reasoning
-                </Text>
-                <Text
-                  style={[styles.techSubtitle, { color: colors.textSecondary }]}
-                >
-                  Qwen 3.5 (122B) Clinical Nutrition Reasoning Model
-                </Text>
-              </View>
-            </View>
+      {/* Full Settings Modal Sheet */}
+      <SettingsSheet
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+        onSignOutRequest={() => setSignOutModalVisible(true)}
+        isLoggedIn={isLoggedIn}
+        isAnonymous={isAnonymous}
+      />
 
-            <View style={[styles.techItem, { marginBottom: 0 }]}>
-              <View
-                style={[
-                  styles.techIconBox,
-                  { backgroundColor: colors.warningLight },
-                ]}
-              >
-                <Server size={16} color={colors.warningText} />
-              </View>
-              <View style={styles.techTextContainer}>
-                <Text style={[styles.techTitle, { color: colors.text }]}>
-                  Classification Standard
-                </Text>
-                <Text
-                  style={[styles.techSubtitle, { color: colors.textSecondary }]}
-                >
-                  International NOVA Food Processing Classification (Groups 1-4)
-                </Text>
-              </View>
-            </View>
-          </CardContent>
-        </Card>
-      </FadeInView>
-
-      {/* App Version Info */}
-      <FadeInView delay={240} style={styles.versionContainer}>
-        <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-          EatInformed Mobile v1.1.0
-        </Text>
-        <Text style={[styles.versionSubtext, { color: colors.textMuted }]}>
-          Food Product Analysis & Nutrition Intelligence
-        </Text>
-      </FadeInView>
-
+      {/* Sign Out Confirmation Modal */}
       <ConfirmModal
         visible={signOutModalVisible}
-        title={isAnonymous ? "Exit Guest Mode" : "Sign Out"}
+        title={isAnonymous ? 'Exit Guest Mode' : 'Sign Out'}
         message={
           isAnonymous
-            ? "Your temporary guest scanning session will end. You can start a new guest session or sign in anytime."
-            : "Are you sure you want to sign out of your EatInformed account?"
+            ? 'Your temporary guest session will end. You can start a new session or sign in anytime.'
+            : 'Are you sure you want to sign out of your EatInformed account?'
         }
-        confirmText={isAnonymous ? "Exit" : "Sign Out"}
+        confirmText={isAnonymous ? 'Exit' : 'Sign Out'}
         cancelText="Cancel"
-        destructive={true}
-        onConfirm={confirmSignOut}
+        destructive
         onCancel={() => setSignOutModalVisible(false)}
+        onConfirm={confirmSignOut}
       />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingTop: spacing.base,
-    paddingBottom: spacing.md,
+  watermarkTicker: {
+    position: 'absolute',
+    top: 40,
+    alignSelf: 'center',
+    zIndex: 0,
   },
-  title: {
-    fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.black,
-    letterSpacing: -0.6,
+  watermarkText: {
+    fontSize: 54,
+    fontWeight: '900',
+    letterSpacing: 8,
   },
-  subtitle: {
-    fontSize: typography.fontSizes.sm,
-    lineHeight: typography.lineHeights.sm,
-    marginTop: 3,
-  },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.base,
-  },
-  avatarCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  headerSettingsBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
   },
-  userInfo: {
+  userHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInner: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userMetaCol: {
     flex: 1,
+    marginLeft: spacing.md,
   },
-  userName: {
-    fontSize: typography.fontSizes.lg,
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  displayName: {
+    fontSize: typography.fontSizes.md,
     fontWeight: typography.fontWeights.bold,
-    letterSpacing: -0.3,
+    maxWidth: 150,
   },
-  userEmail: {
-    fontSize: typography.fontSizes.sm,
+  userHandle: {
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.medium,
     marginTop: 2,
   },
-  authButton: {
-    width: '100%',
-  },
-  statusRow: {
+  heroActionBtns: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
+  },
+  actionCircleBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    justifyContent: 'center',
+  },
+  authRow: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: 'flex-start',
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginVertical: spacing.md,
+  },
+  pillCard: {
+    flex: 1,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  pillValue: {
+    fontSize: typography.fontSizes.md,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  pillLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  settingsShortcutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingsShortcutIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsShortcutText: {
+    flex: 1,
+  },
+  settingsShortcutTitle: {
+    fontSize: typography.fontSizes.sm,
+    fontWeight: '700',
+  },
+  settingsShortcutDesc: {
+    fontSize: typography.fontSizes.xs,
+    marginTop: 2,
   },
   statusIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.xs,
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: spacing.sm,
   },
   statusText: {
-    fontSize: typography.fontSizes.subhead,
-    fontWeight: typography.fontWeights.semibold,
-  },
-  recheckButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-  },
-  recheckText: {
     fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
+    fontWeight: typography.fontWeights.medium,
   },
-  statusDetail: {
-    fontSize: typography.fontSizes.xs,
-    marginTop: 4,
-  },
-  techItem: {
+  diagnosticBox: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  techIconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    gap: spacing.sm,
   },
-  techTextContainer: {
+  diagnosticText: {
+    fontSize: typography.fontSizes.xs,
     flex: 1,
-  },
-  techTitle: {
-    fontSize: typography.fontSizes.subhead,
-    fontWeight: typography.fontWeights.semibold,
-  },
-  techSubtitle: {
-    fontSize: typography.fontSizes.xs,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  versionContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    paddingBottom: 36,
-  },
-  versionText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
-  },
-  versionSubtext: {
-    fontSize: typography.fontSizes.caption2,
-    marginTop: 3,
   },
 });

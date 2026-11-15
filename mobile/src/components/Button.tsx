@@ -17,6 +17,7 @@ type ButtonSize = 'sm' | 'md' | 'lg';
 interface ButtonProps {
   title: string;
   onPress: () => void;
+  onLongPress?: () => void;
   variant?: ButtonVariant;
   size?: ButtonSize;
   style?: ViewStyle;
@@ -30,6 +31,7 @@ interface ButtonProps {
 export function Button({
   title,
   onPress,
+  onLongPress,
   variant = 'primary',
   size = 'md',
   style,
@@ -111,6 +113,7 @@ export function Button({
   return (
     <PressableScale
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={disabled || loading}
       scaleTo={0.975}
       style={[

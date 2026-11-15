@@ -18,6 +18,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { saveUserSession, signInWithGoogle, authenticateWithBackend, signInAsGuest } from '../lib/auth';
+import { AppHaptics } from '../lib/haptics';
 import { RootStackParamList } from '../navigation/types';
 import { EatInformedLogo } from '../components/EatInformedLogo';
 
@@ -61,12 +62,15 @@ export default function AuthScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
+    AppHaptics.selection();
     if (!email.trim() || !password.trim()) {
+      AppHaptics.error();
       setError('Please provide both an email address and password.');
       return;
     }
 
     if (password.length < 6) {
+      AppHaptics.error();
       setError('Password must be at least 6 characters.');
       return;
     }
@@ -80,8 +84,10 @@ export default function AuthScreen() {
         password,
         activeTab === 'login' ? 'signIn' : 'signUp'
       );
+      AppHaptics.success();
       navigation.goBack();
     } catch (err: unknown) {
+      AppHaptics.error();
       setError(err instanceof Error ? err.message : 'Authentication failed.');
     } finally {
       setIsLoading(false);
@@ -89,13 +95,16 @@ export default function AuthScreen() {
   };
 
   const handleGoogleSignIn = async () => {
+    AppHaptics.selection();
     setIsGoogleLoading(true);
     setError(null);
 
     try {
       await signInWithGoogle();
+      AppHaptics.success();
       navigation.goBack();
     } catch (err: unknown) {
+      AppHaptics.warning();
       setError(err instanceof Error ? err.message : 'Google sign-in failed.');
     } finally {
       setIsGoogleLoading(false);
@@ -103,11 +112,13 @@ export default function AuthScreen() {
   };
 
   const handleContinueGuest = async () => {
+    AppHaptics.selection();
     setIsLoading(true);
     setError(null);
 
     try {
       await signInAsGuest();
+      AppHaptics.success();
       navigation.goBack();
     } catch {
       navigation.goBack();
@@ -158,6 +169,7 @@ export default function AuthScreen() {
           ]}
           value={activeTab}
           onChange={(val) => {
+            AppHaptics.selection();
             setActiveTab(val);
             setError(null);
           }}

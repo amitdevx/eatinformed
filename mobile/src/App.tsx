@@ -26,6 +26,7 @@ import ResultScreen from './screens/ResultScreen';
 import AuthScreen from './screens/AuthScreen';
 import { getUserSession } from './lib/auth';
 import { checkApiHealth } from './api/client';
+import { FloatingNavBar } from './components/FloatingNavBar';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,109 +50,19 @@ const linking: LinkingOptions<RootStackParamList> = {
   },
 };
 
-function AnimatedTabIcon({
-  focused,
-  children,
-}: {
-  focused: boolean;
-  children: React.ReactNode;
-}) {
-  const scale = useRef(new Animated.Value(focused ? 1.06 : 1)).current;
-
-  useEffect(() => {
-    Animated.spring(scale, {
-      toValue: focused ? 1.08 : 1,
-      ...SpringPresets.snappy,
-    }).start();
-  }, [focused, scale]);
-
-  return (
-    <Animated.View style={{ transform: [{ scale }], alignItems: 'center', justifyContent: 'center' }}>
-      {children}
-    </Animated.View>
-  );
-}
-
 function TabNavigator() {
-  const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const bottomPadding = insets.bottom > 0 ? insets.bottom : 10;
-  const tabBarHeight = 58 + bottomPadding;
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      tabBar={(props) => <FloatingNavBar {...props} />}
+      screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: tabBarHeight,
-          paddingBottom: bottomPadding,
-          paddingTop: 6,
-          elevation: 0,
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarIcon: ({ color, size, focused }) => {
-          const strokeWidth = focused ? 2.3 : 1.9;
-          switch (route.name) {
-            case 'Home':
-              return (
-                <AnimatedTabIcon focused={focused}>
-                  <Home size={size} color={color} strokeWidth={strokeWidth} />
-                </AnimatedTabIcon>
-              );
-            case 'Scan':
-              return (
-                <AnimatedTabIcon focused={focused}>
-                  <View
-                    style={[
-                      styles.scanTabIcon,
-                      {
-                        backgroundColor: focused ? colors.primaryButton : colors.primaryMuted,
-                        borderColor: focused ? colors.primaryButton : colors.primaryBorder,
-                      },
-                    ]}
-                  >
-                    <ScanLine
-                      size={20}
-                      color={focused ? colors.onPrimary : colors.primary}
-                      strokeWidth={2.2}
-                    />
-                  </View>
-                </AnimatedTabIcon>
-              );
-            case 'History':
-              return (
-                <AnimatedTabIcon focused={focused}>
-                  <History size={size} color={color} strokeWidth={strokeWidth} />
-                </AnimatedTabIcon>
-              );
-            case 'Guide':
-              return (
-                <AnimatedTabIcon focused={focused}>
-                  <BookOpen size={size} color={color} strokeWidth={strokeWidth} />
-                </AnimatedTabIcon>
-              );
-            case 'Profile':
-              return (
-                <AnimatedTabIcon focused={focused}>
-                  <User size={size} color={color} strokeWidth={strokeWidth} />
-                </AnimatedTabIcon>
-              );
-            default:
-              return <Home size={size} color={color} />;
-          }
-        },
-      })}
+      }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
-      <Tab.Screen name="Scan" component={ScanScreen} options={{ title: 'Scan' }} />
-      <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
-      <Tab.Screen name="Guide" component={GuideScreen} options={{ title: 'Guide' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="Scan" component={ScanScreen} />
+      <Tab.Screen name="Guide" component={GuideScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -221,19 +132,4 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  tabBarLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-    marginTop: 2,
-  },
-  scanTabIcon: {
-    width: 38,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = StyleSheet.create({});

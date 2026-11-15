@@ -80,151 +80,164 @@ export interface AppThemeColors {
 }
 
 export const darkColors: AppThemeColors = {
-  // Brand (Apple System Green Dark #30D158)
-  primary: '#30D158',
-  primaryButton: '#30D158',
-  onPrimary: '#031A09',
-  primaryDark: '#248A3D',
-  primaryLight: '#4ADE80',
-  primaryMuted: '#0D2818',
-  primaryBorder: '#1E4E30',
+  // Brand (GymMane Vibrant Emerald & Sage Palette)
+  primary: '#10B981',
+  primaryButton: '#10B981',
+  onPrimary: '#0A0A0A',
+  primaryDark: '#059669',
+  primaryLight: '#34D399',
+  primaryMuted: 'rgba(16, 185, 129, 0.16)',
+  primaryBorder: 'rgba(16, 185, 129, 0.38)',
 
-  // Background and Surfaces (True OLED + Apple Elevated Dark Greys)
-  background: '#000000', // Pure Black OLED (systemBackground)
-  backgroundElevated: '#0B0B0E',
-  surface: '#161618', // Level 1 Card Surface (secondarySystemGroupedBackground)
-  surfaceRaised: '#222226', // Level 2 Nested Control / Input (tertiarySystemGroupedBackground)
-  surfaceHighlight: '#2C2C31', // Level 3 Active Segment / Pressed State
-  surfaceGlass: 'rgba(22, 22, 24, 0.86)',
+  // Background and Surfaces (GymMane Deep Charcoal Dark Architecture)
+  background: '#0A0A0A', // GymMane bg
+  backgroundElevated: '#141414',
+  surface: '#1C1C1C', // GymMane bgRaised
+  surfaceRaised: '#2B2B2B', // GymMane bgRaised2
+  surfaceHighlight: '#383838',
+  surfaceGlass: 'rgba(28, 28, 28, 0.86)',
 
-  // Borders & Hairlines
-  border: '#26262A',
-  borderStrong: '#38383E',
-  separator: '#222226',
+  // Borders & Hairlines (GymMane border)
+  border: '#3E3E3E',
+  borderStrong: '#555555',
+  separator: '#2B2B2B',
 
-  // Typography (WCAG AAA/AA Verified on #000000, #161618, and #222226)
-  text: '#F5F5F7', // 16.4:1 on surface
-  textSecondary: '#AEAEB2', // 8.2:1 on surface (Apple systemGray2 Dark)
-  textMuted: '#8E8E93', // 5.4:1 on surface (Apple systemGray Dark)
+  // Typography (GymMane text, textSecondary, textTertiary)
+  text: '#FFFFFF',
+  textSecondary: '#9A9A9A',
+  textMuted: '#666666',
 
-  // Semantic Status
-  success: '#30D158',
-  successText: '#4ADE80',
-  successLight: '#0D2818',
-  successBorder: '#1E4E30',
+  // Semantic Status (GymMane Semantic Palette)
+  success: '#10B981',
+  successText: '#34D399',
+  successLight: 'rgba(16, 185, 129, 0.15)',
+  successBorder: 'rgba(16, 185, 129, 0.35)',
 
-  danger: '#FF453A',
-  dangerText: '#FF6961',
-  dangerLight: '#2C1215',
-  dangerBorder: '#582226',
+  danger: '#E5674C', // GymMane danger
+  dangerText: '#F87171',
+  dangerLight: 'rgba(229, 103, 76, 0.15)',
+  dangerBorder: 'rgba(229, 103, 76, 0.35)',
 
-  warning: '#FF9F0A',
+  warning: '#E0B15A', // GymMane warn
   warningText: '#FBBF24',
-  warningLight: '#2A1C08',
-  warningBorder: '#523610',
+  warningLight: 'rgba(224, 177, 90, 0.15)',
+  warningBorder: 'rgba(224, 177, 90, 0.35)',
 
-  info: '#0A84FF',
-  infoText: '#60A5FA',
-  infoLight: '#0C2340',
-  infoBorder: '#1E3A5F',
+  info: '#7FA8C9', // GymMane info
+  infoText: '#93C5FD',
+  infoLight: 'rgba(127, 168, 201, 0.15)',
+  infoBorder: 'rgba(127, 168, 201, 0.35)',
 
-  starFilled: '#FBBF24',
-  starEmpty: '#2C2C31',
+  starFilled: '#E0B15A',
+  starEmpty: '#383838',
 
-  // NOVA Classification (High-Contrast Dark Mode Pills)
-  nova1: '#4ADE80',
-  nova1Dot: '#30D158',
-  nova1Bg: '#0D2818',
-  nova1Border: '#1E4E30',
+  // NOVA Classification (High-Contrast GymMane Badges)
+  nova1: '#34D399',
+  nova1Dot: '#10B981',
+  nova1Bg: 'rgba(16, 185, 129, 0.15)',
+  nova1Border: 'rgba(16, 185, 129, 0.35)',
 
-  nova2: '#60A5FA',
-  nova2Dot: '#0A84FF',
-  nova2Bg: '#0C2340',
-  nova2Border: '#1E3A5F',
+  nova2: '#93C5FD',
+  nova2Dot: '#7FA8C9',
+  nova2Bg: 'rgba(127, 168, 201, 0.15)',
+  nova2Border: 'rgba(127, 168, 201, 0.35)',
 
   nova3: '#FBBF24',
-  nova3Dot: '#FF9F0A',
-  nova3Bg: '#2A1C08',
-  nova3Border: '#523610',
+  nova3Dot: '#E0B15A',
+  nova3Bg: 'rgba(224, 177, 90, 0.15)',
+  nova3Border: 'rgba(224, 177, 90, 0.35)',
 
-  nova4: '#FF6961',
-  nova4Dot: '#FF453A',
-  nova4Bg: '#2C1215',
-  nova4Border: '#582226',
+  nova4: '#F87171',
+  nova4Dot: '#E5674C',
+  nova4Bg: 'rgba(229, 103, 76, 0.15)',
+  nova4Border: 'rgba(229, 103, 76, 0.35)',
+};
+
+export const amoledColors: AppThemeColors = {
+  ...darkColors,
+  background: '#000000',
+  backgroundElevated: '#080808',
+  surface: '#111111',
+  surfaceRaised: '#1E1E1E',
+  surfaceHighlight: '#2A2A2A',
+  surfaceGlass: 'rgba(17, 17, 17, 0.90)',
+  border: '#2E2E2E',
+  borderStrong: '#444444',
+  separator: '#1E1E1E',
 };
 
 export const lightColors: AppThemeColors = {
-  // Brand (Apple Accessible Green Light)
-  primary: '#1E8E3E',
-  primaryButton: '#1E8E3E',
+  // Brand (GymMane Accessible Emerald)
+  primary: '#059669',
+  primaryButton: '#059669',
   onPrimary: '#FFFFFF',
-  primaryDark: '#166534',
-  primaryLight: '#34C759',
-  primaryMuted: '#E8F8ED',
-  primaryBorder: '#A7F3D0',
+  primaryDark: '#047857',
+  primaryLight: '#10B981',
+  primaryMuted: 'rgba(5, 150, 105, 0.12)',
+  primaryBorder: 'rgba(5, 150, 105, 0.32)',
 
-  // Background and Surfaces (Apple Grouped Light Background + Pure White Cards)
-  background: '#F2F2F7', // Apple systemGroupedBackground Light
-  backgroundElevated: '#FFFFFF',
-  surface: '#FFFFFF', // Pure White Card Surface
-  surfaceRaised: '#F2F2F7', // Nested Input / Pill / Table Header Surface
-  surfaceHighlight: '#E5E5EA', // Active Segment / Pressed State
-  surfaceGlass: 'rgba(255, 255, 255, 0.88)',
+  // Background and Surfaces (GymMane Warm Nordic Ivory Light Mode)
+  background: '#F7F4F0', // GymMane bg
+  backgroundElevated: '#FFFEFD', // GymMane pageBg
+  surface: '#FFFFFF', // GymMane bgRaised
+  surfaceRaised: '#ECE8E3', // GymMane bgRaised2
+  surfaceHighlight: '#E0DBD5',
+  surfaceGlass: 'rgba(255, 255, 255, 0.90)',
 
   // Borders & Hairlines
-  border: '#E5E5EA',
-  borderStrong: '#D1D1D6',
-  separator: '#EBEBF0',
+  border: '#E0DBD5', // GymMane border
+  borderStrong: '#CBC5BD',
+  separator: '#ECE8E3',
 
-  // Typography (WCAG AAA/AA Verified on #FFFFFF and #F2F2F7)
-  text: '#1C1C1E', // 17.4:1 on #FFFFFF
-  textSecondary: '#48484A', // 8.4:1 on #FFFFFF, 7.5:1 on #F2F2F7
-  textMuted: '#636366', // 5.7:1 on #FFFFFF, 5.1:1 on #F2F2F7
+  // Typography (GymMane text, textSecondary, textTertiary)
+  text: '#1A1713',
+  textSecondary: '#5F574F',
+  textMuted: '#8A8179',
 
   // Semantic Status
-  success: '#1E8E3E',
-  successText: '#166534',
-  successLight: '#E8F8ED',
-  successBorder: '#A7F3D0',
+  success: '#059669',
+  successText: '#047857',
+  successLight: 'rgba(5, 150, 105, 0.10)',
+  successBorder: 'rgba(5, 150, 105, 0.28)',
 
-  danger: '#D70015',
-  dangerText: '#C41224',
-  dangerLight: '#FFEBEE',
-  dangerBorder: '#FECDD3',
+  danger: '#C0392B', // GymMane danger
+  dangerText: '#991B1B',
+  dangerLight: 'rgba(192, 57, 43, 0.10)',
+  dangerBorder: 'rgba(192, 57, 43, 0.28)',
 
-  warning: '#B45309',
-  warningText: '#9A4D00',
-  warningLight: '#FFF4E5',
-  warningBorder: '#FDE68A',
+  warning: '#9A6A12', // GymMane warn
+  warningText: '#92400E',
+  warningLight: 'rgba(154, 106, 18, 0.10)',
+  warningBorder: 'rgba(154, 106, 18, 0.28)',
 
-  info: '#007AFF',
-  infoText: '#0055B3',
-  infoLight: '#EBF5FF',
-  infoBorder: '#BAE6FD',
+  info: '#3268A0', // GymMane info
+  infoText: '#1E40AF',
+  infoLight: 'rgba(50, 104, 160, 0.10)',
+  infoBorder: 'rgba(50, 104, 160, 0.28)',
 
-  starFilled: '#D97706',
-  starEmpty: '#E5E5EA',
+  starFilled: '#9A6A12',
+  starEmpty: '#E0DBD5',
 
-  // NOVA Classification (High-Contrast Accessible Light Mode Pills)
-  nova1: '#166534',
-  nova1Dot: '#1E8E3E',
-  nova1Bg: '#E8F8ED',
-  nova1Border: '#A7F3D0',
+  // NOVA Classification
+  nova1: '#047857',
+  nova1Dot: '#059669',
+  nova1Bg: 'rgba(5, 150, 105, 0.10)',
+  nova1Border: 'rgba(5, 150, 105, 0.28)',
 
-  nova2: '#0055B3',
-  nova2Dot: '#007AFF',
-  nova2Bg: '#EBF5FF',
-  nova2Border: '#BAE6FD',
+  nova2: '#1E40AF',
+  nova2Dot: '#3268A0',
+  nova2Bg: 'rgba(50, 104, 160, 0.10)',
+  nova2Border: 'rgba(50, 104, 160, 0.28)',
 
-  nova3: '#9A4D00',
-  nova3Dot: '#D97706',
-  nova3Bg: '#FFF4E5',
-  nova3Border: '#FDE68A',
+  nova3: '#92400E',
+  nova3Dot: '#9A6A12',
+  nova3Bg: 'rgba(154, 106, 18, 0.10)',
+  nova3Border: 'rgba(154, 106, 18, 0.28)',
 
-  nova4: '#C41224',
-  nova4Dot: '#D70015',
-  nova4Bg: '#FFEBEE',
-  nova4Border: '#FECDD3',
+  nova4: '#991B1B',
+  nova4Dot: '#C0392B',
+  nova4Bg: 'rgba(192, 57, 43, 0.10)',
+  nova4Border: 'rgba(192, 57, 43, 0.28)',
 };
 
 // Default fallback export

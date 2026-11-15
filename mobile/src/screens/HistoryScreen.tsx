@@ -13,17 +13,20 @@ import {
   ChevronRight,
   History as HistoryIcon,
   Share2,
+  Filter,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { Card } from '../components/Card';
+import { Card, CardContent } from '../components/Card';
 import { EmptyState } from '../components/States';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { ScanActivityHeatmap } from '../components/ScanActivityHeatmap';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
+import { AppHaptics } from '../lib/haptics';
 import {
   getScanHistory,
   deleteHistoryItem,
@@ -39,6 +42,7 @@ export default function HistoryScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { colors } = useTheme();
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [filterMode, setFilterMode] = useState<'all' | 'clean' | 'processed' | 'ultra'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isClearAllModalVisible, setIsClearAllModalVisible] = useState(false);
@@ -61,6 +65,7 @@ export default function HistoryScreen() {
   };
 
   const handleOpenItem = (item: HistoryItem) => {
+    AppHaptics.selection();
     navigation.navigate('Result', {
       data: item.data,
       imageUri: item.imagePreviewUrl,
@@ -68,11 +73,13 @@ export default function HistoryScreen() {
   };
 
   const handleDeleteItem = (id: string, name: string) => {
+    AppHaptics.warning();
     setItemToDelete({ id, name });
   };
 
   const confirmDeleteItem = async () => {
     if (itemToDelete) {
+      AppHaptics.success();
       const updated = await deleteHistoryItem(itemToDelete.id);
       setHistoryItems(updated);
       setItemToDelete(null);
@@ -80,10 +87,12 @@ export default function HistoryScreen() {
   };
 
   const handleClearAll = () => {
+    AppHaptics.warning();
     setIsClearAllModalVisible(true);
   };
 
   const confirmClearAll = async () => {
+    AppHaptics.success();
     setIsClearAllModalVisible(false);
     await clearAllHistory();
     setHistoryItems([]);
@@ -100,8 +109,16 @@ export default function HistoryScreen() {
   };
 
   const handleExport = async () => {
+    AppHaptics.success();
     await exportScanHistory();
   };
+
+  const filteredItems = historyItems.filter((item) => {
+    if (filterMode === 'clean') return (item.novaGroup || 1) <= 2;
+    if (filterMode === 'processed') return item.novaGroup === 3;
+    if (filterMode === 'ultra') return item.novaGroup === 4;
+    return true;
+  });
 
   return (
     <Screen
@@ -160,6 +177,59 @@ export default function HistoryScreen() {
         />
       </FadeInView>
 
+      {historyItems.length > 0 && (
+        <FadeInView delay={30} style={styles.filterRow}>
+          {[
+            { id: 'all', label: `All (${historyItems.length})` },
+            { id: 'clean', label: 'Clean (1-2)' },
+            { id: 'processed', label: 'Processed (3)' },
+            { id: 'ultra', label: 'Ultra (4)' },
+          ].map((tab) => {
+            const active = filterMode === tab.id;
+            return (
+              <PressableScale
+                key={tab.id}
+                onPress={() => {
+                  AppHaptics.selection();
+                  setFilterMode(tab.id as any);
+                }}
+                scaleTo={0.94}
+                style={[
+                  styles.filterPill,
+                  {
+                    backgroundColor: active ? colors.primary : colors.surfaceRaised,
+                    borderColor: active ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    {
+                      color: active ? colors.onPrimary : colors.textSecondary,
+                      fontWeight: active ? '700' : '500',
+                    },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </FadeInView>
+      )}
+
+      {/* FitBuddy-Grade 30-Day Activity Heatmap */}
+      {historyItems.length > 0 && (
+        <FadeInView delay={50}>
+          <Card style={{ marginBottom: spacing.md }}>
+            <CardContent>
+              <ScanActivityHeatmap />
+            </CardContent>
+          </Card>
+        </FadeInView>
+      )}
+
       {historyItems.length === 0 ? (
         <EmptyState
           title="No Saved Scans Yet"
@@ -169,10 +239,26 @@ export default function HistoryScreen() {
           icon={<HistoryIcon size={32} color={colors.textMuted} />}
           style={{ marginTop: 44 }}
         />
+      ) : filteredItems.length === 0 ? (
+        <EmptyState
+          title="No Scans in this Category"
+          description="None of your saved scans match the selected processing filter."
+          actionTitle="Show All Scans"
+          onAction={() => setFilterMode('all')}
+          icon={<Filter size={32} color={colors.textMuted} />}
+          style={{ marginTop: 32 }}
+        />
       ) : (
-        historyItems.map((item, idx) => (
+        filteredItems.map((item, idx) => (
           <FadeInView key={item.id} delay={50 + idx * 45}>
-            <Card onPress={() => handleOpenItem(item)} style={styles.itemCard}>
+            <Card
+              onPress={() => handleOpenItem(item)}
+              onLongPress={() => {
+                AppHaptics.impactHeavy();
+                handleDeleteItem(item.id, item.productName);
+              }}
+              style={styles.itemCard}
+            >
               <View style={styles.cardHeader}>
                 <View style={styles.cardTitleContainer}>
                   {item.brand ? (
@@ -248,6 +334,22 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: spacing.md,
+    flexWrap: 'wrap',
+  },
+  filterPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  filterText: {
+    fontSize: 11,
+    letterSpacing: -0.1,
+  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',

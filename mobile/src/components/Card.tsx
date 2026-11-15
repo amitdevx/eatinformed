@@ -15,9 +15,10 @@ interface CardProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  onLongPress?: () => void;
 }
 
-export function Card({ children, style, onPress }: CardProps) {
+export function Card({ children, style, onPress, onLongPress }: CardProps) {
   const { colors, isDark } = useTheme();
   const cardStyle: StyleProp<ViewStyle> = [
     styles.card,
@@ -29,9 +30,14 @@ export function Card({ children, style, onPress }: CardProps) {
     style,
   ];
 
-  if (onPress) {
+  if (onPress || onLongPress) {
     return (
-      <PressableScale onPress={onPress} scaleTo={0.982} style={cardStyle}>
+      <PressableScale
+        onPress={onPress}
+        onLongPress={onLongPress}
+        scaleTo={0.982}
+        style={cardStyle}
+      >
         {children}
       </PressableScale>
     );

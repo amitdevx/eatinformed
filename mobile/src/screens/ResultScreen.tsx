@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Share2,
   RefreshCw,
+  Info,
 } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -23,6 +24,11 @@ import { Badge } from '../components/Badge';
 import { NovaBadge } from '../components/NovaBadge';
 import { RatingStars } from '../components/RatingStars';
 import { SegmentedControl } from '../components/SegmentedControl';
+import { HealthScoreRing } from '../components/HealthScoreRing';
+import { MacroProportionBar } from '../components/MacroProportionBar';
+import { AdditiveDetailSheet, AdditiveDetailData } from '../components/AdditiveDetailSheet';
+import { ADDITIVE_DICTIONARY } from '../lib/additive-dictionary';
+import { AppHaptics } from '../lib/haptics';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
@@ -40,6 +46,30 @@ export default function ResultScreen() {
   const { data, imageUri } = route.params;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [additiveSheetVisible, setAdditiveSheetVisible] = useState(false);
+  const [selectedAdditive, setSelectedAdditive] = useState<AdditiveDetailData | null>(null);
+
+  const handleOpenAdditiveDetails = (item: any) => {
+    AppHaptics.selection();
+    const rawName = item.ingredient || '';
+    const match = ADDITIVE_DICTIONARY.find(
+      (entry) =>
+        entry.name.toLowerCase().includes(rawName.toLowerCase()) ||
+        rawName.toLowerCase().includes(entry.name.toLowerCase()) ||
+        (entry.code && rawName.toLowerCase().includes(entry.code.toLowerCase()))
+    );
+
+    setSelectedAdditive({
+      name: rawName,
+      code: match?.code,
+      category: match?.category || item.purpose,
+      riskLevel: match?.riskLevel || (item.isControversial ? 'caution' : 'safe'),
+      novaGroup: match?.novaGroup || (item.isControversial ? 4 : 1),
+      description: match?.description || item.description,
+      foundIn: match?.foundIn,
+    });
+    setAdditiveSheetVisible(true);
+  };
 
   const productName = data.productName || 'Food Product';
   const rawBrand = (data.brand || '').trim();
@@ -174,11 +204,24 @@ export default function ResultScreen() {
         >
           <CardContent>
             <View style={styles.ratingRow}>
-              <View>
+              <HealthScoreRing
+                score={rating}
+                size={82}
+                strokeWidth={8}
+                label="SCORE"
+              />
+              <View style={styles.ratingInfoCol}>
                 <Text style={[styles.ratingLabel, { color: colors.textSecondary }]}>
-                  HEALTH SCORE
+                  OVERALL HEALTH SCORE
                 </Text>
                 <RatingStars rating={rating} size="lg" />
+                <Text style={[styles.ratingSubtext, { color: colors.textSecondary }]}>
+                  {rating >= 4.0
+                    ? 'Clean / Nutrient Dense'
+                    : rating >= 2.5
+                    ? 'Moderate Processing'
+                    : 'Ultra-Processed Formulation'}
+                </Text>
               </View>
             </View>
             <View
@@ -353,7 +396,12 @@ export default function ResultScreen() {
 
           {completeIngredientAnalysis && completeIngredientAnalysis.length > 0 ? (
             completeIngredientAnalysis.map((item, index) => (
-              <Card key={index} style={styles.ingredientCard}>
+              <Card
+                key={index}
+                style={styles.ingredientCard}
+                onPress={() => handleOpenAdditiveDetails(item)}
+                onLongPress={() => AppHaptics.impactHeavy()}
+              >
                 <CardContent>
                   <View style={styles.ingredientTopRow}>
                     <Text
@@ -367,6 +415,7 @@ export default function ResultScreen() {
                         <Badge label="Allergen" variant="danger" size="sm" />
                       )}
                       {getIngredientBadge(item)}
+                      <Info size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
                     </View>
                   </View>
                   {item.purpose ? (
@@ -432,8 +481,33 @@ export default function ResultScreen() {
           return colors.textSecondary;
         };
 
+        const parseGrams = (query: RegExp) => {
+          const item = nutrientsList.find((n) => query.test(n.nutrient));
+          const val = item?.perServing || item?.per100mL || '';
+          const num = parseFloat(val.replace(/[^0-9.]/g, ''));
+          return isNaN(num) ? 0 : num;
+        };
+        const proteinG = parseGrams(/protein/i);
+        const carbsG = parseGrams(/carbohydrate|carbs/i);
+        const fatG = parseGrams(/\bfat\b|total fat/i);
+        const fiberG = parseGrams(/fiber|dietary fiber/i);
+        const caloriesKcal = parseGrams(/energy|calories|kcal/i);
+
         return (
           <FadeInView key="tab-nutrition" delay={20}>
+            {/* FitBuddy Stacked Macro Proportion Bar */}
+            <Card style={{ marginBottom: spacing.md }}>
+              <CardContent>
+                <MacroProportionBar
+                  proteinGrams={proteinG}
+                  carbsGrams={carbsG}
+                  fatGrams={fatG}
+                  fiberGrams={fiberG}
+                  calories={caloriesKcal}
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader
                 title="Nutritional Panel"
@@ -574,6 +648,13 @@ export default function ResultScreen() {
           style={{ width: '100%' }}
         />
       </FadeInView>
+
+      {/* GymMane-Grade Additive Clinical Detail Sheet */}
+      <AdditiveDetailSheet
+        visible={additiveSheetVisible}
+        additive={selectedAdditive}
+        onClose={() => setAdditiveSheetVisible(false)}
+      />
     </Screen>
   );
 }
@@ -614,9 +695,17 @@ const styles = StyleSheet.create({
   },
   ratingRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  ratingInfoCol: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  ratingSubtext: {
+    fontSize: typography.fontSizes.xs,
+    marginTop: 4,
+    fontWeight: '500',
   },
   ratingLabel: {
     fontSize: typography.fontSizes.caption2,
