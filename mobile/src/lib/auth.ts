@@ -71,7 +71,7 @@ export async function saveUserSession(
   const session: UserSessionData = {
     email,
     name: name || (isAnonymous ? 'Guest Explorer' : email ? email.split('@')[0] : 'Member'),
-    token: token || (isAnonymous ? `guest_session_${Date.now()}` : `token_${Date.now()}`),
+    token: token || undefined,
     photoUrl: photoUrl !== undefined ? photoUrl : cachedSession?.photoUrl,
     handle: resolvedHandle,
     allergens: resolvedAllergens,
@@ -152,7 +152,7 @@ export async function authenticateWithBackend(
   }
 }
 
-// ponytail: authentic guest session with fast 3.5s timeout & instant fallback
+// ponytail: authentic guest session with verified cryptographic server token
 export async function signInAsGuest(): Promise<UserSessionData> {
   try {
     const response = await apiClient.post<{
@@ -162,23 +162,19 @@ export async function signInAsGuest(): Promise<UserSessionData> {
     }>('/api/auth/mobile', {
       type: 'guest',
     }, {
-      timeout: 3500,
+      timeout: 8000,
     });
 
     if (response.data && response.data.token) {
       const u = response.data.user;
       return await saveUserSession(u.email || '', u.name || 'Guest Explorer', response.data.token, true);
     }
-  } catch (e) {
-    console.warn('Backend guest auth failed, falling back to local guest session:', e);
+    throw new Error('Invalid guest token response from authentication server.');
+  } catch (e: any) {
+    const msg = e?.response?.data?.error || e?.message || 'Could not initialize guest session. Please verify your connection.';
+    console.warn('Backend guest auth failed:', msg);
+    throw new Error(msg);
   }
-
-  return await saveUserSession(
-    '',
-    'Guest Explorer',
-    `guest_session_${Date.now()}`,
-    true
-  );
 }
 
 // ponytail: Google OAuth flow via HTTPS Web-to-App Bridge to bypass Google Web Client custom scheme policy

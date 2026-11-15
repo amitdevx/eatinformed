@@ -1,13 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Share } from 'react-native';
 import { HistoryItem, ProductAnalysisOutput } from '../types';
+import { getUserSession, normalizeHandle } from './auth';
 
-const HISTORY_STORAGE_KEY = 'eatinformed_mobile_history_v2';
-const LEGACY_STORAGE_KEY = 'eatinformed_mobile_history_v1';
-const MAX_HISTORY_ITEMS = 20;
+const RECENT_CACHE_PREFIX = '@eatinformed_recent_v3_';
+const DURABLE_LEDGER_PREFIX = '@eatinformed_ledger_v3_';
+const LEGACY_STORAGE_KEY = 'eatinformed_mobile_history_v2';
+const MAX_RECENT_ITEMS = 20;
+const MAX_LEDGER_ITEMS = 2500;
 
 export interface TrendDataPoint {
   day: string;
@@ -23,26 +25,46 @@ export interface HeatmapDay {
   averageScore?: number;
 }
 
+/**
+ * Derives a clean, isolated partition identifier for the currently active user session.
+ */
+async function getHistoryScope(): Promise<string> {
+  try {
+    const session = await getUserSession();
+    if (session?.email) {
+      return normalizeHandle(session.email);
+    }
+    if (session?.handle && session.handle !== 'guest') {
+      return normalizeHandle(session.handle);
+    }
+  } catch {}
+  return 'guest';
+}
+
+/**
+ * Retrieves the recent scan history (up to 20 items) for fast list display.
+ */
 export async function getScanHistory(): Promise<HistoryItem[]> {
   try {
-    const raw = await AsyncStorage.getItem(HISTORY_STORAGE_KEY);
+    const scope = await getHistoryScope();
+    const recentKey = `${RECENT_CACHE_PREFIX}${scope}`;
+    const raw = await AsyncStorage.getItem(recentKey);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed;
     }
 
-    try {
-      const legacyRaw = await SecureStore.getItemAsync(LEGACY_STORAGE_KEY);
+    // Migrate legacy data if existing on first upgrade for guest
+    if (scope === 'guest') {
+      const legacyRaw = await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
       if (legacyRaw) {
         const parsed = JSON.parse(legacyRaw);
-        if (Array.isArray(parsed)) {
-          await AsyncStorage.setItem(HISTORY_STORAGE_KEY, legacyRaw);
-          await SecureStore.deleteItemAsync(LEGACY_STORAGE_KEY).catch(() => {});
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          await AsyncStorage.setItem(recentKey, legacyRaw);
+          await AsyncStorage.setItem(`${DURABLE_LEDGER_PREFIX}${scope}`, legacyRaw);
           return parsed;
         }
       }
-    } catch {
-      // ignore migration error
     }
 
     return [];
@@ -52,37 +74,68 @@ export async function getScanHistory(): Promise<HistoryItem[]> {
   }
 }
 
+/**
+ * Retrieves the complete durable lifetime scan history ledger for the active user.
+ * Used for annual histogram, lifetime statistics, and export functions.
+ */
+export async function getFullScanLedger(): Promise<HistoryItem[]> {
+  try {
+    const scope = await getHistoryScope();
+    const ledgerKey = `${DURABLE_LEDGER_PREFIX}${scope}`;
+    const raw = await AsyncStorage.getItem(ledgerKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+    return await getScanHistory();
+  } catch (error) {
+    console.warn('Failed to load full scan ledger:', error);
+    return await getScanHistory();
+  }
+}
+
+/**
+ * Saves a new scan event. Appends to the durable ledger without discarding identical products
+ * on different occasions, and updates the fast recent-items cache.
+ */
 export async function saveScanToHistory(
   data: ProductAnalysisOutput,
   imagePreviewUrl?: string | null
 ): Promise<HistoryItem[]> {
   try {
-    const currentHistory = await getScanHistory();
+    const scope = await getHistoryScope();
+    const recentKey = `${RECENT_CACHE_PREFIX}${scope}`;
+    const ledgerKey = `${DURABLE_LEDGER_PREFIX}${scope}`;
 
-    const isGenericName = (name: string) =>
-      !name || /^(scanned food product|packaged food item|food product)$/i.test(name.trim());
+    const [currentRecent, currentLedger] = await Promise.all([
+      getScanHistory(),
+      getFullScanLedger(),
+    ]);
 
+    const uniqueId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const newItem: HistoryItem = {
-      id: Date.now().toString(),
+      id: uniqueId,
       timestamp: Date.now(),
       productName: data.productName || 'Scanned Food Product',
       brand: data.brand || '',
-      rating: data.rating,
-      novaGroup: data.novaGroup,
+      rating: data.rating ?? 0,
+      novaGroup: data.novaGroup ?? undefined,
       data,
       imagePreviewUrl: imagePreviewUrl && imagePreviewUrl.length < 500000 ? imagePreviewUrl : null,
     };
 
-    const filtered = currentHistory.filter((item) => {
-      if (isGenericName(newItem.productName)) {
-        return item.id !== newItem.id;
-      }
-      return item.productName.toLowerCase() !== newItem.productName.toLowerCase();
-    });
+    // 1. Append to durable lifetime ledger
+    const updatedLedger = [newItem, ...currentLedger].slice(0, MAX_LEDGER_ITEMS);
 
-    const updated = [newItem, ...filtered].slice(0, MAX_HISTORY_ITEMS);
-    await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated));
-    return updated;
+    // 2. Update recent items cache
+    const updatedRecent = [newItem, ...currentRecent.filter((item) => item.id !== newItem.id)].slice(0, MAX_RECENT_ITEMS);
+
+    await Promise.all([
+      AsyncStorage.setItem(ledgerKey, JSON.stringify(updatedLedger)),
+      AsyncStorage.setItem(recentKey, JSON.stringify(updatedRecent)),
+    ]);
+
+    return updatedRecent;
   } catch (error) {
     console.warn('Failed to save scan to history storage:', error);
     return [];
@@ -91,10 +144,24 @@ export async function saveScanToHistory(
 
 export async function deleteHistoryItem(id: string): Promise<HistoryItem[]> {
   try {
-    const current = await getScanHistory();
-    const updated = current.filter((item) => item.id !== id);
-    await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated));
-    return updated;
+    const scope = await getHistoryScope();
+    const recentKey = `${RECENT_CACHE_PREFIX}${scope}`;
+    const ledgerKey = `${DURABLE_LEDGER_PREFIX}${scope}`;
+
+    const [currentRecent, currentLedger] = await Promise.all([
+      getScanHistory(),
+      getFullScanLedger(),
+    ]);
+
+    const updatedRecent = currentRecent.filter((item) => item.id !== id);
+    const updatedLedger = currentLedger.filter((item) => item.id !== id);
+
+    await Promise.all([
+      AsyncStorage.setItem(recentKey, JSON.stringify(updatedRecent)),
+      AsyncStorage.setItem(ledgerKey, JSON.stringify(updatedLedger)),
+    ]);
+
+    return updatedRecent;
   } catch (error) {
     console.warn('Failed to delete history item:', error);
     return [];
@@ -103,8 +170,14 @@ export async function deleteHistoryItem(id: string): Promise<HistoryItem[]> {
 
 export async function clearAllHistory(): Promise<boolean> {
   try {
-    await AsyncStorage.removeItem(HISTORY_STORAGE_KEY);
-    await SecureStore.deleteItemAsync(LEGACY_STORAGE_KEY).catch(() => {});
+    const scope = await getHistoryScope();
+    const recentKey = `${RECENT_CACHE_PREFIX}${scope}`;
+    const ledgerKey = `${DURABLE_LEDGER_PREFIX}${scope}`;
+
+    await Promise.all([
+      AsyncStorage.removeItem(recentKey),
+      AsyncStorage.removeItem(ledgerKey),
+    ]);
     return true;
   } catch (error) {
     console.warn('Failed to clear scan history:', error);
@@ -115,7 +188,7 @@ export async function clearAllHistory(): Promise<boolean> {
 export async function getSevenDayTrendData(
   providedItems?: HistoryItem[]
 ): Promise<TrendDataPoint[]> {
-  const history = providedItems || (await getScanHistory());
+  const history = providedItems || (await getFullScanLedger());
   const result: TrendDataPoint[] = [];
   const now = new Date();
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -148,7 +221,7 @@ export async function getSevenDayTrendData(
 export async function getThirtyDayHeatmapData(
   providedItems?: HistoryItem[]
 ): Promise<HeatmapDay[]> {
-  const history = providedItems || (await getScanHistory());
+  const history = providedItems || (await getFullScanLedger());
   const list: HeatmapDay[] = [];
   const now = new Date();
 
@@ -185,7 +258,7 @@ export async function getYearlyHistogramData(
   cleanRatio: string;
   activeMonths: number;
 }> {
-  const history = providedItems || (await getScanHistory());
+  const history = providedItems || (await getFullScanLedger());
   const currentYear = new Date().getFullYear();
   const monthlyCounts = new Array(12).fill(0);
   let cleanScans = 0;
@@ -215,14 +288,15 @@ export async function getYearlyHistogramData(
 
 export async function exportScanHistory(): Promise<boolean> {
   try {
-    const history = await getScanHistory();
+    const history = await getFullScanLedger();
     if (history.length === 0) return false;
     const backup = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       appName: 'EatInformed',
       exportedAt: new Date().toISOString(),
       itemCount: history.length,
       scans: history.map((item) => ({
+        id: item.id,
         timestamp: item.timestamp,
         dateFormatted: new Date(item.timestamp).toLocaleString(),
         productName: item.productName,

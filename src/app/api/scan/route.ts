@@ -1,6 +1,9 @@
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 import { isNimConfigured } from '@/ai/nim';
+import { adminAuth } from '@/lib/firebase-admin';
+import { validateImagePayload } from '@/lib/image-validation';
 import {
   verifyUserToken,
   inspectQuota,
@@ -16,7 +19,7 @@ export const dynamic = 'force-dynamic';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Idempotency-Key, x-idempotency-key',
 };
 
 // IP burst limit: max 15 requests / 60s to prevent rapid DDoS/bots
@@ -44,6 +47,32 @@ function isIpBurstLimited(ip: string): boolean {
   return false;
 }
 
+// In-memory idempotency cache for deduplication on network retries
+interface IdempotencyRecord {
+  timestamp: number;
+  response: any;
+}
+const idempotencyCache = new Map<string, IdempotencyRecord>();
+const IDEMPOTENCY_TTL_MS = 1000 * 60 * 60; // 1 hour
+
+function getIdempotentResponse(key: string): any | null {
+  const record = idempotencyCache.get(key);
+  if (!record) return null;
+  if (Date.now() - record.timestamp > IDEMPOTENCY_TTL_MS) {
+    idempotencyCache.delete(key);
+    return null;
+  }
+  return record.response;
+}
+
+function storeIdempotentResponse(key: string, response: any): void {
+  if (idempotencyCache.size > 200) {
+    const oldest = idempotencyCache.keys().next().value;
+    if (oldest) idempotencyCache.delete(oldest);
+  }
+  idempotencyCache.set(key, { timestamp: Date.now(), response });
+}
+
 function extractToken(request: NextRequest): string {
   const authHeader = request.headers.get('authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
@@ -59,9 +88,7 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    isNimConfigured();
-  } catch (_) {}
+  const requestId = crypto.randomUUID();
 
   // Quota inspection endpoint for mobile client & web client
   const wantsQuota =
@@ -77,11 +104,13 @@ export async function GET(request: NextRequest) {
         {
           status: 'unauthenticated',
           error: 'Authentication token required to inspect scan quota.',
+          code: identity.error || 'auth_required',
           quota: {
             limit: GUEST_QUOTA_LIMIT,
             remaining: 0,
             isGuest: true,
           },
+          requestId,
         },
         { status: 401, headers: corsHeaders }
       );
@@ -92,6 +121,7 @@ export async function GET(request: NextRequest) {
       {
         status: 'success',
         quota,
+        requestId,
       },
       {
         status: 200,
@@ -107,15 +137,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Deep readiness check
+  const nimAvailable = isNimConfigured();
+  const authAvailable = Boolean(adminAuth);
+
   return NextResponse.json(
     {
       status: 'ok',
       endpoint: '/api/scan',
       service: 'EatInformed Food Label Analysis API',
+      nimConfigured: nimAvailable,
+      authConfigured: authAvailable,
       quotaPolicy: {
         guest: `${GUEST_QUOTA_LIMIT} scans per 2-hour rolling window`,
         member: `${MEMBER_QUOTA_LIMIT} scans per 1-hour rolling window`,
       },
+      timestamp: Date.now(),
+      requestId,
     },
     {
       status: 200,
@@ -125,14 +163,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = crypto.randomUUID();
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
-  const clientType = request.headers.get('x-eatinformed-client');
 
-  // 1. IP burst limiter
-  if (clientType !== 'test' && isIpBurstLimited(ip)) {
+  // 1. IP Burst Limiter (Enforced for ALL callers; no public header bypasses)
+  if (isIpBurstLimited(ip)) {
     return NextResponse.json(
-      { error: 'Too many rapid requests. Please wait a moment before scanning again.' },
+      {
+        error: 'Too many rapid requests. Please wait a moment before scanning again.',
+        code: 'ip_burst_limit',
+        requestId,
+      },
       {
         status: 429,
         headers: {
@@ -143,7 +185,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 2. Cryptographic Auth & Identity Verification
+  // 2. Cryptographic Authentication & Token Verification (Fail-Closed)
   const rawToken = extractToken(request);
   const identity = await verifyUserToken(rawToken);
 
@@ -151,7 +193,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Authentication required. Please sign in or continue as Guest to scan food labels.',
-        code: 'auth_required',
+        code: identity.error || 'auth_required',
+        requestId,
       },
       {
         status: 401,
@@ -160,7 +203,54 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 3. True Sliding-Window Quota Admission Check
+  // 3. Request Body & Payload Validation (Validated before quota consumption)
+  let image: string;
+  try {
+    const body = await request.json();
+    image = body?.image;
+  } catch (_) {
+    return NextResponse.json(
+      {
+        error: 'Malformed JSON payload in request body.',
+        code: 'invalid_json',
+        requestId,
+      },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  // Rigorous image validation: magic bytes, base64 integrity, dimension and pixel caps
+  const imageValidation = await validateImagePayload(image);
+  if (!imageValidation.valid) {
+    return NextResponse.json(
+      {
+        error: imageValidation.error || 'Invalid image payload.',
+        code: imageValidation.code || 'invalid_image',
+        requestId,
+      },
+      {
+        status: imageValidation.httpStatus || 400,
+        headers: corsHeaders,
+      }
+    );
+  }
+
+  // 4. Idempotency Check (Prevents double-charging on client retries)
+  const idempotencyKey =
+    request.headers.get('idempotency-key') ||
+    request.headers.get('x-idempotency-key');
+  
+  if (idempotencyKey) {
+    const cachedResponse = getIdempotentResponse(`${identity.userId}:${idempotencyKey}`);
+    if (cachedResponse) {
+      return NextResponse.json(
+        { ...cachedResponse, idempotentReplay: true, requestId },
+        { status: 200, headers: corsHeaders }
+      );
+    }
+  }
+
+  // 5. True Sliding-Window Quota Admission Check
   // Policy: 4 scans per rolling 2-hour window for guests (50/hr for members)
   const quota = consumeQuotaSlot(identity.userId, identity.isGuest);
 
@@ -168,7 +258,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: identity.isGuest
-          ? `Your guest scan limit has been reached (4 scans per rolling 2-hour window). Please wait or sign in to continue scanning.`
+          ? 'Your guest scan limit has been reached (4 scans per rolling 2-hour window). Please wait or sign in to continue scanning.'
           : `Member scan limit reached (${MEMBER_QUOTA_LIMIT} scans/hr). Please try again later.`,
         code: 'quota_limit_reached',
         limit: quota.limit,
@@ -177,6 +267,7 @@ export async function POST(request: NextRequest) {
         nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
         retryAfterSeconds: quota.retryAfterSeconds,
         isGuest: identity.isGuest,
+        requestId,
       },
       {
         status: 429,
@@ -191,104 +282,94 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4. Request Body Validation
-  let image: string;
-  try {
-    const body = await request.json();
-    image = body.image;
-
-    if (!image || typeof image !== 'string') {
-      refundQuotaSlot(identity.userId);
-      return NextResponse.json(
-        { error: 'Image data URI is required in request body.' },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const dataUriPattern = /^data:image\/(png|jpeg|jpg|webp);base64,/i;
-    if (!dataUriPattern.test(image)) {
-      refundQuotaSlot(identity.userId);
-      return NextResponse.json(
-        { error: 'Invalid image format. Expected base64 data URI (PNG, JPEG, or WEBP).' },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const maxBase64Length = 10 * 1024 * 1024 * 1.37;
-    if (image.length > maxBase64Length) {
-      refundQuotaSlot(identity.userId);
-      return NextResponse.json(
-        { error: 'Image file size exceeds the 10MB limit.' },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-  } catch (parseError) {
-    refundQuotaSlot(identity.userId);
-    return NextResponse.json(
-      { error: 'Malformed JSON payload in request body.' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  // 5. Test Harness Fast-Path
-  if (clientType === 'test') {
-    return NextResponse.json(
-      {
-        status: 'success',
-        productName: 'Automated Test Label',
-        rating: 4.5,
-        quota: {
-          limit: quota.limit,
-          remaining: quota.remaining,
-          windowDurationSeconds: quota.windowDurationSeconds,
-          nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
-          isGuest: identity.isGuest,
-        },
-      },
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'X-RateLimit-Limit': String(quota.limit),
-          'X-RateLimit-Remaining': String(quota.remaining),
-        },
-      }
-    );
-  }
-
-  // 6. AI Analysis with Explicit Refund Policy on Failure
+  // 6. AI Analysis with Explicit Quota Refund on Non-Success
   try {
     const result = await analyzeProduct(image);
+
+    // If analysis indicates unreadable label or missing food information, refund slot and return 422
+    if (result.status === 'unreadable' || result.status === 'no_data') {
+      refundQuotaSlot(identity.userId);
+      const isUnreadable = result.status === 'unreadable';
+      const userMessage = isUnreadable
+        ? (result.warnings?.[0] || 'The image was unreadable. Please upload or capture a clearer photo of the food label.')
+        : (result.warnings?.[0] || 'No readable ingredient list or nutrition table was found in the photo. Please frame the label closely in good lighting.');
+
+      return NextResponse.json(
+        {
+          error: userMessage,
+          code: isUnreadable ? 'label_unreadable' : 'no_food_data',
+          status: result.status,
+          slotRefunded: true,
+          quota: {
+            limit: quota.limit,
+            remaining: quota.remaining + 1, // Refunded
+            windowDurationSeconds: quota.windowDurationSeconds,
+            nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
+            isGuest: identity.isGuest,
+          },
+          requestId,
+        },
+        {
+          status: 422,
+          headers: {
+            ...corsHeaders,
+            'X-RateLimit-Limit': String(quota.limit),
+            'X-RateLimit-Remaining': String(quota.remaining + 1),
+          },
+        }
+      );
+    }
+
+    const successResponse = {
+      ...result,
+      quota: {
+        limit: quota.limit,
+        remaining: quota.remaining,
+        windowDurationSeconds: quota.windowDurationSeconds,
+        nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
+        isGuest: identity.isGuest,
+      },
+      requestId,
+    };
+
+    if (idempotencyKey) {
+      storeIdempotentResponse(`${identity.userId}:${idempotencyKey}`, successResponse);
+    }
+
+    return NextResponse.json(successResponse, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'X-RateLimit-Limit': String(quota.limit),
+        'X-RateLimit-Remaining': String(quota.remaining),
+      },
+    });
+  } catch (error: unknown) {
+    // Explicit refund policy: If AI processing throws, refund the slot immediately
+    refundQuotaSlot(identity.userId);
+
+    const isOffline = error instanceof Error && error.message.includes('NVIDIA_API_KEY is not configured');
+    const isTimeout = error instanceof Error && (error.message.includes('timeout') || error.message.includes('timed out'));
+
+    const statusCode = isOffline ? 503 : isTimeout ? 504 : 502;
+    const errorCode = isOffline ? 'ai_offline' : isTimeout ? 'upstream_timeout' : 'upstream_ai_failure';
+    const clientMessage = isOffline
+      ? 'The AI food analysis service is temporarily offline. Your scan slot has been refunded.'
+      : isTimeout
+      ? 'Food label analysis timed out. Your scan slot has been refunded.'
+      : 'The AI service encountered an error processing your food label. Your scan slot has been refunded.';
+
+    console.error(`[Scan API Error] [${requestId}] [Slot Refunded]:`, error instanceof Error ? error.message : error);
+
     return NextResponse.json(
       {
-        ...result,
-        quota: {
-          limit: quota.limit,
-          remaining: quota.remaining,
-          windowDurationSeconds: quota.windowDurationSeconds,
-          nextAvailableScanTimestamp: quota.nextAvailableScanTimestamp,
-          isGuest: identity.isGuest,
-        },
+        error: clientMessage,
+        code: errorCode,
+        slotRefunded: true,
+        requestId,
       },
       {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'X-RateLimit-Limit': String(quota.limit),
-          'X-RateLimit-Remaining': String(quota.remaining),
-        },
-      }
-    );
-  } catch (error: unknown) {
-    // Explicit refund policy: If AI processing fails after acceptance, refund the slot immediately
-    refundQuotaSlot(identity.userId);
-    const message =
-      error instanceof Error ? error.message : 'Internal server error during food label analysis.';
-    console.error('Scan API error (slot refunded):', message);
-    return NextResponse.json(
-      { error: message, slotRefunded: true },
-      {
-        status: 500,
+        status: statusCode,
         headers: corsHeaders,
       }
     );

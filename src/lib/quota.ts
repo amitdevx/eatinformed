@@ -137,8 +137,8 @@ export function verifyGuestToken(token: string): { valid: boolean; uid: string |
 
 export async function verifyUserToken(
   token: string
-): Promise<{ userId: string | null; isGuest: boolean }> {
-  if (!token) return { userId: null, isGuest: true };
+): Promise<{ userId: string | null; isGuest: boolean; error?: string }> {
+  if (!token) return { userId: null, isGuest: true, error: 'missing_token' };
 
   // 1. Check if token is a cryptographic guest token
   const guestVerification = verifyGuestToken(token);
@@ -149,6 +149,7 @@ export async function verifyUserToken(
   // 2. Check Firebase Admin Auth if initialized
   if (adminAuth) {
     try {
+      // checkRevoked = true: Enforces security revocation checks
       const decoded = await adminAuth.verifyIdToken(token, true);
       const isAnon = decoded.firebase?.sign_in_provider === 'anonymous';
       return { userId: decoded.uid, isGuest: isAnon };
@@ -161,15 +162,8 @@ export async function verifyUserToken(
     }
   }
 
-  // 3. Automated test harness support: Allow test tokens explicitly identified
-  if (token.startsWith('test_member_')) {
-    return { userId: token, isGuest: false };
-  }
-  if (token.startsWith('test_guest_')) {
-    return { userId: token, isGuest: true };
-  }
-
-  return { userId: null, isGuest: true };
+  // No arbitrary strings or backdoor prefixes allowed
+  return { userId: null, isGuest: true, error: 'invalid_or_expired_token' };
 }
 
 // ---------------------------------------------------------------------------

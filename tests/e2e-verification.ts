@@ -242,83 +242,65 @@ async function runTests() {
   assert(saltG === 3.0, 'Salt calculation formula (sodium / 400) correctly converts 1200mg sodium to 3.0g salt');
 
   // -------------------------------------------------------------
-  // TEST GROUP 8: Scan Auth Gating & Per-User Hourly Rate Limits
+  // TEST GROUP 8: Scan Auth Gating & 4-Scan / 2-Hour Guest Quota
   // -------------------------------------------------------------
-  console.log('\n--- TEST GROUP 8: SCAN AUTH GATE & DUAL-TIER RATE LIMITING ---');
+  console.log('\n--- TEST GROUP 8: SCAN AUTH GATE & 4-SCAN / 2-HR GUEST QUOTA ---');
   const scanRoute = await import('../src/app/api/scan/route');
+  const { createCryptographicGuestToken, GUEST_QUOTA_LIMIT } = await import('../src/lib/quota');
 
   // 8.1 Unauthenticated scan request is rejected with HTTP 401
   const unauthReq = new NextRequest('http://localhost:3000/api/scan', {
     method: 'POST',
-    body: JSON.stringify({ image: 'data:image/jpeg;base64,sample' }),
+    body: JSON.stringify({ image: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' }),
   });
   const unauthRes = await scanRoute.POST(unauthReq);
   const unauthData = await unauthRes.json();
   assert(
-    unauthRes.status === 401 && unauthData.code === 'auth_required',
+    unauthRes.status === 401 && (unauthData.code === 'auth_required' || unauthData.code === 'missing_token'),
     'Unauthenticated POST /api/scan is rejected with HTTP 401 (code: auth_required)'
   );
 
-  // 8.2 Guest session token is accepted and assigned 25/hr rate limit
-  const guestScanReq = new NextRequest('http://localhost:3000/api/scan', {
+  // 8.2 Public header x-eatinformed-client: test is rejected without auth (No backdoor)
+  const headerTestReq = new NextRequest('http://localhost:3000/api/scan', {
     method: 'POST',
     headers: {
-      Authorization: 'Bearer guest_test_session_user_01',
-      'x-eatinformed-client': 'test', // test client avoids triggering real NIM OCR in test runner
-    },
-    body: JSON.stringify({ image: 'data:image/jpeg;base64,sample' }),
-  });
-  const guestScanRes = await scanRoute.POST(guestScanReq);
-  const guestLimitHeader = guestScanRes.headers.get('X-RateLimit-Limit');
-  assert(
-    guestLimitHeader === '25',
-    'Guest scan request is allocated 25 requests/hour quota (X-RateLimit-Limit: 25)'
-  );
-
-  // 8.3 Member session token (length >= 32) is accepted and assigned 50/hr rate limit
-  const memberToken = 'firebase_auth_verified_member_token_user_identity_xyz_99';
-  const memberScanReq = new NextRequest('http://localhost:3000/api/scan', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${memberToken}`,
       'x-eatinformed-client': 'test',
     },
-    body: JSON.stringify({ image: 'data:image/jpeg;base64,sample' }),
+    body: JSON.stringify({ image: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' }),
   });
-  const memberScanRes = await scanRoute.POST(memberScanReq);
-  const memberLimitHeader = memberScanRes.headers.get('X-RateLimit-Limit');
+  const headerTestRes = await scanRoute.POST(headerTestReq);
   assert(
-    memberLimitHeader === '50',
-    'Member scan request is allocated 50 requests/hour quota (X-RateLimit-Limit: 50)'
+    headerTestRes.status === 401,
+    'Public test header x-eatinformed-client: test rejected without valid auth token'
   );
 
-  // 8.4 Guest hourly rate limit enforcement: 25 requests allowed, 26th blocked with HTTP 429
-  const rateTestGuestId = `guest_quota_test_${Date.now()}`;
-  let guestQuotaAllowed = 0;
-  let lastGuestStatus = 200;
-  let lastGuestRetryAfter: string | null = null;
-
-  for (let i = 0; i < 26; i++) {
-    const req = new NextRequest('http://localhost:3000/api/scan', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${rateTestGuestId}`,
-        'x-eatinformed-client': 'test',
-      },
-      body: JSON.stringify({ image: 'data:image/jpeg;base64,sample' }),
-    });
-    const res = await scanRoute.POST(req);
-    if (res.status === 429) {
-      lastGuestStatus = 429;
-      lastGuestRetryAfter = res.headers.get('Retry-After');
-      break;
-    }
-    guestQuotaAllowed++;
-  }
-
+  // 8.3 Cryptographically signed guest session token is inspected and assigned 4 scans / 2hr limit
+  const guestUid = `e2e_guest_uid_${Date.now()}`;
+  const validGuestToken = createCryptographicGuestToken(guestUid);
+  const inspectReq = new NextRequest('http://localhost:3000/api/scan?quota=true', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${validGuestToken}`,
+    },
+  });
+  const inspectRes = await scanRoute.GET(inspectReq);
+  const inspectLimitHeader = inspectRes.headers.get('X-RateLimit-Limit');
   assert(
-    guestQuotaAllowed === 25 && lastGuestStatus === 429 && lastGuestRetryAfter === '3600',
-    'Hourly rate limiter permits exactly 25 guest scans then returns HTTP 429 with Retry-After: 3600'
+    inspectRes.status === 200 && inspectLimitHeader === String(GUEST_QUOTA_LIMIT),
+    `Cryptographically signed guest token inspected with limit ${GUEST_QUOTA_LIMIT} scans / 2hr`
+  );
+
+  // 8.4 Guest quota enforcement: 4 scans permitted, 5th blocked with HTTP 429
+  const { consumeQuotaSlot } = await import('../src/lib/quota');
+  const quotaGuestId = `e2e_quota_guest_${Date.now()}`;
+  let admitted = 0;
+  for (let i = 0; i < 5; i++) {
+    const q = consumeQuotaSlot(quotaGuestId, true);
+    if (q.allowed) admitted++;
+  }
+  assert(
+    admitted === 4,
+    'Sliding-window quota permits exactly 4 guest scans before blocking 5th scan'
   );
 
   // 8.5 Guest logout and session reset logic

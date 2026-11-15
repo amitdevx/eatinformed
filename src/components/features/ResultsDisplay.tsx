@@ -219,7 +219,9 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
 
   const handleCopyMarkdown = useCallback(() => {
     if (!analysisData) return;
-    const md = `# EatInformed Food Analysis Report: ${analysisData.productName || 'Product'}\n\n**Brand:** ${analysisData.brand || 'N/A'}\n**Rating:** ${analysisData.rating}/5.0\n**NOVA Group:** ${analysisData.novaGroup}\n\n## Ingredients\n${analysisData.ingredients.map((ing) => `- ${ing}`).join('\n')}\n`;
+    const ratingDisplay = analysisData.rating !== null ? `${analysisData.rating}/5.0` : 'Unrated';
+    const novaDisplay = analysisData.novaGroup !== null ? `NOVA ${analysisData.novaGroup}` : 'Unknown';
+    const md = `# EatInformed Food Analysis Report: ${analysisData.productName || 'Product'}\n\n**Brand:** ${analysisData.brand || 'N/A'}\n**Rating:** ${ratingDisplay}\n**NOVA Group:** ${novaDisplay}\n\n## Ingredients\n${analysisData.ingredients.map((ing) => `- ${ing}`).join('\n')}\n`;
     navigator.clipboard.writeText(md).then(() => {
       toast({ title: 'Copied', description: 'Markdown report copied.' });
     });
@@ -260,7 +262,7 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
   const nutrition = analysisData.nutrition;
   const hasStructuredNutrition = nutrition?.nutrients && nutrition.nutrients.length > 0;
 
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: number | null | undefined) => {
     const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
     return (
       <div className="flex items-center gap-1.5">

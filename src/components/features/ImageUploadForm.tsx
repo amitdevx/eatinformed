@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AuthForm } from '@/components/features/AuthForm';
-import { analyzeProduct } from '@/ai/flows/product-analysis';
 import { type ProductAnalysisOutput } from '@/ai/flows/product-analysis-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,8 +26,8 @@ interface HistoryItem {
   timestamp: number;
   productName: string;
   brand: string;
-  rating: number;
-  novaGroup?: number;
+  rating: number | null;
+  novaGroup?: number | null;
   data: ProductAnalysisOutput;
   imagePreviewUrl?: string | null;
 }
@@ -393,21 +392,63 @@ export function CheckPageClient() {
     setError(null);
     setAnalysisData(null);
     
-    let lastResult: ProductAnalysisOutput | null = null;
+    let lastResult: any = null;
     let lastError: any = null;
 
-    // Transparently retry up to 2 attempts on transient cold-start or network glitches before failing
+    let token = '';
+    try {
+      token = await user.getIdToken();
+    } catch (tokenErr) {
+      console.warn('Failed to retrieve user auth token:', tokenErr);
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Transparently retry up to 2 attempts on transient network glitches
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const result = await analyzeProduct(photoDataUri);
-        if (result.status === 'success') {
+        const response = await fetch('/api/scan', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ image: photoDataUri }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
           setProgress(100);
-          setAnalysisData(result);
-          saveToHistory(result, photoDataUri);
+          setAnalysisData(data);
+          saveToHistory(data, photoDataUri);
           setIsLoading(false);
           return;
         }
-        lastResult = result;
+
+        if (response.status === 429) {
+          setError(data.error || 'Your scan limit has been reached. Please wait or sign in to continue scanning.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (response.status === 401) {
+          setOpenAuthModal(true);
+          setError('Authentication required. Please sign in to scan food labels.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (response.status === 422) {
+          setError(data.error || 'The food label image was unreadable. Please upload a clearer photo.');
+          setIsLoading(false);
+          return;
+        }
+
+        lastResult = data;
+        lastError = new Error(data.error || `Server responded with status ${response.status}`);
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 800));
         }
@@ -420,14 +461,7 @@ export function CheckPageClient() {
     }
 
     if (lastResult) {
-      const detail = lastResult.warnings?.[0] || lastResult.nutrition?.rawText;
-      if (lastResult.status === 'unreadable') {
-        setError(detail || 'The image was unreadable. Please upload or capture a clearer photo of the product label.');
-      } else if (lastResult.status === 'no_data') {
-        setError(detail || "We couldn't find any ingredient or nutrition text on the label. Please try a different image.");
-      } else {
-        setError(detail || 'Analysis could not be completed for this image.');
-      }
+      setError(lastResult.error || 'Analysis could not be completed for this image.');
     } else {
       console.error('Scan failed:', lastError);
       setError('An unexpected error occurred during analysis. The AI service may be temporarily unavailable. Please try again.');
@@ -767,11 +801,12 @@ export function CheckPageClient() {
                   )}
                   <span className={cn(
                     "text-xs font-bold px-2.5 py-0.5 rounded-full border",
+                    scan.rating === null ? "bg-muted text-muted-foreground border-border" :
                     scan.rating >= 4 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" :
                     scan.rating >= 2.5 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25" :
                     "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
                   )}>
-                    {scan.rating.toFixed(1)} / 5
+                    {scan.rating !== null ? `${scan.rating.toFixed(1)} / 5` : 'Unrated'}
                   </span>
                 </div>
               </button>

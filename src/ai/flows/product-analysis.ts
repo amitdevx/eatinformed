@@ -242,14 +242,14 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
     };
   });
 
-  const resolvedNova = analysisData?.novaGroup ?? ocrData?.novaGroup ?? 4;
+  const resolvedNova = analysisData?.novaGroup ?? ocrData?.novaGroup ?? null;
   const rawPros: string[] = Array.isArray(analysisData?.pros) && analysisData.pros.length > 0
     ? analysisData.pros
     : Array.isArray(ocrData?.pros) && ocrData.pros.length > 0
     ? ocrData.pros
-    : resolvedNova <= 2
+    : resolvedNova && resolvedNova <= 2
     ? ['Minimally processed whole-food ingredient profile']
-    : ['Clearly declared ingredient and allergen labeling'];
+    : [];
 
   const rawCons: string[] = Array.isArray(analysisData?.cons) && analysisData.cons.length > 0
     ? analysisData.cons
@@ -258,8 +258,13 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
     : resolvedNova === 4
     ? ['Ultra-processed formulation (NOVA 4) containing industrial seasonings or additives']
     : resolvedNova === 3
-    ? ['Processed food formulation — monitor sodium and added sugars per serving']
+    ? ['Processed food formulation: monitor sodium and added sugars per serving']
     : [];
+
+  const rawRating = analysisData?.rating ?? ocrData?.rating ?? null;
+  const rating = rawRating !== null && rawRating !== undefined && !isNaN(Number(rawRating))
+    ? Math.max(0, Math.min(5, Number(rawRating)))
+    : null;
 
   const merged = {
     productName: ocrData.productName?.trim() || 'Scanned Food Product',
@@ -271,7 +276,7 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
       servingSizeLabel: ocrData.nutrition?.servingSizeLabel || undefined,
       nutrients,
     },
-    rating: Math.max(0, Math.min(5, Number(analysisData?.rating ?? ocrData.rating ?? 2.5))),
+    rating,
     pros: rawPros,
     cons: rawCons,
     warnings: Array.isArray(analysisData?.warnings)
@@ -291,9 +296,9 @@ Required JSON keys: rating (1.0-5.0), novaGroup (1-4), pros (string[]), cons (st
     dietaryInfo: analysisData?.dietaryInfo || {
       allergens: [],
       suitability: [],
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
+      isVegetarian: null,
+      isVegan: null,
+      isGlutenFree: null,
       summary: ocrData.allergenAdvice || '',
     },
     status: 'success' as const,
@@ -307,10 +312,10 @@ function makeErrorResult(status: 'unreadable' | 'no_data', errorMessage: string)
   return {
     productName: '',
     brand: '',
-    novaGroup: 4,
+    novaGroup: null,
     ingredients: [],
     nutrition: { rawText: errorMessage, nutrients: [] },
-    rating: 0,
+    rating: null,
     pros: [],
     cons: [],
     warnings: [errorMessage],
@@ -318,9 +323,9 @@ function makeErrorResult(status: 'unreadable' | 'no_data', errorMessage: string)
     dietaryInfo: {
       allergens: [],
       suitability: [],
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
+      isVegetarian: null,
+      isVegan: null,
+      isGlutenFree: null,
       summary: '',
     },
     status,
