@@ -332,7 +332,7 @@ export function SettingsSheet({
                       <Text style={[styles.rowTitle, { color: colors.text }]}>Offline Additive Protection</Text>
                     </View>
                     <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>
-                      Prewarm clinical dictionary for zero-network queries
+                      Open the offline additive reference
                     </Text>
                   </View>
                   <Switch
@@ -361,7 +361,7 @@ export function SettingsSheet({
                       <Text style={[styles.rowTitle, { color: colors.text }]}>Export Scan History (JSON)</Text>
                     </View>
                     <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>
-                      Download or share your clinical audit logs
+                      Download or share your scan records
                     </Text>
                   </View>
                   <ChevronRight size={18} color={colors.textSecondary} />

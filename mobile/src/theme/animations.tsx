@@ -1,7 +1,9 @@
+import Reanimated, { useAnimatedStyle, useSharedValue, withDelay, withTiming, cancelAnimation } from 'react-native-reanimated';
+import { motion, ScrollMotionContext, useMotionPreference } from './motion';
 // EatInformed Apple Fluid Motion & Spring Physics System
 // Grounded in Apple WWDC18 "Designing Fluid Interfaces" & WWDC23 "Animate with Springs"
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useContext } from 'react';
 import {
   Animated,
   Pressable,
@@ -46,6 +48,7 @@ export const SpringPresets = {
 interface FadeInViewProps {
   children: React.ReactNode;
   delay?: number;
+  depth?: boolean;
   translateY?: number;
   scaleFrom?: number;
   style?: StyleProp<ViewStyle>;
@@ -55,84 +58,19 @@ interface FadeInViewProps {
  * Apple-style staggered spring entrance container.
  * Animates opacity (0 -> 1), translateY (offset -> 0), and scale (0.98 -> 1).
  */
-export function FadeInView({
-  children,
-  delay = 0,
-  translateY = 12,
-  scaleFrom = 0.985,
-  style,
-}: FadeInViewProps) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translate = useRef(new Animated.Value(translateY)).current;
-  const scale = useRef(new Animated.Value(scaleFrom)).current;
-
+export function FadeInView({ children, delay = 40, translateY = 22, scaleFrom = 0.97, depth = false, style }: FadeInViewProps) {
+  const reduced = useMotionPreference(), scroll = useContext(ScrollMotionContext);
+  const reveal = useSharedValue(0), top = useSharedValue(0), height = useSharedValue(1);
   useEffect(() => {
-    let isMounted = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((reduceMotion) => {
-        if (!isMounted) return;
-        if (reduceMotion) {
-          opacity.setValue(1);
-          translate.setValue(0);
-          scale.setValue(1);
-          return;
-        }
-        Animated.parallel([
-          Animated.spring(opacity, {
-            toValue: 1,
-            delay,
-            ...SpringPresets.gentle,
-          }),
-          Animated.spring(translate, {
-            toValue: 0,
-            delay,
-            ...SpringPresets.gentle,
-          }),
-          Animated.spring(scale, {
-            toValue: 1,
-            delay,
-            ...SpringPresets.gentle,
-          }),
-        ]).start();
-      })
-      .catch(() => {
-        Animated.parallel([
-          Animated.spring(opacity, {
-            toValue: 1,
-            delay,
-            ...SpringPresets.gentle,
-          }),
-          Animated.spring(translate, {
-            toValue: 0,
-            delay,
-            ...SpringPresets.gentle,
-          }),
-          Animated.spring(scale, {
-            toValue: 1,
-            delay,
-            ...SpringPresets.gentle,
-          }),
-        ]).start();
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [delay, opacity, scale, translate]);
-
-  return (
-    <Animated.View
-      style={[
-        style,
-        {
-          opacity,
-          transform: [{ translateY: translate }, { scale }],
-        },
-      ]}
-    >
-      {children}
-    </Animated.View>
-  );
+    reveal.set(reduced ? 1 : withDelay(Math.min(delay, 530), withTiming(1, { duration: motion.entranceMs, easing: motion.easeOut })));
+    return () => cancelAnimation(reveal);
+  }, [reduced, delay, reveal]);
+  const animated = useAnimatedStyle(() => {
+    const start = Math.max(0, top.get() - 64);
+    const progress = depth && scroll && !reduced ? Math.max(0, Math.min(1, (scroll.get() - start) / Math.max(1, top.get() + height.get() - start))) : 0;
+    return { opacity: reveal.get() * (1 - progress * 0.45), transform: [{ translateY: reduced ? 0 : (1 - reveal.get()) * translateY + progress * height.get() * 0.18 }, { scale: reduced ? 1 : scaleFrom + (1 - scaleFrom) * reveal.get() - progress * 0.08 }] };
+  });
+  return <Reanimated.View onLayout={e => { top.set(e.nativeEvent.layout.y); height.set(e.nativeEvent.layout.height); }} style={[style, animated]}>{children}</Reanimated.View>;
 }
 
 interface PressableScaleProps {
@@ -165,6 +103,7 @@ export function PressableScale({
   accessibilityRole = 'button',
   hitSlop,
 }: PressableScaleProps) {
+  const reduced = useMotionPreference();
   const scale = useRef(new Animated.Value(1)).current;
   const flatStyle = StyleSheet.flatten(style) || {};
 
@@ -206,7 +145,7 @@ export function PressableScale({
 
   const handlePressIn = () => {
     Animated.spring(scale, {
-      toValue: scaleTo,
+      toValue: reduced ? 1 : scaleTo,
       ...SpringPresets.snappy,
     }).start();
   };

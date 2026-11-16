@@ -1,11 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
+  ViewStyle,
   Text,
   StyleSheet,
   Pressable,
   Animated,
   Dimensions,
+  useWindowDimensions,
   Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,8 +46,9 @@ const TABS: TabConfig[] = [
 ];
 
 // ponytail: GymMane-grade 120Hz hardware-accelerated floating acrylic navigation island with native GPU transform physics
-export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
+export function FloatingNavBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { width: viewportWidth } = useWindowDimensions();
   const { colors, isDark } = useTheme();
 
   const [quickScanModalVisible, setQuickScanModalVisible] = useState(false);
@@ -60,7 +63,7 @@ export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
   const glowPulse = useRef(new Animated.Value(1)).current;
 
   // Bar width locked to responsive max 420px, 5 slots total
-  const barWidth = Math.min(SCREEN_WIDTH - 32, 420);
+  const barWidth = Math.min(viewportWidth - 32, 420);
   const slotWidth = barWidth / 5;
   const pillWidth = slotWidth - 10;
   const pillHeight = NAV_BAR_HEIGHT - 16;
@@ -75,26 +78,6 @@ export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
       }).start();
     }
   }, [activeTabIndex, slotWidth, thumbTranslateX]);
-
-  // Subtle breathing glow for center Scan FAB
-  useEffect(() => {
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowPulse, {
-          toValue: 1.15,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowPulse, {
-          toValue: 1.0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulseLoop.start();
-    return () => pulseLoop.stop();
-  }, [glowPulse]);
 
   const handleTabPress = (routeName: string) => {
     AppHaptics.selection();
@@ -140,6 +123,7 @@ export function FloatingNavBar({ state, navigation }: BottomTabBarProps) {
     return null;
   }
 
+  if ((StyleSheet.flatten(descriptors[state.routes[state.index].key].options.tabBarStyle) as ViewStyle | undefined)?.display === 'none') return null;
   return (
     <>
       <View

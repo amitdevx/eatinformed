@@ -143,7 +143,7 @@ export default function GuideScreen() {
       <FadeInView delay={0}>
         <ScreenHeader
           title="Food Safety Guide"
-          subtitle="NOVA classification standards & offline clinical additive dictionary"
+          subtitle="NOVA classification standards & offline additive reference"
           largeTitle={true}
         />
       </FadeInView>
@@ -167,7 +167,7 @@ export default function GuideScreen() {
       {activeTab === 'nova' && (
         <FadeInView key="tab-nova" delay={60}>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            Developed by epidemiologists at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of industrial processing. Tap or long press any card to inspect full clinical details.
+            Developed by epidemiologists at the University of Sao Paulo, NOVA categorizes foods into 4 groups by the extent and purpose of industrial processing. Tap or long press any card to read more about the classification.
           </Text>
 
           {NOVA_GROUPS.map((item, idx) => {
@@ -290,8 +290,8 @@ export default function GuideScreen() {
 
           <Text style={[styles.resultsCount, { color: colors.textMuted }]}>
             {filteredAdditives.length === 1
-              ? '1 clinical entry found'
-              : `${filteredAdditives.length} clinical entries found`}
+              ? '1 reference entry found'
+              : `${filteredAdditives.length} reference entries found`}
           </Text>
 
           {filteredAdditives.map((item, idx) => (

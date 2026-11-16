@@ -113,7 +113,7 @@ export default function HistoryScreen() {
   };
 
   const filteredItems = historyItems.filter((item) => {
-    if (filterMode === 'clean') return (item.novaGroup || 1) <= 2;
+    if (filterMode === 'clean') return item.novaGroup != null && item.novaGroup <= 2;
     if (filterMode === 'processed') return item.novaGroup === 3;
     if (filterMode === 'ultra') return item.novaGroup === 4;
     return true;

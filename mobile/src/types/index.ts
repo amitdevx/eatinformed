@@ -29,28 +29,15 @@ export interface DietaryInfo {
   summary: string;
 }
 
-export interface ProductAnalysisOutput {
-  productName?: string;
-  brand?: string;
-  novaGroup?: number;
-  ingredients: string[];
-  nutrition: NutritionData;
-  rating: number;
-  pros: string[];
-  cons: string[];
-  warnings: string[];
-  ingredientAnalysis: IngredientAnalysisItem[];
-  dietaryInfo: DietaryInfo;
-  status: 'success' | 'no_data' | 'unreadable';
-}
+export type ProductAnalysisOutput = import('../../../src/ai/flows/product-analysis-types').ProductAnalysisOutput & { scanId?: string };
 
 export interface HistoryItem {
   id: string;
   timestamp: number;
   productName: string;
   brand: string;
-  rating: number;
-  novaGroup?: number;
+  rating: number | null;
+  novaGroup?: number | null;
   data: ProductAnalysisOutput;
   imagePreviewUrl?: string | null;
 }

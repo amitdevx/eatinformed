@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 interface RatingStarsProps {
-  rating: number; // 0.0 to 5.0
+  rating: number | null; // 0.0 to 5.0
   size?: 'sm' | 'md' | 'lg';
   showScore?: boolean;
   style?: ViewStyle;
@@ -18,6 +18,7 @@ export function RatingStars({
   style,
 }: RatingStarsProps) {
   const { colors } = useTheme();
+  if (rating == null) return <Text style={{ color: colors.textSecondary }}>Rating unavailable</Text>;
   const normalizedRating = Math.max(0, Math.min(5, Number(rating) || 0));
 
   const starSizes: Record<'sm' | 'md' | 'lg', number> = {

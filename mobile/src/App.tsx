@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -142,11 +143,13 @@ function MainApp() {
 
 export default function App() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <ThemeProvider>
       <AuthProvider>
         <MainApp />
       </AuthProvider>
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

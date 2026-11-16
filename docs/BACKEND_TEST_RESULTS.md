@@ -13,3 +13,5 @@ Repeat results: 6/6 Firebase emulator integration tests passed (263739ms). Actua
 Final standalone web/backend typecheck exited 0. Production web build exited 0. Mobile typecheck exited 0 after correcting animated tab-bar style typing.
 
 Browser smoke verification: 3/3 passed at 360/768/1440px, testing /, /check, /support and /login for horizontal overflow and runtime page errors. This does not exercise authenticated scans or Android gestures.
+
+Android bundle verification: `npx expo export --platform android --max-workers 1` completed successfully, producing a 6 MB Hermes bytecode bundle and 17 assets. This validates bundling; actual native installation and gesture/blur execution remain BLOCKED.

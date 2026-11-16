@@ -7,7 +7,7 @@ import { typography } from '../theme/tokens';
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface HealthScoreRingProps {
-  score: number; // 0.0 - 5.0
+  score: number | null; // 0.0 - 5.0
   maxScore?: number;
   size?: number;
   strokeWidth?: number;
@@ -27,7 +27,7 @@ export function HealthScoreRing({
   const { colors, isDark } = useTheme();
   const animatedProgress = useRef(new Animated.Value(0)).current;
 
-  const clampedScore = Math.max(0, Math.min(score, maxScore));
+  const clampedScore = Math.max(0, Math.min(score ?? 0, maxScore));
   const progressRatio = clampedScore / maxScore;
 
   const radius = (size - strokeWidth) / 2;
@@ -51,7 +51,7 @@ export function HealthScoreRing({
     return colors.danger; // Coral for Ultra-Processed
   };
 
-  const ringColor = getRingColor();
+  const ringColor = score == null ? colors.textSecondary : getRingColor();
   const trackColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
 
   const strokeDashoffset = animatedProgress.interpolate({
@@ -106,7 +106,7 @@ export function HealthScoreRing({
             },
           ]}
         >
-          {clampedScore.toFixed(1)}
+          {score == null ? '—' : clampedScore.toFixed(1)}
         </Text>
         <Text
           style={[

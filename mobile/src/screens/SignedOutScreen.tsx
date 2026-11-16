@@ -56,7 +56,7 @@ export default function SignedOutScreen() {
           <EatInformedLogo size={76} />
           <Text style={[styles.title, { color: colors.text }]}>You are signed out</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Sign in to continue with your verified food passport, or explore EatInformed as a guest.
+            Sign in to continue with your Food Passport, or explore EatInformed as a guest.
           </Text>
         </View>
 

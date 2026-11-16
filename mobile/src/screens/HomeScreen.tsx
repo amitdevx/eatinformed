@@ -23,7 +23,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { SAMPLE_PRODUCTS, SampleProduct } from '../lib/sample-products';
-import { getScanHistory, getSevenDayTrendData } from '../lib/history';
+import { getFullScanLedger, getSevenDayTrendData } from '../lib/history';
 import { AppHaptics } from '../lib/haptics';
 import { RootStackParamList } from '../navigation/types';
 import { EatInformedLogo } from '../components/EatInformedLogo';
@@ -35,21 +35,22 @@ export default function HomeScreen() {
   const { colors } = useTheme();
 
   const [historyCount, setHistoryCount] = useState(0);
-  const [avgScore, setAvgScore] = useState(0);
+  const [avgScore, setAvgScore] = useState<number | null>(null);
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
 
   useFocusEffect(
     useCallback(() => {
-      Promise.all([getScanHistory(), getSevenDayTrendData()]).then(([history, trend]) => {
+      Promise.all([getFullScanLedger(), getSevenDayTrendData()]).then(([history, trend]) => {
         setHistoryCount(history.length);
-        if (history.length > 0) {
-          const total = history.reduce((acc, cur) => acc + (cur.rating || 0), 0);
-          setAvgScore(Number((total / history.length).toFixed(1)));
+        const rated = history.filter(item => item.rating != null);
+        if (rated.length > 0) {
+          const total = rated.reduce((acc, cur) => acc + cur.rating!, 0);
+          setAvgScore(Number((total / rated.length).toFixed(1)));
         } else {
-          setAvgScore(0);
+          setAvgScore(null);
         }
         setTrendData(trend);
-      });
+      }).catch(() => { setHistoryCount(0); setAvgScore(null); setTrendData([]); });
     }, [])
   );
 
@@ -129,7 +130,7 @@ export default function HomeScreen() {
                 <Text style={[styles.heroGaugeSubtitle, { color: colors.textSecondary }]}>
                   {historyCount > 0
                     ? `${historyCount} product audits logged`
-                    : 'Instant clinical label OCR & NOVA classification'}
+                    : 'Read labels and estimate food processing'}
                 </Text>
 
                 <View style={styles.heroStatChipsRow}>
@@ -210,7 +211,7 @@ export default function HomeScreen() {
         <Card style={{ marginTop: spacing.md }}>
           <CardHeader
             title="7-Day Nutritional Clarity"
-            subtitle="Touch-scrubber tracking clinical NOVA diet index"
+            subtitle="Average available AI ratings over time"
           />
           <CardContent>
             <ProcessingTrendChart data={trendData} />

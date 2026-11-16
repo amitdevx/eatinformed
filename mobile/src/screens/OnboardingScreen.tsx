@@ -552,7 +552,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               Choose your avatar
             </Text>
             <Text style={[styles.stepSubtitle, { color: colors.textSecondary }]}>
-              Personalize the photo that appears on your verified food passport.
+              Personalize the photo that appears on your Food Passport.
             </Text>
 
             <View style={styles.avatarPreviewCenter}>

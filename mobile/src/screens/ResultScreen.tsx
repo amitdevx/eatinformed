@@ -93,8 +93,8 @@ export default function ResultScreen() {
   const brand = /^(unknown|n\/a|none|not visible|null|undefined|generic)$/i.test(rawBrand)
     ? ''
     : rawBrand;
-  const rating = data.rating || 0;
-  const novaGroup = data.novaGroup || 4;
+  const rating = data.rating;
+  const novaGroup = data.novaGroup;
 
   const matchedPersonalAllergens = React.useMemo(() => {
     if (!userAllergens || userAllergens.length === 0) return [];
@@ -120,7 +120,7 @@ export default function ResultScreen() {
     try {
       await Share.share({
         title: `EatInformed Health Report: ${productName}`,
-        message: `${productName}${brand ? ` (${brand})` : ''}\nHealth Rating: ${rating.toFixed(1)}/5.0\nNOVA Group: ${novaGroup}\nAnalyzed with EatInformed.`,
+        message: `${productName}${brand ? ` (${brand})` : ''}\nAI rating estimate: ${rating?.toFixed(1) ?? 'Unknown'}/5.0\nNOVA Group: ${novaGroup}\nAnalyzed with EatInformed.`,
       });
     } catch (e) {
       console.warn('Share text error:', e);
@@ -140,59 +140,15 @@ export default function ResultScreen() {
     navigation.navigate('Main', { screen: 'Scan' });
   };
 
-  // ponytail: guarantee every declared ingredient in data.ingredients is analyzed & displayed
-  const completeIngredientAnalysis = React.useMemo(() => {
-    const analysisList = Array.isArray(data.ingredientAnalysis) ? data.ingredientAnalysis : [];
-    const rawList = Array.isArray(data.ingredients) ? data.ingredients : [];
-
-    if (rawList.length === 0) return analysisList;
-    if (analysisList.length >= rawList.length) return analysisList;
-
-    const matchedIndices = new Set<number>();
-    const merged = rawList.map((rawIng) => {
-      const normalizedRaw = rawIng.toLowerCase().trim();
-      const foundIdx = analysisList.findIndex(
-        (a, idx) =>
-          !matchedIndices.has(idx) &&
-          (a.ingredient.toLowerCase().trim() === normalizedRaw ||
-            normalizedRaw.includes(a.ingredient.toLowerCase().trim()) ||
-            a.ingredient.toLowerCase().trim().includes(normalizedRaw))
-      );
-      if (foundIdx !== -1) {
-        matchedIndices.add(foundIdx);
-        return analysisList[foundIdx];
-      }
-      const isSugarOrSyrup = /sugar|syrup|honey|dextrose|fructose|maltose|sucrose/i.test(rawIng);
-      const isOilOrFat = /\boil\b|fat|butter|shortening|palm/i.test(rawIng);
-      const isSalt = /\bsalt\b|sodium/i.test(rawIng);
-      return {
-        ingredient: rawIng,
-        description: isSugarOrSyrup
-          ? 'Caloric sweetener used for taste, browning, and texture.'
-          : isOilOrFat
-          ? 'Culinary or processing lipid used for mouthfeel, moisture, and baking.'
-          : isSalt
-          ? 'Mineral seasoning used for flavor enhancement and preservation.'
-          : 'Declared food ingredient extracted from product packaging label.',
-        purpose: isSugarOrSyrup
-          ? 'Sweetener'
-          : isOilOrFat
-          ? 'Texture & Lipid Base'
-          : isSalt
-          ? 'Seasoning & Preservation'
-          : 'Formulation Ingredient',
-        isAllergen: /milk|dairy|whey|casein|soy|wheat|gluten|peanut|nut|coconut|egg|fish|sesame/i.test(rawIng),
-        isControversial: /artificial|dye|red 40|yellow 5|yellow 6|msg|monosodium|high-fructose|bha|bht|tbhq|carrageenan|polysorbate/i.test(rawIng),
-      };
-    });
-
-    return merged;
-  }, [data.ingredients, data.ingredientAnalysis]);
+  const completeIngredientAnalysis = React.useMemo(() => data.ingredients.map(ingredient =>
+    data.ingredientAnalysis.find(item => item.ingredient.trim().toLowerCase() === ingredient.trim().toLowerCase()) ||
+    { ingredient, description: 'Interpretation unavailable. Check the original label.', purpose: '', isAllergen: null, isControversial: null }
+  ), [data.ingredients, data.ingredientAnalysis]);
 
   const getIngredientBadge = (item: {
     ingredient: string;
-    isAllergen: boolean;
-    isControversial: boolean;
+    isAllergen: boolean | null;
+    isControversial: boolean | null;
   }) => {
     const name = item.ingredient.toLowerCase();
     if (item.isControversial) {
@@ -262,7 +218,7 @@ export default function ResultScreen() {
                 </Text>
                 <RatingStars rating={rating} size="lg" />
                 <Text style={[styles.ratingSubtext, { color: colors.textSecondary }]}>
-                  {rating >= 4.0
+                  {rating == null ? 'Insufficient evidence for a rating' : rating >= 4.0
                     ? 'Clean / Nutrient Dense'
                     : rating >= 2.5
                     ? 'Moderate Processing'
@@ -567,50 +523,36 @@ export default function ResultScreen() {
       {/* TAB 3: NUTRITION FACTS */}
       {activeTab === 'nutrition' && (() => {
         const nutrientsList = Array.isArray(data.nutrition?.nutrients) ? data.nutrition.nutrients : [];
-        const hasPer100 = nutrientsList.some((n) => n.per100mL && n.per100mL.trim() !== '' && n.per100mL.trim() !== '-');
+        const hasPer100 = nutrientsList.some((n) => n.per100g || n.per100mL);
         const hasPerServe = nutrientsList.some((n) => n.perServing && n.perServing.trim() !== '' && n.perServing.trim() !== '-');
 
-        const getNutrientColor = (name: string, valStr?: string) => {
-          if (!valStr || valStr === '-') return colors.textSecondary;
-          const num = parseFloat(valStr.replace(/[^0-9.]/g, ''));
-          if (isNaN(num)) return colors.textSecondary;
-
-          const lower = name.toLowerCase();
-          if (lower.includes('protein') && num >= 5) return colors.successText;
-          if (lower.includes('fiber') && num >= 4) return colors.successText;
-          if ((lower.includes('sugar') || lower.includes('added sugar')) && num >= 10) return colors.warningText;
-          if (lower.includes('sodium') && num >= 400) return colors.dangerText;
-          if (lower.includes('saturated') && num >= 4) return colors.warningText;
-
-          return colors.textSecondary;
-        };
-
+        const getNutrientColor = (_name: string, _value?: string) => colors.textSecondary;
+        // Only compare explicit gram values from the same serving basis.
         const parseGrams = (query: RegExp) => {
-          const item = nutrientsList.find((n) => query.test(n.nutrient));
-          const val = item?.perServing || item?.per100mL || '';
-          const num = parseFloat(val.replace(/[^0-9.]/g, ''));
-          return isNaN(num) ? 0 : num;
+          const value = nutrientsList.find(n => query.test(n.nutrient))?.perServing;
+          const match = value?.trim().match(/^(\d+(?:[.,]\d+)?)\s*g$/i);
+          return match ? Number(match[1].replace(',', '.')) : null;
         };
-        const proteinG = parseGrams(/protein/i);
-        const carbsG = parseGrams(/carbohydrate|carbs/i);
-        const fatG = parseGrams(/\bfat\b|total fat/i);
-        const fiberG = parseGrams(/fiber|dietary fiber/i);
-        const caloriesKcal = parseGrams(/energy|calories|kcal/i);
+        const proteinG = parseGrams(/^protein$/i), carbsG = parseGrams(/^(total )?carbohydrates?$/i), fatG = parseGrams(/^(total )?fat$/i);
+        const fiberG = parseGrams(/^(dietary )?fib(er|re)$/i);
+        const energy = nutrientsList.find(n => /^(energy|calories)$/i.test(n.nutrient))?.perServing?.match(/^(\d+(?:[.,]\d+)?)\s*kcal$/i);
+        const caloriesKcal = energy ? Number(energy[1].replace(',', '.')) : undefined;
 
         return (
           <FadeInView key="tab-nutrition" delay={20}>
             {/* FitBuddy Stacked Macro Proportion Bar */}
-            <Card style={{ marginBottom: spacing.md }}>
+            {proteinG !== null && carbsG !== null && fatG !== null && <Card style={{ marginBottom: spacing.md }}>
               <CardContent>
                 <MacroProportionBar
                   proteinGrams={proteinG}
                   carbsGrams={carbsG}
                   fatGrams={fatG}
-                  fiberGrams={fiberG}
+                  fiberGrams={fiberG ?? undefined}
                   calories={caloriesKcal}
                 />
+                <Text style={{ color: colors.textSecondary }}>Proportions by mass, per serving.</Text>
               </CardContent>
-            </Card>
+            </Card>}
 
             <Card>
               <CardHeader
@@ -717,7 +659,7 @@ export default function ResultScreen() {
                                 },
                               ]}
                             >
-                              {n.per100mL || '-'}
+                              {n.per100g ? `${n.per100g} /100 g` : n.per100mL ? `${n.per100mL} /100 mL` : '—'}
                             </Text>
                           )}
                         </View>
@@ -809,7 +751,7 @@ export default function ResultScreen() {
                 <View style={styles.shareOptionTexts}>
                   <Text style={[styles.shareOptionTitle, { color: colors.text }]}>Share as JSON File</Text>
                   <Text style={[styles.shareOptionDesc, { color: colors.textSecondary }]}>
-                    Complete structured audit file for backup or clinical export
+                    Structured label analysis for backup or sharing
                   </Text>
                 </View>
               </Pressable>

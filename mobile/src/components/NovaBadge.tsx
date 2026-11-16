@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { borderRadius, spacing, typography } from '../theme/tokens';
 
 interface NovaBadgeProps {
-  novaGroup?: number;
+  novaGroup?: number | null;
   showDescription?: boolean;
   size?: 'sm' | 'md' | 'lg';
   style?: ViewStyle;
@@ -19,12 +19,13 @@ const novaDescriptions: Record<number, string> = {
 };
 
 export function NovaBadge({
-  novaGroup = 4,
+  novaGroup,
   showDescription = false,
   size = 'md',
   style,
 }: NovaBadgeProps) {
   const { colors, isDark } = useTheme();
+  if (novaGroup == null) return <Text style={{ color: colors.textSecondary }}>NOVA unknown</Text>;
   const meta = getNovaColor(novaGroup, !isDark);
   const description = novaDescriptions[novaGroup] || '';
 

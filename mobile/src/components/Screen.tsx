@@ -1,3 +1,5 @@
+import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
+import { ScrollMotionContext } from '../theme/motion';
 import React from 'react';
 import {
   View,
@@ -28,6 +30,8 @@ export function Screen({
   refreshControl,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const scroll = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler(e => { scroll.set(e.contentOffset.y); });
   const { colors } = useTheme();
 
   const containerStyle: ViewStyle = {
@@ -44,10 +48,12 @@ export function Screen({
         style={containerStyle}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
+        <ScrollMotionContext.Provider value={scroll}>
+        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16}
           style={[{ flex: 1 }, style]}
           contentContainerStyle={[
             styles.scrollContent,
+            { paddingBottom: 104 + insets.bottom },
             contentContainerStyle,
           ]}
           keyboardShouldPersistTaps="handled"
@@ -55,7 +61,8 @@ export function Screen({
           showsVerticalScrollIndicator={false}
         >
           {children}
-        </ScrollView>
+        </Animated.ScrollView>
+        </ScrollMotionContext.Provider>
       </KeyboardAvoidingView>
     );
   }

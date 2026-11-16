@@ -177,17 +177,17 @@ export function AdditiveDetailSheet({
               <View style={styles.bannerTextCol}>
                 <Text style={[styles.bannerTitle, { color: riskColor }]}>
                   {isCaution
-                    ? 'Clinical Caution: Additive Alert'
+                    ? 'Ingredient information'
                     : isModerate
                     ? 'Moderate Consideration'
-                    : 'Recognized Generally Safe'}
+                    : 'Ingredient reference'}
                 </Text>
                 <Text style={[styles.bannerSubtitle, { color: colors.text }]}>
                   {isCaution
-                    ? 'Frequent intake of this additive is clinically linked to gut dysbiosis or metabolic stress.'
+                    ? 'Effects depend on the substance, quantity and individual context. This reference is not a medical assessment.'
                     : isModerate
-                    ? 'Consuming in moderation is generally well tolerated for healthy individuals.'
-                    : 'Clean food component with minimal documented biochemical interference.'}
+                    ? 'Check the label and consult a qualified professional about individual dietary needs.'
+                    : 'This classification does not establish safety for allergies or other dietary conditions.'}
                 </Text>
               </View>
             </View>

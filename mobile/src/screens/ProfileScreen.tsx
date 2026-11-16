@@ -1,3 +1,4 @@
+import { ProfileReveal } from '../components/ProfileReveal';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
@@ -52,7 +53,7 @@ import { FoodPassportModal } from '../components/FoodPassportModal';
 import { checkApiHealth } from '../api/client';
 import { getUserSession, clearUserSession, UserSessionData } from '../lib/auth';
 import { useAuth } from '../context/AuthContext';
-import { exportScanHistory, getScanHistory, getYearlyHistogramData } from '../lib/history';
+import { exportScanHistory, getFullScanLedger, getScanHistory, getYearlyHistogramData } from '../lib/history';
 import { HistoryItem } from '../types';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale, SpringPresets } from '../theme/animations';
@@ -134,62 +135,7 @@ export default function ProfileScreen() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [passportVisible, setPassportVisible] = useState(false);
 
-  // GymMane Rubber-band Swipe Down Physics (Threshold = 110pt raw finger distance)
-  const pullAnim = useRef(new Animated.Value(0)).current;
-  const isArmedRef = useRef(false);
-  const [isArmed, setIsArmed] = useState(false);
-  const scrollYRef = useRef(0);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        return (
-          scrollYRef.current <= 0 &&
-          gesture.dy > 12 &&
-          Math.abs(gesture.dy) > Math.abs(gesture.dx) &&
-          gesture.vy > 0
-        );
-      },
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dy > 0) {
-          // Physical rubber-band visual displacement (asymptote ~90pt)
-          const visualY = (1 - 1 / (gesture.dy * 0.006 + 1)) * 95;
-          pullAnim.setValue(visualY);
-
-          // Separate raw finger translation from rubber-band visual displacement
-          const armed = gesture.dy >= RAW_PULL_THRESHOLD;
-          if (armed !== isArmedRef.current) {
-            isArmedRef.current = armed;
-            setIsArmed(armed);
-            if (armed) {
-              AppHaptics.impactHeavy();
-            }
-          }
-        }
-      },
-      onPanResponderRelease: () => {
-        if (isArmedRef.current) {
-          isArmedRef.current = false;
-          setIsArmed(false);
-          AppHaptics.success();
-          setPassportVisible(true);
-        }
-        Animated.spring(pullAnim, {
-          toValue: 0,
-          ...SpringPresets.fluid,
-        }).start();
-      },
-      onPanResponderTerminate: () => {
-        isArmedRef.current = false;
-        setIsArmed(false);
-        Animated.spring(pullAnim, {
-          toValue: 0,
-          ...SpringPresets.fluid,
-        }).start();
-      },
-    })
-  ).current;
-
+  const avatarRef = useRef<View>(null);
   const loadData = useCallback(async () => {
     try {
       const activeSession = await getUserSession();
@@ -208,7 +154,7 @@ export default function ProfileScreen() {
       }
 
       const [history, yearData] = await Promise.all([
-        getScanHistory(),
+        getFullScanLedger(),
         getYearlyHistogramData(),
       ]);
       setRecentScans(history.slice(0, 4));
@@ -254,91 +200,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* 120Hz Continuous Ambient Moving Watermark Ticker (GymMane Gold Standard) */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.watermarkWrapper,
-          {
-            opacity: pullAnim.interpolate({
-              inputRange: [0, 60, REACH_THRESHOLD],
-              outputRange: [0, 0.4, 0.95],
-              extrapolate: 'clamp',
-            }),
-            transform: [
-              {
-                scale: pullAnim.interpolate({
-                  inputRange: [0, REACH_THRESHOLD],
-                  outputRange: [1.25, 1.0],
-                  extrapolate: 'clamp',
-                }),
-              },
-            ],
-          },
-        ]}
-      >
-        <NameTicker
-          text={userName || 'EATINFORMED'}
-          color={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'}
-          rows={6}
-          size={78}
-          speed={36}
-        />
-      </Animated.View>
-
-      {/* Swipe Down Gesture Responder Container */}
-      <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
-        <Animated.View
-          style={[
-            styles.animatedScrollContainer,
-            {
-              transform: [
-                {
-                  translateY: pullAnim.interpolate({
-                    inputRange: [0, REACH_THRESHOLD],
-                    outputRange: [0, REACH_THRESHOLD * 0.55],
-                    extrapolate: 'clamp',
-                  }),
-                },
-              ],
-              opacity: pullAnim.interpolate({
-                inputRange: [0, REACH_THRESHOLD],
-                outputRange: [1, 0.15],
-                extrapolate: 'clamp',
-              }),
-            },
-          ]}
-        >
-          <ScrollView
-            onScroll={(e) => {
-              scrollYRef.current = e.nativeEvent.contentOffset.y;
-            }}
-            scrollEventThrottle={16}
-            contentContainerStyle={[
-              styles.scrollContent,
-              {
-                paddingTop: insets.top + 8,
-                paddingBottom: insets.bottom + 120,
-              },
-            ]}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Grabber Pill Bar Indicator */}
-            <View style={styles.grabberSection}>
-              <View
-                style={[
-                  styles.grabberPill,
-                  {
-                    backgroundColor: isArmed ? colors.primary : colors.textSecondary,
-                    width: isArmed ? 52 : 36,
-                  },
-                ]}
-              />
-              <Text style={[styles.grabberText, { color: isArmed ? colors.primary : colors.textSecondary }]}>
-                {isArmed ? 'Release to open Food Passport' : 'Pull down to reveal Food Passport'}
-              </Text>
-            </View>
-
+      <ProfileReveal name={userName || 'Guest Explorer'} email={userEmail || ''} photo={userPhoto} handle={session?.handle} count={scanCount} clean={cleanRatio} avatarRef={avatarRef}>
             {/* Profile Header Block with Banner & Avatar */}
             <View style={styles.headerBlock}>
               {/* Settings Gear Button (Top-Right Glass Circle) */}
@@ -361,6 +223,7 @@ export default function ProfileScreen() {
 
               {/* Avatar + Edit Badge */}
               <View style={styles.avatarRow}>
+                <View ref={avatarRef} collapsable={false}>
                 <PressableScale
                   onPress={() => setEditProfileVisible(true)}
                   style={[styles.avatarCircle, { borderColor: colors.primary, backgroundColor: colors.surfaceRaised }]}
@@ -376,6 +239,7 @@ export default function ProfileScreen() {
                     <Camera size={12} color="#FFFFFF" />
                   </View>
                 </PressableScale>
+                </View>
 
                 {/* Identity Info */}
                 <View style={styles.identityMeta}>
@@ -385,7 +249,7 @@ export default function ProfileScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.userHandleText, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {userEmail || 'Local Guest Session'}
+                    {userEmail || 'Anonymous account'}
                   </Text>
 
                   {/* Membership Tier Badge */}
@@ -393,7 +257,7 @@ export default function ProfileScreen() {
                     <View style={[styles.tierBadge, { backgroundColor: colors.primary + '20' }]}>
                       <Shield size={12} color={colors.primary} />
                       <Text style={[styles.tierBadgeText, { color: colors.primary }]}>
-                        {isAnonymous ? 'GUEST EXPLORER' : 'VERIFIED BIO-MEMBER'}
+                        {isAnonymous ? 'GUEST EXPLORER' : 'MEMBER'}
                       </Text>
                     </View>
 
@@ -425,8 +289,8 @@ export default function ProfileScreen() {
 
               <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
                 <Flame size={14} color="#EF4444" />
-                <Text style={[styles.pillValue, { color: colors.text }]}>{scanCount > 0 ? '1d' : '0d'}</Text>
-                <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>Streak</Text>
+                <Text style={[styles.pillValue, { color: colors.text }]}>{yearStats.totalScans}</Text>
+                <Text style={[styles.pillLabel, { color: colors.textSecondary }]}>This year</Text>
               </View>
 
               <View style={[styles.statPill, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
@@ -596,21 +460,7 @@ export default function ProfileScreen() {
                 </View>
               </View>
             </View>
-          </ScrollView>
-        </Animated.View>
-      </View>
-
-      {/* Modals & Bottom Sheets */}
-      <FoodPassportModal
-        visible={passportVisible}
-        onClose={() => setPassportVisible(false)}
-        userName={userName || 'Guest Explorer'}
-        userEmail={userEmail || ''}
-        userHandle={session?.handle || (userEmail ? userEmail.split('@')[0] : 'guest')}
-        userPhoto={userPhoto}
-        scanCount={scanCount}
-        cleanScore={cleanRatio}
-      />
+      </ProfileReveal>
 
       <EditProfileSheet
         visible={editProfileVisible}

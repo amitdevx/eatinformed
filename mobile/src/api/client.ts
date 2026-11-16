@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { Platform } from 'react-native';
+import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { ProductAnalysisOutput } from '../types';
@@ -45,19 +45,25 @@ export const apiClient = axios.create({
   },
 });
 
-// Auto-attach stored token if Authorization header is not set
+let refreshInFlight: Promise<void> | null = null;
 apiClient.interceptors.request.use(async (config) => {
-  if (!config.headers['Authorization']) {
-    try {
-      const raw = await SecureStore.getItemAsync('eatinformed_user_session_v1');
-      if (raw) {
-        const session = JSON.parse(raw);
-        if (session?.token) {
-          config.headers['Authorization'] = `Bearer ${session.token}`;
-        }
-      }
-    } catch (_) {}
+  if (config.url?.startsWith('/api/auth/')) return config;
+  let raw = await SecureStore.getItemAsync('eatinformed_user_session_v1');
+  let session = raw ? JSON.parse(raw) : null;
+  if (session?.refreshToken && (!session.expiresAt || session.expiresAt < Date.now() + 60000)) {
+    if (!refreshInFlight) refreshInFlight = (async () => {
+      const result = await axios.post(`${getBaseUrl()}/api/auth/mobile`, { type: 'refresh', refreshToken: session.refreshToken }, { timeout: 12000 });
+      const currentRaw = await SecureStore.getItemAsync('eatinformed_user_session_v1');
+      const current = currentRaw ? JSON.parse(currentRaw) : null;
+      if (current?.uid !== session.uid) throw new Error('Account changed. Please retry.');
+      await SecureStore.setItemAsync('eatinformed_user_session_v1', JSON.stringify({ ...current, token: result.data.token, refreshToken: result.data.refreshToken, expiresAt: result.data.expiresAt }));
+    })().finally(() => { refreshInFlight = null; });
+    await refreshInFlight;
+    raw = await SecureStore.getItemAsync('eatinformed_user_session_v1');
+    session = raw ? JSON.parse(raw) : null;
   }
+  if (session?.token) config.headers.Authorization = `Bearer ${session.token}`;
+  else delete config.headers.Authorization;
   return config;
 });
 
@@ -93,6 +99,7 @@ export async function scanFoodLabel(
     payload = `data:image/jpeg;base64,${payload}`;
   }
 
+  const idempotencyKey = Crypto.randomUUID();
   const startTime = Date.now();
   let lastError: unknown = null;
 
@@ -103,6 +110,7 @@ export async function scanFoodLabel(
         '/api/scan',
         { image: payload },
         {
+          headers: { 'Idempotency-Key': idempotencyKey },
           onUploadProgress: (progressEvent) => {
             if (onUploadProgress && progressEvent.total) {
               onUploadProgress(Math.min(1, progressEvent.loaded / progressEvent.total));
@@ -112,6 +120,7 @@ export async function scanFoodLabel(
           },
         }
       );
+      if (response.data.status !== 'success' || !Array.isArray(response.data.ingredients) || !response.data.nutrition) throw new Error('Invalid scan result received.');
       await recordScanDuration(Date.now() - startTime);
       return response.data;
     } catch (err) {
@@ -119,7 +128,7 @@ export async function scanFoodLabel(
       const axiosErr = err as AxiosError;
       const status = axiosErr.response?.status;
       // Don't retry client validation errors (400/401/413)
-      if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) {
+      if (status && status >= 400 && status < 500 && status !== 408) {
         break;
       }
       if (attempt < 2) {

@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -9,6 +10,9 @@ const USER_SESSION_KEY = 'eatinformed_user_session_v1';
 let cachedSession: UserSessionData | null = null;
 
 export interface UserSessionData {
+  uid: string;
+  refreshToken?: string;
+  expiresAt?: number;
   email: string;
   name: string;
   token?: string;
@@ -28,13 +32,6 @@ export function normalizeHandle(input: string): string {
 }
 
 export async function getUserSession(): Promise<UserSessionData | null> {
-  if (cachedSession && cachedSession.isLoggedIn) {
-    if (cachedSession.token) {
-      setAuthToken(cachedSession.token);
-    }
-    return cachedSession;
-  }
-
   try {
     const raw = await SecureStore.getItemAsync(USER_SESSION_KEY);
     if (!raw) {
@@ -42,6 +39,7 @@ export async function getUserSession(): Promise<UserSessionData | null> {
       return null;
     }
     const session: UserSessionData = JSON.parse(raw);
+    if (!session.uid || !session.token || !session.refreshToken) { setAuthToken(null); return null; }
     if (session.token) {
       setAuthToken(session.token);
     }
@@ -49,7 +47,7 @@ export async function getUserSession(): Promise<UserSessionData | null> {
     return session;
   } catch (e) {
     console.warn('Error reading session from secure storage:', e);
-    return cachedSession;
+    return null;
   }
 }
 
@@ -60,24 +58,31 @@ export async function saveUserSession(
   isAnonymous: boolean = false,
   photoUrl?: string,
   handle?: string,
-  allergens?: string[]
+  allergens?: string[],
+  identity?: { uid: string; refreshToken?: string; expiresAt?: number }
 ): Promise<UserSessionData> {
-  const existingHandle = cachedSession?.handle;
-  const existingAllergens = cachedSession?.allergens;
+  if (!identity?.uid && !cachedSession?.uid) throw new Error('A verified account is required.');
+  const sameUser = !identity || identity.uid === cachedSession?.uid;
+  const previous = sameUser ? cachedSession : null;
+  const existingHandle = previous?.handle;
+  const existingAllergens = previous?.allergens;
   const resolvedHandle =
     handle || existingHandle || (isAnonymous ? 'guest' : normalizeHandle(email || name || 'member'));
   const resolvedAllergens = allergens || existingAllergens || [];
 
   const session: UserSessionData = {
+    uid: identity?.uid || previous!.uid,
+    refreshToken: identity?.refreshToken || previous?.refreshToken,
+    expiresAt: identity?.expiresAt || previous?.expiresAt,
     email,
     name: name || (isAnonymous ? 'Guest Explorer' : email ? email.split('@')[0] : 'Member'),
     token: token || undefined,
-    photoUrl: photoUrl !== undefined ? photoUrl : cachedSession?.photoUrl,
+    photoUrl: photoUrl !== undefined ? photoUrl : previous?.photoUrl,
     handle: resolvedHandle,
     allergens: resolvedAllergens,
     isLoggedIn: true,
     isAnonymous,
-    loginDate: cachedSession?.loginDate || new Date().toLocaleDateString(),
+    loginDate: previous?.loginDate || new Date().toLocaleDateString(),
   };
 
   cachedSession = session;
@@ -95,6 +100,7 @@ export async function updateUserProfile(
   updates: Partial<UserSessionData>
 ): Promise<UserSessionData> {
   const current = await getUserSession();
+  await apiClient.patch('/api/profile', { ...(updates.name !== undefined ? { name: updates.name } : {}), ...(updates.handle !== undefined ? { handle: normalizeHandle(updates.handle) } : {}), ...(updates.allergens !== undefined ? { allergens: updates.allergens.map(a => a.toLowerCase()) } : {}) });
   const email = updates.email !== undefined ? updates.email : current?.email || '';
   const name = updates.name !== undefined ? updates.name : current?.name || 'Member';
   const token = updates.token !== undefined ? updates.token : current?.token;
@@ -129,21 +135,27 @@ export async function authenticateWithBackend(
   type: 'signIn' | 'signUp'
 ): Promise<UserSessionData> {
   try {
+    const current = await getUserSession();
+    if (type === 'signUp' && current?.isAnonymous) await apiClient.get('/api/scan?quota=true');
+    const fresh = await getUserSession();
     const response = await apiClient.post<{
       status: string;
       token: string;
-      user: { email: string; name: string; isAnonymous: boolean };
+      refreshToken: string;
+      expiresAt: number;
+      user: { uid: string; email: string; name: string; isAnonymous: boolean };
     }>('/api/auth/mobile', {
       email,
       password,
-      type,
+      type: type === 'signUp' && fresh?.isAnonymous ? 'link' : type,
+      ...(type === 'signUp' && fresh?.isAnonymous ? { idToken: fresh.token } : {}),
     }, {
       timeout: 12000,
     });
 
     if (response.data && response.data.token) {
       const u = response.data.user;
-      return await saveUserSession(u.email, u.name, response.data.token, u.isAnonymous);
+      return await saveUserSession(u.email, u.name, response.data.token, u.isAnonymous, undefined, undefined, undefined, { uid: u.uid, refreshToken: response.data.refreshToken, expiresAt: response.data.expiresAt });
     }
     throw new Error('Invalid response from authentication server');
   } catch (err: any) {
@@ -154,11 +166,15 @@ export async function authenticateWithBackend(
 
 // ponytail: authentic guest session with verified cryptographic server token
 export async function signInAsGuest(): Promise<UserSessionData> {
+  const existing = await getUserSession();
+  if (existing?.isAnonymous) return existing;
   try {
     const response = await apiClient.post<{
       status: string;
       token: string;
-      user: { email: string; name: string; isAnonymous: boolean };
+      refreshToken: string;
+      expiresAt: number;
+      user: { uid: string; email: string; name: string; isAnonymous: boolean };
     }>('/api/auth/mobile', {
       type: 'guest',
     }, {
@@ -167,7 +183,7 @@ export async function signInAsGuest(): Promise<UserSessionData> {
 
     if (response.data && response.data.token) {
       const u = response.data.user;
-      return await saveUserSession(u.email || '', u.name || 'Guest Explorer', response.data.token, true);
+      return await saveUserSession(u.email || '', u.name || 'Guest Explorer', response.data.token, true, undefined, undefined, undefined, { uid: u.uid, refreshToken: response.data.refreshToken, expiresAt: response.data.expiresAt });
     }
     throw new Error('Invalid guest token response from authentication server.');
   } catch (e: any) {
@@ -188,7 +204,10 @@ export async function signInWithGoogle(): Promise<UserSessionData> {
     scheme: 'eatinformed',
   });
 
-  const bridgeUrl = `${webBaseUrl}/mobile-auth?redirect_uri=${encodeURIComponent(appCallbackUri)}`;
+  const state = Crypto.randomUUID();
+  const verifier = Crypto.randomUUID() + Crypto.randomUUID();
+  const challenge = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, verifier);
+  const bridgeUrl = `${webBaseUrl}/mobile-auth?redirect_uri=${encodeURIComponent(appCallbackUri)}&state=${encodeURIComponent(state)}&challenge=${challenge}`;
 
   const res = await WebBrowser.openAuthSessionAsync(bridgeUrl, appCallbackUri);
 
@@ -196,20 +215,17 @@ export async function signInWithGoogle(): Promise<UserSessionData> {
     throw new Error('Google sign-in was cancelled.');
   }
 
-  const queryPart = res.url.split('?')[1] || res.url.split('#')[1] || '';
+  if (!res.url.startsWith(appCallbackUri + '#')) throw new Error('Unexpected sign-in callback.');
+  const queryPart = res.url.split('#')[1] || '';
   const params = new URLSearchParams(queryPart);
+  if (params.get('state') !== state) throw new Error('Sign-in could not be verified.');
   if (params.get('error')) {
     throw new Error('Google sign-in was cancelled.');
   }
 
-  const token = params.get('token') || params.get('access_token') || params.get('id_token');
-  const email = params.get('email') || '';
-  const name = params.get('name') || (email ? email.split('@')[0] : 'Member');
-  const photoUrl = params.get('photoUrl') || undefined;
-
-  if (!token || !email) {
-    throw new Error('Could not retrieve Google account details. Please try again.');
-  }
-
-  return await saveUserSession(email, name, token, false, photoUrl);
+  const code = params.get('code');
+  if (!code) throw new Error('Could not complete Google sign-in.');
+  const response = await apiClient.post('/api/auth/bridge', { mode: 'exchange', code, verifier });
+  const verified = response.data;
+  return await saveUserSession(verified.user.email, verified.user.name, verified.token, verified.user.isAnonymous, verified.user.photoUrl, undefined, undefined, { uid: verified.user.uid, refreshToken: verified.refreshToken, expiresAt: verified.expiresAt });
 }

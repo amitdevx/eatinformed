@@ -1,130 +1,24 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-interface NameTickerProps {
-  text: string;
-  color?: string;
-  rows?: number;
-  size?: number;
-  speed?: number;
-  running?: boolean;
-}
-
-// ponytail: GymMane-grade 120Hz hardware-accelerated infinite scrolling background watermark ticker
-// Alternating rows translate in opposite directions entirely on the native render thread via useNativeDriver: true
-export const NameTicker = React.memo(function NameTicker({
-  text = 'EATINFORMED',
-  color = 'rgba(255, 255, 255, 0.07)',
-  rows = 5,
-  size = 72,
-  speed = 40,
-  running = true,
-}: NameTickerProps) {
-  const displayText = (text.trim().toUpperCase() || 'EATINFORMED') + '  ·  ';
-  // Approximate width per item based on character count and font size
-  const itemWidth = Math.max(displayText.length * size * 0.58, SCREEN_WIDTH * 1.2);
-  const duration = Math.round((itemWidth / speed) * 1000);
-
-  const scrollForward = useRef(new Animated.Value(0)).current;
-  const scrollReverse = useRef(new Animated.Value(-itemWidth)).current;
-
+import React, { useEffect, useState } from 'react';
+import { AppState, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+function Row({ text, size, color, speed, reverse, running }: { text: string; size: number; color: string; speed: number; reverse: boolean; running: boolean }) {
+  const [span, setSpan] = useState(0), { width } = useWindowDimensions();
+  const offset = useSharedValue(0), reduced = useReducedMotion();
   useEffect(() => {
-    if (!running) return;
-
-    scrollForward.setValue(0);
-    scrollReverse.setValue(-itemWidth);
-
-    const forwardLoop = Animated.loop(
-      Animated.timing(scrollForward, {
-        toValue: -itemWidth,
-        duration,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-
-    const reverseLoop = Animated.loop(
-      Animated.timing(scrollReverse, {
-        toValue: 0,
-        duration,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-
-    forwardLoop.start();
-    reverseLoop.start();
-
-    return () => {
-      forwardLoop.stop();
-      reverseLoop.stop();
-    };
-  }, [duration, itemWidth, running, scrollForward, scrollReverse]);
-
-  const rowIndices = Array.from({ length: rows }, (_, i) => i);
-
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <View style={styles.container}>
-        {rowIndices.map((rowIndex) => {
-          const isEven = rowIndex % 2 === 0;
-          const translateX = isEven ? scrollForward : scrollReverse;
-          const rowPace = 1 + (rowIndex % 3) * 0.12;
-
-          return (
-            <View key={rowIndex} style={[styles.row, { height: size * 0.95 }]}>
-              <Animated.View
-                style={[
-                  styles.animatedTrack,
-                  {
-                    transform: [{ translateX }],
-                    opacity: 0.85 + (rowIndex % 2) * 0.15,
-                  },
-                ]}
-              >
-                {/* Render enough repeating blocks to ensure continuous coverage across 120Hz translation */}
-                <Text
-                  style={[
-                    styles.tickerText,
-                    {
-                      fontSize: size,
-                      color,
-                      letterSpacing: -size * 0.035,
-                      lineHeight: size * 1.05,
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {displayText.repeat(8)}
-                </Text>
-              </Animated.View>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  row: {
-    width: '100%',
-    overflow: 'hidden',
-    justifyContent: 'center',
-  },
-  animatedTrack: {
-    flexDirection: 'row',
-    width: SCREEN_WIDTH * 8,
-  },
-  tickerText: {
-    fontWeight: '900',
-    textTransform: 'uppercase',
-  },
+    if (!running || reduced || !span) { cancelAnimation(offset); return; }
+    offset.set(reverse ? -span : 0);
+    offset.set(withRepeat(withTiming(reverse ? 0 : -span, { duration: span / Math.max(speed, 1) * 1000, easing: Easing.linear }), -1));
+    return () => cancelAnimation(offset);
+  }, [span, speed, reverse, running, reduced, offset]);
+  const motion = useAnimatedStyle(() => ({ transform: [{ translateX: offset.get() }] }));
+  const style = { fontSize: size, fontWeight: '900' as const, color, lineHeight: size * 1.1 };
+  return <View style={{ overflow: 'hidden', height: size * 1.1 }}>
+    <Text onTextLayout={e => setSpan(Math.ceil(e.nativeEvent.lines[0]?.width || 0))} style={[style, { position: 'absolute', width: 10000, opacity: 0 }]} numberOfLines={1}>{text}</Text>
+    {span > 0 && <Animated.View style={[{ flexDirection: 'row', width: span * (Math.ceil(width / span) + 2) }, motion]}>{Array.from({ length: Math.ceil(width / span) + 2 }, (_, i) => <Text key={i} style={[style, { width: span }]} numberOfLines={1}>{text}</Text>)}</Animated.View>}
+  </View>;
+}
+export const NameTicker = React.memo(function NameTicker({ text, color = '#ffffff12', rows = 5, size = 72, speed = 40, running = false }: { text: string; color?: string; rows?: number; size?: number; speed?: number; running?: boolean }) {
+  const [active, setActive] = useState(AppState.currentState === 'active');
+  useEffect(() => { const sub = AppState.addEventListener('change', s => setActive(s === 'active')); return () => sub.remove(); }, []);
+  return <View pointerEvents="none" accessibilityElementsHidden style={[StyleSheet.absoluteFill, { justifyContent: 'center', overflow: 'hidden' }]}>{Array.from({ length: rows }, (_, i) => <Row key={i} text={`${text.trim().toUpperCase() || 'EATINFORMED'}  ·  `} size={size} color={color} speed={speed} reverse={i % 2 === 1} running={running && active} />)}</View>;
 });

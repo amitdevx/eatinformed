@@ -49,9 +49,9 @@ const PIPELINE_STAGES = [
   { threshold: 0.0, label: 'Optimizing label image for optical analysis...' },
   { threshold: 0.12, label: 'Uploading food label to EatInformed AI...' },
   { threshold: 0.28, label: 'Extracting ingredients & nutrition panel with Vision AI...' },
-  { threshold: 0.58, label: 'Cross-referencing additives & NOVA processing group...' },
-  { threshold: 0.82, label: 'Finalizing clinical nutrition assessment...' },
-  { threshold: 0.92, label: 'High server load: completing deep verification...' },
+  { threshold: 0.58, label: 'Analyzing the uploaded food label...' },
+  { threshold: 0.82, label: 'Waiting for the analysis service...' },
+  { threshold: 0.92, label: 'Still waiting for the analysis service...' },
 ];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;

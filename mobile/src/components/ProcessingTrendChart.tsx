@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface TrendDataPoint {
   day: string; // e.g. 'Mon', 'Tue'
-  score: number; // 0.0 - 5.0
+  score: number | null; // 0.0 - 5.0
   dateStr: string;
   scansCount: number;
 }
@@ -43,7 +43,7 @@ export function ProcessingTrendChart({
   const [containerWidth, setContainerWidth] = useState(SCREEN_WIDTH - 64);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const hasRealScans = data && data.length > 0 && data.some((d) => d.scansCount > 0);
+  const hasRealScans = data && data.length > 0 && data.some((d) => d.score !== null);
 
   const paddingHorizontal = 18;
   const paddingTop = 24;
@@ -57,12 +57,13 @@ export function ProcessingTrendChart({
   const points = useMemo(() => {
     if (!hasRealScans || data.length === 0) return [];
     const stepX = data.length > 1 ? plotWidth / (data.length - 1) : 0;
-    return data.map((d, i) => {
+    return data.flatMap((d, i) => {
+      if (d.score == null) return [];
       const x = paddingHorizontal + i * stepX;
       // Invert Y coordinate (0.0 is bottom, 5.0 is top)
       const normalizedScore = Math.max(0, Math.min(d.score, 5.0)) / 5.0;
       const y = paddingTop + plotHeight * (1 - normalizedScore);
-      return { x, y, data: d };
+      return [{ x, y, data: { ...d, score: d.score as number } }];
     });
   }, [hasRealScans, data, plotWidth, plotHeight, paddingHorizontal, paddingTop]);
 
@@ -172,7 +173,7 @@ export function ProcessingTrendChart({
             </Text>
             <View style={styles.tooltipScoreRow}>
               <Text style={[styles.tooltipScore, { color: colors.text }]}>
-                {activePoint.data.score.toFixed(1)}
+                {activePoint.data.score?.toFixed(1)}
               </Text>
               <Text style={[styles.tooltipScoreScale, { color: colors.textSecondary }]}>
                 / 5.0 HEALTH INDEX

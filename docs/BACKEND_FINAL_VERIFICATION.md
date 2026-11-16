@@ -15,3 +15,5 @@ Dependency audit after compatible updates: 0 critical, 6 high and 16 moderate ru
 Production web build completed successfully, including TypeScript and all 15 generated pages. A browser smoke run initially timed out on page load under host pressure; rerun uses DOMContentLoaded and a 120-second budget.
 
 Browser smoke verification: 3/3 passed at 360/768/1440px, testing /, /check, /support and /login for horizontal overflow and runtime page errors. This does not exercise authenticated scans or Android gestures.
+
+Android bundle verification: `npx expo export --platform android --max-workers 1` completed successfully, producing a 6 MB Hermes bytecode bundle and 17 assets. This validates bundling; actual native installation and gesture/blur execution remain BLOCKED.
