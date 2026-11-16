@@ -73,3 +73,9 @@ The synthetic test account returned `account_exists` on registration retry. Sign
 React Navigation retains shared screens across auth branches unless their navigation key changes. The shared Auth route now belongs to a group keyed by verified account/guest status. OAuth callbacks are filtered out of the screen router and remain owned by Expo's pending authentication session. References: [authentication flow](https://reactnavigation.org/docs/auth-flow/) and [link filtering](https://reactnavigation.org/docs/configuring-links/).
 
 Normal Profile scrolling was verified after System UI recovery (`profile-normal-scroll.png`). Google bridge/cancellation evidence: `google-browser-handoff.png`, `google-return-from-popup.png`, `google-cancelled-app.png`. The synthetic registered test account is retained; no user records were deleted. Its random test credentials are stored only in a private temporary host file, not this repository.
+
+## Account sync and cache-deletion mismatch
+
+A single authorized full-image production request using the synthetic registered account returned HTTP 200 in 38,836 ms, request `80d327bf-ff37-439b-a0ea-a8e9ad22ae15`. It contained one ingredient and five nutrients; quota changed from 50 to 49. Android then loaded that record into History (`member-history-server-sync.png`). This is live-provider/backend/history evidence; it is not a successful repaired-APK gallery-to-result test.
+
+Settings advertised a local cache wipe but invoked `clearAllHistory`, which deletes durable account history. Status: STATIC VERIFIED defect; FIX IMPLEMENTED by a UID-scoped AsyncStorage-only cache removal. No saved records were deleted to reproduce it. History's separate account deletion confirmation now explains its cross-device effect. Settings also displays the configured app version rather than hardcoded build 42. Device verification of these changes is pending the remote APK.

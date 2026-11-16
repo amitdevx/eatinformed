@@ -134,7 +134,7 @@ export default function HistoryScreen() {
         <ScreenHeader
           title="Scan History"
           subtitle={`${historyItems.length} ${
-            historyItems.length === 1 ? 'saved report on device' : 'saved reports on device'
+            historyItems.length === 1 ? 'saved report in your account' : 'saved reports in your account'
           }`}
           largeTitle={true}
           rightElement={
@@ -318,9 +318,9 @@ export default function HistoryScreen() {
 
       <ConfirmModal
         visible={isClearAllModalVisible}
-        title="Clear History"
-        message="Are you sure you want to delete all saved scan reports from this device?"
-        confirmText="Clear All"
+        title="Delete Account History"
+        message="Delete all saved scan reports from your account? This removes them across synced devices."
+        confirmText="Delete All"
         cancelText="Cancel"
         destructive={true}
         onConfirm={confirmClearAll}

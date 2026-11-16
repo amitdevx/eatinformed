@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Constants from 'expo-constants';
 import {
   View,
   Text,
@@ -34,7 +35,7 @@ import { useTheme, ThemeMode } from '../theme/ThemeContext';
 import { SegmentedControl } from './SegmentedControl';
 import { Button } from './Button';
 import { AppHaptics } from '../lib/haptics';
-import { exportScanHistory, clearAllHistory } from '../lib/history';
+import { exportScanHistory, clearLocalHistoryCache } from '../lib/history';
 import { checkApiHealth } from '../api/client';
 import { spacing, typography, borderRadius } from '../theme/tokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -141,17 +142,21 @@ export function SettingsSheet({
   const handleClearHistory = () => {
     AppHaptics.warning();
     Alert.alert(
-      'Clear Scan History',
-      'Are you sure you want to delete all cached food scans from your device? This cannot be undone.',
+      'Clear Local Scan Cache',
+      'Remove downloaded scan records from this device? Saved scans will sync again when you open History.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear All',
+          text: 'Clear Cache',
           style: 'destructive',
           onPress: async () => {
-            await clearAllHistory();
-            AppHaptics.success();
-            Alert.alert('Cleared', 'Your local scan cache has been wiped.');
+            try {
+              await clearLocalHistoryCache();
+              AppHaptics.success();
+              Alert.alert('Cache Cleared', 'Saved scans will sync when you open History.');
+            } catch {
+              Alert.alert('Could Not Clear Cache', 'Please try again.');
+            }
           },
         },
       ]
@@ -374,7 +379,7 @@ export function SettingsSheet({
                       <Text style={[styles.rowTitle, { color: colors.danger }]}>Clear Local Scan Cache</Text>
                     </View>
                     <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>
-                      Wipes cached labels and temporary images
+                      Removes downloaded scan records from this device
                     </Text>
                   </View>
                   <ChevronRight size={18} color={colors.textSecondary} />
@@ -442,7 +447,7 @@ export function SettingsSheet({
             {/* About Info */}
             <View style={styles.aboutFooter}>
               <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-                EatInformed v1.2.0 (Build 42) · Apple HIG & GymMane Design
+                EatInformed {Constants.expoConfig?.version || 'Version unavailable'}
               </Text>
             </View>
           </ScrollView>

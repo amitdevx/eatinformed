@@ -70,6 +70,11 @@ export async function deleteHistoryItem(id: string): Promise<HistoryItem[]> {
   await AsyncStorage.removeItem(`${CACHE_PREFIX}${uid}`);
   return getScanHistory();
 }
+export async function clearLocalHistoryCache(): Promise<void> {
+  const uid = await getHistoryScope();
+  await AsyncStorage.removeItem(`${CACHE_PREFIX}${uid}`);
+}
+
 export async function clearAllHistory(): Promise<boolean> {
   const uid = await getHistoryScope();
   const items = await getFullScanLedger(false);
