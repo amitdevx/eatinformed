@@ -88,7 +88,7 @@ export default function AuthScreen() {
       );
       await authSignIn(session);
       AppHaptics.success();
-      navigation.goBack();
+      // Auth state switches the root navigator to Main.
     } catch (err: unknown) {
       AppHaptics.error();
       setError(err instanceof Error ? err.message : 'Authentication failed.');
@@ -106,7 +106,7 @@ export default function AuthScreen() {
       const session = await signInWithGoogle();
       await authSignIn(session);
       AppHaptics.success();
-      navigation.goBack();
+      // Auth state switches the root navigator to Main.
     } catch (err: unknown) {
       AppHaptics.warning();
       setError(err instanceof Error ? err.message : 'Google sign-in failed.');
@@ -124,9 +124,9 @@ export default function AuthScreen() {
       const session = await signInAsGuest();
       await authSignIn(session);
       AppHaptics.success();
-      navigation.goBack();
-    } catch {
-      navigation.goBack();
+      // Auth state switches the root navigator to Main.
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not initialize guest session.');
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +161,7 @@ export default function AuthScreen() {
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           {activeTab === 'login'
             ? 'Sign in to access your saved food reports and sync scans across devices.'
-            : 'Join EatInformed to build transparent, whole-food nutrition habits.'}
+            : 'Already use EatInformed on the website? Choose Sign In and use the same account.'}
         </Text>
       </FadeInView>
 

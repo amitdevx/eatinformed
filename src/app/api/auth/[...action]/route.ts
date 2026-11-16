@@ -81,16 +81,29 @@ export async function POST(request: NextRequest, context: Context) {
     const upstream = await fetch(`${endpoint}?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(8000) });
     const result = await upstream.json();
     if (!upstream.ok) {
+      const providerCode = String(result.error?.message || 'UNKNOWN').split(' : ')[0];
+      console.warn(JSON.stringify({ event: 'auth_provider_failure', requestId, status: upstream.status, code: providerCode }));
+      if (['OPERATION_NOT_ALLOWED', 'ADMIN_ONLY_OPERATION', 'CONFIGURATION_NOT_FOUND', 'API_KEY_INVALID', 'INVALID_API_KEY', 'PROJECT_NOT_FOUND'].includes(providerCode)) throw new ApiError(503, 'auth_provider_configuration', 'This sign-in method is unavailable. Please contact support.');
       const conflict = result.error?.message === 'EMAIL_EXISTS';
       throw new ApiError(conflict ? 409 : upstream.status === 429 ? 429 : 401, conflict ? 'account_exists' : 'authentication_failed', conflict ? 'This account already exists. Sign in to it; guest records will remain separate.' : 'Authentication failed. Check your details or try again later.');
     }
     const token = result.idToken || result.id_token;
     const claims = await adminAuth.verifyIdToken(token, true);
     const user = await adminAuth.getUser(claims.uid);
+    const profile = adminDb ? await adminDb.collection('profiles').doc(claims.uid).get().then(record => record.data()).catch(() => undefined) : undefined;
     return NextResponse.json({ status: 'success', token, refreshToken: result.refreshToken || result.refresh_token,
       expiresAt: Date.now() + Number(result.expiresIn || result.expires_in || 3600) * 1000,
-      user: { uid: claims.uid, email: user.email || '', name: user.displayName || user.email?.split('@')[0] || 'Guest Explorer', isAnonymous: claims.firebase?.sign_in_provider === 'anonymous', photoUrl: user.photoURL || null } }, { headers: { 'Cache-Control': 'no-store' } });
+      user: { uid: claims.uid, email: user.email || '', name: profile?.name || user.displayName || user.email?.split('@')[0] || 'Guest Explorer', isAnonymous: claims.firebase?.sign_in_provider === 'anonymous', photoUrl: user.photoURL || null, handle: profile?.handle, allergens: profile?.allergens || [] } }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
+    console.warn(JSON.stringify({ event: 'auth_request_failed', requestId, code: error instanceof ApiError ? error.code : 'internal_error', status: error instanceof ApiError ? error.status : 500 }));
     return apiFailure(error, requestId);
   }
+}
+
+// Public capability check; does not disclose project identifiers or credentials.
+export async function GET(_request: NextRequest, context: Context) {
+  const { action } = await context.params;
+  if (action?.length !== 1 || action[0] !== 'status') return NextResponse.json({ code: 'not_found' }, { status: 404 });
+  const configured = Boolean(adminAuth && (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY));
+  return NextResponse.json({ status: configured ? 'configured' : 'unavailable' }, { status: configured ? 200 : 503, headers: { 'Cache-Control': 'no-store' } });
 }

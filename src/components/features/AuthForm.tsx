@@ -71,19 +71,11 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const handleAuthSuccess = async (idToken: string) => {
-    // ponytail: ensure session cookie endpoint completes before navigating
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      if (!res.ok) {
-        console.warn('Session cookie creation returned non-ok status; continuing with client auth.');
-      }
-    } catch (err) {
-      console.warn('Session cookie network error; continuing with client auth:', err);
-    }
+    const response = await fetch('/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Could not establish your server session. Please try again.');
     onAuthSuccess();
   };
 

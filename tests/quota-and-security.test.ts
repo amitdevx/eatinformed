@@ -55,3 +55,13 @@ test('allergen aliases use whole words and never promise safety', () => {
   assert.equal(preferenceWarnings(['nutmeg', 'coconut', 'eggplant'], ['egg', 'tree nut']).length, 0);
   assert.equal(preferenceWarnings(['whey powder', 'groundnuts'], ['milk', 'peanut']).length, 2);
 });
+
+import { parseServiceAccount } from '../src/lib/firebase-credentials';
+test('service-account serialization supports escaped PEM, camel case and double-encoded JSON', () => {
+  const source = { project_id: 'demo-test', client_email: 'test@example.test', private_key: 'line1\\nline2' };
+  assert.equal(parseServiceAccount(JSON.stringify(source)).privateKey, 'line1\nline2');
+  assert.equal(parseServiceAccount(JSON.stringify(JSON.stringify(source))).projectId, 'demo-test');
+  assert.equal(parseServiceAccount(JSON.stringify({ projectId: source.project_id, clientEmail: source.client_email, privateKey: source.private_key })).clientEmail, source.client_email);
+  assert.throws(() => parseServiceAccount('{}'));
+  assert.throws(() => parseServiceAccount('not json'));
+});

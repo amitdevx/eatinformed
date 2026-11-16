@@ -118,3 +118,34 @@ test('crashed scans settle as interrupted without a second provider execution or
   assert.equal((await store.reserve(identity, key, 'image')).status, 504);
   await assert.rejects(store.finish(identity, key, { status: 'success' }, 200), { code: 'operation_completed' });
 });
+
+test('web account can sign in on mobile while the browser session stays signed in', async () => {
+  const email = `${randomUUID()}@example.test`, password = 'test-password-123';
+  const signup = await authPost(req('/api/auth/mobile', undefined, { type: 'signUp', email, password }), { params: Promise.resolve({ action: ['mobile'] }) });
+  assert.equal(signup.status, 200);
+  const account = await signup.json();
+  const browserSession = await adminAuth!.createSessionCookie(account.token, { expiresIn: 86400000 });
+  const signin = await authPost(req('/api/auth/mobile', undefined, { type: 'signIn', email, password }, 'POST', { cookie: `session=${browserSession}` }), { params: Promise.resolve({ action: ['mobile'] }) });
+  assert.equal(signin.status, 200);
+  assert.equal((await signin.json()).user.uid, account.user.uid);
+  const duplicate = await authPost(req('/api/auth/mobile', undefined, { type: 'signUp', email, password }), { params: Promise.resolve({ action: ['mobile'] }) });
+  assert.equal(duplicate.status, 409);
+  assert.equal((await duplicate.json()).code, 'account_exists');
+  assert.equal((await authenticate(req('/api/scan', undefined, undefined, 'GET', { cookie: `session=${browserSession}` }))).uid, account.user.uid);
+});
+
+test('browser-to-app exchange uses the same UID and is verifier-protected and single-use', async () => {
+  const { createHash } = await import('node:crypto');
+  const account = await login(true), verifier = randomUUID() + randomUUID();
+  const challenge = createHash('sha256').update(verifier).digest('hex');
+  const context = { params: Promise.resolve({ action: ['bridge'] }) };
+  const created = await authPost(req('/api/auth/bridge', undefined, { mode: 'create', idToken: account.token, refreshToken: account.refreshToken, challenge }), context);
+  assert.equal(created.status, 200);
+  const { code } = await created.json();
+  const wrong = await authPost(req('/api/auth/bridge', undefined, { mode: 'exchange', code, verifier: 'x'.repeat(64) }), context);
+  assert.equal(wrong.status, 401);
+  const exchanged = await authPost(req('/api/auth/bridge', undefined, { mode: 'exchange', code, verifier }), context);
+  assert.equal(exchanged.status, 200);
+  assert.equal((await exchanged.json()).user.uid, account.user.uid);
+  assert.equal((await authPost(req('/api/auth/bridge', undefined, { mode: 'exchange', code, verifier }), context)).status, 401);
+});

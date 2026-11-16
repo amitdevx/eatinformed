@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -14,7 +14,7 @@ function MobileAuthContent() {
   const challenge = searchParams.get('challenge') || '';
   const validRedirect = rawRedirect === redirectUri && /^[a-f0-9]{64}$/.test(challenge) && /^[a-f0-9-]{36}$/.test(state);
 
-  const [status, setStatus] = useState<'loading' | 'signing_in' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'ready' | 'loading' | 'signing_in' | 'success' | 'error'>('ready');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const startGoogleSignIn = async () => {
@@ -39,13 +39,13 @@ function MobileAuthContent() {
       const name = user.displayName || email.split('@')[0] || 'Member';
       const photoUrl = user.photoURL || '';
 
-      setStatus('success');
-
       // Hand off token and credentials back to the mobile app deep link
       const delimiter = '#';
       const exchange = await fetch('/api/auth/bridge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'create', idToken, refreshToken: user.refreshToken, challenge }) });
-      if (!exchange.ok) throw new Error('Could not complete sign-in. Please try again.');
-      const { code } = await exchange.json();
+      const resultData = await exchange.json();
+      if (!exchange.ok) throw new Error(`${resultData.error || 'Could not complete sign-in.'}${resultData.requestId ? ` Reference: ${resultData.requestId}` : ''}`);
+      const { code } = resultData;
+      setStatus('success');
       const callbackUrl = `${redirectUri}${delimiter}state=${encodeURIComponent(state)}&code=${encodeURIComponent(code)}`;
 
       window.location.replace(callbackUrl);
@@ -60,9 +60,7 @@ function MobileAuthContent() {
     }
   };
 
-  useEffect(() => {
-    startGoogleSignIn();
-  }, []);
+
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center">
@@ -77,7 +75,7 @@ function MobileAuthContent() {
             ? 'Completing secure Google authentication for your mobile app...'
             : status === 'success'
             ? 'Redirecting back to EatInformed app...'
-            : 'Authentication paused.'}
+            : status === 'ready' ? 'Continue with Google to sign in to the same EatInformed account on your app.' : 'Authentication paused.'}
         </p>
 
         {status === 'error' && (

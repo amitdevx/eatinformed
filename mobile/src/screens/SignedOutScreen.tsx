@@ -20,6 +20,7 @@ export default function SignedOutScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { colors, isDark } = useTheme();
   const { continueAsGuest } = useAuth();
+  const [error, setError] = useState<string | null>(null);
   const [loadingGuest, setLoadingGuest] = useState(false);
 
   const handleOpenAuth = (tab: 'login' | 'signup') => {
@@ -29,11 +30,12 @@ export default function SignedOutScreen() {
 
   const handleContinueAsGuest = async () => {
     AppHaptics.impactMedium();
+    setError(null);
     setLoadingGuest(true);
     try {
       await continueAsGuest();
     } catch (err) {
-      console.warn('Guest sign-in error:', err);
+      setError(err instanceof Error ? err.message : 'Guest sign-in failed. Please try again.');
     } finally {
       setLoadingGuest(false);
     }
@@ -60,6 +62,7 @@ export default function SignedOutScreen() {
           </Text>
         </View>
 
+        {error ? <Text accessibilityRole="alert" style={{ color: colors.danger, marginBottom: 16, textAlign: 'center' }}>{error}</Text> : null}
         {/* Action Buttons */}
         <View style={styles.actions}>
           <Button

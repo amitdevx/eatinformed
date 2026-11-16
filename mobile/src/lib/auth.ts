@@ -85,14 +85,9 @@ export async function saveUserSession(
     loginDate: previous?.loginDate || new Date().toLocaleDateString(),
   };
 
+  await SecureStore.setItemAsync(USER_SESSION_KEY, JSON.stringify(session));
   cachedSession = session;
   setAuthToken(session.token || null);
-
-  try {
-    await SecureStore.setItemAsync(USER_SESSION_KEY, JSON.stringify(session));
-  } catch (e) {
-    console.warn('Error saving session to secure storage:', e);
-  }
   return session;
 }
 
@@ -143,7 +138,7 @@ export async function authenticateWithBackend(
       token: string;
       refreshToken: string;
       expiresAt: number;
-      user: { uid: string; email: string; name: string; isAnonymous: boolean };
+      user: { uid: string; email: string; name: string; isAnonymous: boolean; handle?: string; allergens?: string[] };
     }>('/api/auth/mobile', {
       email,
       password,
@@ -155,11 +150,11 @@ export async function authenticateWithBackend(
 
     if (response.data && response.data.token) {
       const u = response.data.user;
-      return await saveUserSession(u.email, u.name, response.data.token, u.isAnonymous, undefined, undefined, undefined, { uid: u.uid, refreshToken: response.data.refreshToken, expiresAt: response.data.expiresAt });
+      return await saveUserSession(u.email, u.name, response.data.token, u.isAnonymous, undefined, u.handle, u.allergens, { uid: u.uid, refreshToken: response.data.refreshToken, expiresAt: response.data.expiresAt });
     }
     throw new Error('Invalid response from authentication server');
   } catch (err: any) {
-    const msg = err.response?.data?.error || err.message || 'Authentication failed';
+    const msg = err.response?.data?.error || (err.code === 'ERR_NETWORK' ? 'Cannot reach EatInformed. Check your connection and try again.' : err.message) || 'Authentication failed';
     throw new Error(msg);
   }
 }
@@ -174,16 +169,16 @@ export async function signInAsGuest(): Promise<UserSessionData> {
       token: string;
       refreshToken: string;
       expiresAt: number;
-      user: { uid: string; email: string; name: string; isAnonymous: boolean };
+      user: { uid: string; email: string; name: string; isAnonymous: boolean; handle?: string; allergens?: string[] };
     }>('/api/auth/mobile', {
       type: 'guest',
     }, {
-      timeout: 8000,
+      timeout: 15000,
     });
 
     if (response.data && response.data.token) {
       const u = response.data.user;
-      return await saveUserSession(u.email || '', u.name || 'Guest Explorer', response.data.token, true, undefined, undefined, undefined, { uid: u.uid, refreshToken: response.data.refreshToken, expiresAt: response.data.expiresAt });
+      return await saveUserSession(u.email || '', u.name || 'Guest Explorer', response.data.token, true, undefined, u.handle, u.allergens, { uid: u.uid, refreshToken: response.data.refreshToken, expiresAt: response.data.expiresAt });
     }
     throw new Error('Invalid guest token response from authentication server.');
   } catch (e: any) {
@@ -227,5 +222,5 @@ export async function signInWithGoogle(): Promise<UserSessionData> {
   if (!code) throw new Error('Could not complete Google sign-in.');
   const response = await apiClient.post('/api/auth/bridge', { mode: 'exchange', code, verifier });
   const verified = response.data;
-  return await saveUserSession(verified.user.email, verified.user.name, verified.token, verified.user.isAnonymous, verified.user.photoUrl, undefined, undefined, { uid: verified.user.uid, refreshToken: verified.refreshToken, expiresAt: verified.expiresAt });
+  return await saveUserSession(verified.user.email, verified.user.name, verified.token, verified.user.isAnonymous, verified.user.photoUrl, verified.user.handle, verified.user.allergens, { uid: verified.user.uid, refreshToken: verified.refreshToken, expiresAt: verified.expiresAt });
 }

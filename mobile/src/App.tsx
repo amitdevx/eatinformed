@@ -64,7 +64,7 @@ function TabNavigator() {
 
 function MainApp() {
   const { colors, isDark } = useTheme();
-  const { authStatus, completeOnboarding } = useAuth();
+  const { authStatus, completeOnboarding, session } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -107,6 +107,7 @@ function MainApp() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NavigationContainer linking={linking} theme={navTheme}>
         <Stack.Navigator
+          key={authStatus === 'authenticated' ? `account:${session?.uid}:${session?.isAnonymous ? 'guest' : 'member'}` : 'signed-out'}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: colors.background },

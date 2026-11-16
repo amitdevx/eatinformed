@@ -46,7 +46,7 @@ import { FadeInView, PressableScale } from '../theme/animations';
 export const ONBOARDING_STORAGE_KEY = '@eatinformed_onboarding_completed_v1';
 
 interface OnboardingScreenProps {
-  onComplete: () => void;
+  onComplete: () => void | Promise<void>;
 }
 
 type AuthMode = 'select' | 'email-signin' | 'email-signup';
@@ -87,7 +87,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       setPhotoUri(null);
       setStep(3);
     } catch (e) {
-      setErrorMessage('Could not initialize guest session. Please try again.');
+      setErrorMessage(e instanceof Error ? e.message : 'Could not initialize guest session. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -179,10 +179,9 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       );
 
       await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-      onComplete();
+      await onComplete();
     } catch (e) {
-      console.warn('Error completing onboarding:', e);
-      onComplete();
+      setErrorMessage(e instanceof Error ? e.message : 'Could not finish setup. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -317,7 +316,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
               Create your account
             </Text>
             <Text style={[styles.stepSubtitle, { color: colors.textSecondary }]}>
-              Sign in to sync your scans, customize health preferences, and build your nutrition passport.
+              Use your existing website account to sign in, or create a new account to sync scans across devices.
             </Text>
 
             {errorMessage && (
