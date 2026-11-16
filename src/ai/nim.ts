@@ -6,7 +6,7 @@ export function getNimClient() {
   return instance;
 }
 export const isNimConfigured = () => Boolean(getNimClient());
-export async function callNimWithFallback(models: string[], messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[], options: { max_tokens?: number; temperature?: number; top_p?: number; deadline?: number } = {}): Promise<string> {
+export async function callNimWithFallback(models: string[], messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[], options: { max_tokens?: number; temperature?: number; top_p?: number; deadline?: number; requestId?: string } = {}): Promise<string> {
   const client = getNimClient();
   if (!client) throw new ApiError(503, 'ai_offline', 'Food analysis is temporarily unavailable.');
   const deadline = options.deadline || Date.now() + 45000;
@@ -17,7 +17,7 @@ export async function callNimWithFallback(models: string[], messages: OpenAI.Cha
     const start = Date.now();
     try {
       const response = await client.chat.completions.create({ model, messages, max_tokens: options.max_tokens || 3800, temperature: options.temperature ?? 0.05, top_p: options.top_p ?? 0.9 }, { signal: AbortSignal.timeout(Math.min(22000, remaining)) });
-      console.info(JSON.stringify({ event: 'provider_call', model, attempt: attempt + 1, durationMs: Date.now() - start, outcome: response.choices[0]?.finish_reason, tokens: response.usage?.total_tokens }));
+      console.info(JSON.stringify({ event: 'provider_call', requestId: options.requestId, model, attempt: attempt + 1, durationMs: Date.now() - start, outcome: response.choices[0]?.finish_reason, tokens: response.usage?.total_tokens }));
       if (response.choices[0]?.finish_reason === 'length') throw new ApiError(502, 'ai_output_truncated', 'The analysis was incomplete. Please try again.');
       const content = response.choices[0]?.message.content?.trim();
       if (content && content.length > 100000) throw new ApiError(502, 'invalid_ai_output', 'The analysis response was too large.');
@@ -26,7 +26,7 @@ export async function callNimWithFallback(models: string[], messages: OpenAI.Cha
     } catch (error) {
       if (error instanceof ApiError) throw error;
       const status = error instanceof OpenAI.APIError ? error.status : undefined;
-      console.warn(JSON.stringify({ event: 'provider_failure', model, attempt: attempt + 1, status, durationMs: Date.now() - start }));
+      console.warn(JSON.stringify({ event: 'provider_failure', requestId: options.requestId, model, attempt: attempt + 1, status, durationMs: Date.now() - start }));
       if (status === 401 || status === 403) throw new ApiError(503, 'provider_authentication', 'Food analysis is temporarily unavailable.');
       if (status === 400 || status === 404 || status === 422) throw new ApiError(503, 'provider_configuration', 'Food analysis is temporarily unavailable.');
       if (attempt === 1) throw new ApiError(status === 429 ? 503 : status ? 502 : 504, status === 429 ? 'provider_rate_limited' : status ? 'provider_unavailable' : 'upstream_timeout', 'Food analysis could not complete. Please try again later.');

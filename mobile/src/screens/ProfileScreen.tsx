@@ -200,7 +200,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ProfileReveal name={userName || 'Guest Explorer'} email={userEmail || ''} photo={userPhoto} handle={session?.handle} count={scanCount} clean={cleanRatio} avatarRef={avatarRef}>
+      <ProfileReveal visible={passportVisible} onVisibleChange={setPassportVisible} name={userName || 'Guest Explorer'} email={userEmail || ''} photo={userPhoto} handle={session?.handle} count={scanCount} clean={cleanRatio} avatarRef={avatarRef}>
             {/* Profile Header Block with Banner & Avatar */}
             <View style={styles.headerBlock}>
               {/* Settings Gear Button (Top-Right Glass Circle) */}

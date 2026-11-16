@@ -43,7 +43,7 @@ export function createScanHandler(analyze = analyzeProduct) {
       stage = 'analysis';
       let result: Record<string, unknown>, status = 200;
       try {
-        const validated = ProductAnalysisOutputSchema.safeParse(await analyze(image.normalized!));
+        const validated = ProductAnalysisOutputSchema.safeParse(await analyze(image.normalized!, { requestId }));
         if (!validated.success) throw new ApiError(502, 'invalid_ai_output', 'The analysis response was invalid.');
         const analysis = validated.data;
         if (analysis.status !== 'success') throw new ApiError(422, analysis.status === 'unreadable' ? 'label_unreadable' : 'no_food_data', 'No readable ingredients or nutrition panel were found. Try a clearer label photo.');
@@ -57,7 +57,7 @@ export function createScanHandler(analyze = analyzeProduct) {
       }
       stage = 'persistence';
       const completed = await store.finish(identity, key, result, status);
-      console.info(JSON.stringify({ event: 'scan_complete', requestId, status, durationMs: Date.now() - started }));
+      console.info(JSON.stringify({ event: 'scan_complete', requestId, status, code: status === 200 ? 'success' : result.code, stage: status === 200 ? 'persistence' : 'analysis', durationMs: Date.now() - started }));
       return NextResponse.json(completed, { status, headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {
       console.warn(JSON.stringify({ event: 'scan_failed', requestId, stage, code: error instanceof ApiError ? error.code : 'internal_error', durationMs: Date.now() - started }));

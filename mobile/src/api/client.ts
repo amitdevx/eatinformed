@@ -1,5 +1,6 @@
 import { ProductAnalysisOutputSchema } from '../../../src/ai/flows/product-analysis-types';
 import axios, { AxiosError } from 'axios';
+import { awaitScanResponse } from './scan-request';
 import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
@@ -89,9 +90,20 @@ export async function checkApiHealth(): Promise<{ ok: boolean; message: string }
   }
 }
 
+export class ScanRequestError extends Error {
+  constructor(message: string, readonly status?: number, readonly code?: string, readonly requestId?: string) {
+    super(requestId ? `${message} (Request: ${requestId})` : message);
+    this.name = 'ScanRequestError';
+  }
+  get canResume() { return !this.status || this.status === 408 || (this.status === 409 && this.code === 'scan_in_progress'); }
+}
+
+export const createScanKey = () => Crypto.randomUUID();
+
 export async function scanFoodLabel(
   imageUriOrBase64: string,
-  onUploadProgress?: (fraction: number) => void
+  onUploadProgress?: (fraction: number) => void,
+  idempotencyKey: string = createScanKey()
 ): Promise<ProductAnalysisOutput> {
   let payload = imageUriOrBase64;
 
@@ -100,54 +112,32 @@ export async function scanFoodLabel(
     payload = `data:image/jpeg;base64,${payload}`;
   }
 
-  const idempotencyKey = Crypto.randomUUID();
   const startTime = Date.now();
-  let lastError: unknown = null;
+  let lastError: unknown;
+  try {
+    const response = await awaitScanResponse(remainingMs => apiClient.post<ProductAnalysisOutput>(
+      '/api/scan', { image: payload }, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+        timeout: Math.min(60000, remainingMs),
+        onUploadProgress: event => onUploadProgress?.(event.total ? Math.min(1, event.loaded / event.total) : 1),
+      },
+    ));
+    const result = ProductAnalysisOutputSchema.safeParse(response.data);
+    if (!result.success || result.data.status !== 'success' || !response.data.scanId) throw new Error('Invalid scan result received.');
+    await recordScanDuration(Date.now() - startTime);
+    return { ...result.data, scanId: response.data.scanId };
+  } catch (error) { lastError = error; }
 
-  // Transparently retry up to 2 attempts if attempt #1 hits a cold-start timeout or 5xx/network error
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const response = await apiClient.post<ProductAnalysisOutput>(
-        '/api/scan',
-        { image: payload },
-        {
-          headers: { 'Idempotency-Key': idempotencyKey },
-          onUploadProgress: (progressEvent) => {
-            if (onUploadProgress && progressEvent.total) {
-              onUploadProgress(Math.min(1, progressEvent.loaded / progressEvent.total));
-            } else if (onUploadProgress) {
-              onUploadProgress(1);
-            }
-          },
-        }
-      );
-      const result = ProductAnalysisOutputSchema.safeParse(response.data);
-      if (!result.success || result.data.status !== 'success' || !response.data.scanId) throw new Error('Invalid scan result received.');
-      await recordScanDuration(Date.now() - startTime);
-      return { ...result.data, scanId: response.data.scanId };
-    } catch (err) {
-      lastError = err;
-      const axiosErr = err as AxiosError;
-      const status = axiosErr.response?.status;
-      // Don't retry client validation errors (400/401/413)
-      if (status && status >= 400 && status < 500 && status !== 408) {
-        break;
-      }
-      if (attempt < 2) {
-        await new Promise((r) => setTimeout(r, 800));
-      }
-    }
-  }
-
-  const error = lastError as AxiosError<{ error?: string }>;
+  const error = lastError as AxiosError<{ error?: string; code?: string; requestId?: string }>;
   if (error?.response?.data?.error) {
-    throw new Error(error.response.data.error);
+    const { error: message, code, requestId } = error.response.data;
+    throw new ScanRequestError(message!, error.response.status, code, requestId);
   }
   if (error?.code === 'ECONNABORTED') {
-    throw new Error('Analysis timed out. Please verify your connection and try again.');
+    throw new ScanRequestError('Analysis timed out. Please verify your connection and try again.');
   }
   if (error?.message && error.message.includes('Network Error')) {
-    throw new Error('Could not connect to EatInformed server. Please verify the server is running.');
+    throw new ScanRequestError('Could not connect to EatInformed server. Please verify the server is running.');
   }
   throw new Error((error && error.message) || 'Failed to analyze food label image.');
 }

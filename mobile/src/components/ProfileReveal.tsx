@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, BackHandler, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AppState, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring, useReducedMotion } from 'react-native-reanimated';
@@ -11,9 +11,9 @@ import { FoodPassportModal } from './FoodPassportModal';
 import { AppHaptics } from '../lib/haptics';
 import { useTheme } from '../theme/ThemeContext';
 
-export function ProfileReveal({ children, name, email, photo, handle, count, clean, avatarRef }: {
+export function ProfileReveal({ children, name, email, photo, handle, count, clean, avatarRef, visible, onVisibleChange }: {
   children: React.ReactNode; name: string; email: string; photo: string | null; handle?: string;
-  count: number; clean: number; avatarRef: React.RefObject<View | null>;
+  count: number; clean: number; visible: boolean; onVisibleChange: (visible: boolean) => void; avatarRef: React.RefObject<View | null>;
 }) {
   const navigation = useNavigation();
   const { colors, isDark } = useTheme();
@@ -21,7 +21,7 @@ export function ProfileReveal({ children, name, email, photo, handle, count, cle
   const insets = useSafeAreaInsets();
   const focused = useIsFocused(), reduced = useReducedMotion();
   const target = useRef<View>(null), scene = useRef<View>(null);
-  const [visible, setVisible] = useState(false), [dragging, setDragging] = useState(false), [armed, setArmed] = useState(false);
+  const [dragging, setDragging] = useState(false), [armed, setArmed] = useState(false);
   const [active, setActive] = useState(AppState.currentState === 'active');
   const progress = useSharedValue(0), scrollY = useSharedValue(0), startX = useSharedValue(0), startY = useSharedValue(0);
   const eligible = useSharedValue(false), notified = useSharedValue(false), threshold = useSharedValue(false), opening = useSharedValue(false);
@@ -32,32 +32,37 @@ export function ProfileReveal({ children, name, email, photo, handle, count, cle
     }));
   }, [avatarRef, source]);
   const close = useCallback(() => {
-    setVisible(false); setDragging(false); setArmed(false); opening.set(false);
+    onVisibleChange(false); setDragging(false); setArmed(false); opening.set(false);
     progress.set(withSpring(0, { duration: 400, dampingRatio: 0.8 }));
-  }, [opening, progress]);
+  }, [opening, progress, onVisibleChange]);
   useEffect(() => { const subscription = AppState.addEventListener('change', s => setActive(s === 'active')); return () => subscription.remove(); }, []);
   useEffect(() => { if (!focused || !active) close(); }, [focused, active, close]);
   useEffect(() => { navigation.setOptions({ tabBarStyle: visible ? { display: 'none' } : undefined }); return () => navigation.setOptions({ tabBarStyle: undefined }); }, [visible, navigation]);
-  const open = () => { setVisible(true); setDragging(false); AppHaptics.success(); };
+  useEffect(() => {
+    if (visible) { measureAvatar(); opening.set(true); progress.set(withSpring(1, { duration: 300, dampingRatio: 0.8 })); }
+  }, [visible, measureAvatar, opening, progress]);
+  const open = () => { onVisibleChange(true); setDragging(false); AppHaptics.success(); };
   const arm = () => { setArmed(true); AppHaptics.impactHeavy(); };
   const begin = () => { measureAvatar(); setDragging(true); setArmed(false); };
   const finish = () => { setDragging(false); setArmed(false); };
   const pan = Gesture.Pan().enabled(focused && active).manualActivation(true)
-    .onTouchesDown(e => {
+    .onTouchesDown((e, manager) => {
       const touch = e.allTouches[0];
-      if (!touch) return;
+      if (!touch || e.numberOfTouches !== 1) { manager.fail(); return; }
       startX.set(touch.absoluteX); startY.set(touch.absoluteY);
-      eligible.set(scrollY.get() <= 1 && touch.absoluteX > 24 && touch.absoluteX < width - 24 && touch.absoluteY > insets.top + 12);
+      eligible.set(scrollY.get() <= 1 && !opening.get() && touch.x > 24 && touch.x < width - 24 && touch.y > 12);
       notified.set(false); threshold.set(false);
+      if (!eligible.get()) manager.fail();
     })
     .onTouchesMove((e, manager) => {
       if (!eligible.get()) { manager.fail(); return; }
       const touch = e.allTouches[0];
-      if (!touch) return;
+      if (!touch || e.numberOfTouches !== 1) { manager.fail(); return; }
       const dx = touch.absoluteX - startX.get(), dy = touch.absoluteY - startY.get();
       if (Math.abs(dx) > 12 || dy < -8) manager.fail();
       else if (dy > 12 && dy > Math.abs(dx) * 1.5) manager.activate();
     })
+    .onTouchesUp((_e, manager) => { if (progress.get() === 0) manager.fail(); })
     .onStart(() => { scheduleOnRN(begin); })
     .onUpdate(e => {
       const raw = Math.max(0, e.translationY);
@@ -74,7 +79,7 @@ export function ProfileReveal({ children, name, email, photo, handle, count, cle
     .onFinalize(() => {
       if (!opening.get()) { progress.set(withSpring(0, { duration: 400, dampingRatio: 0.8 })); scheduleOnRN(finish); }
     });
-  const native = Gesture.Native().requireExternalGestureToFail(pan);
+  const native = Gesture.Native().simultaneousWithExternalGesture(pan);
   const onScroll = useAnimatedScrollHandler(e => { scrollY.set(e.contentOffset.y); });
   const contentStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.get() * 0.65, transform: [{ translateY: reduced ? 0 : progress.get() * 115 }] }));
   const tickerStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, (progress.get() - 0.15) / 0.85), transform: [{ scale: reduced ? 1 : 1.3 - progress.get() * 0.3 }] }));

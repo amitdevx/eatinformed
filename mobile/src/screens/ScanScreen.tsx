@@ -35,7 +35,7 @@ import { LoadingState, ErrorState } from '../components/States';
 import { useTheme } from '../theme/ThemeContext';
 import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, spacing, typography } from '../theme/tokens';
-import { scanFoodLabel, getEstimatedScanDuration, checkApiHealth, apiClient } from '../api/client';
+import { scanFoodLabel, createScanKey, ScanRequestError, getEstimatedScanDuration, checkApiHealth, apiClient } from '../api/client';
 import { saveScanToHistory } from '../lib/history';
 import { getUserSession, signInAsGuest, UserSessionData } from '../lib/auth';
 import { AppHaptics } from '../lib/haptics';
@@ -68,6 +68,7 @@ export default function ScanScreen() {
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
 
+  const scanAttempt = useRef<{ image: string; key: string } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [estimatedTotalMs, setEstimatedTotalMs] = useState<number>(15000);
@@ -159,41 +160,15 @@ export default function ScanScreen() {
     return () => loop.stop();
   }, [isFocused, selectedImageUri, isLoading, scanLineY]);
 
-  const cropImageToViewfinder = async (uri: string, originalWidth?: number, originalHeight?: number) => {
-    try {
-      const imgWidth = originalWidth && originalWidth > 0 ? originalWidth : 1080;
-      const imgHeight = originalHeight && originalHeight > 0 ? originalHeight : 1920;
-
-      const vfAspect = VIEWFINDER_WIDTH / VIEWFINDER_HEIGHT;
-      let cropWidth = imgWidth * 0.84;
-      let cropHeight = cropWidth / vfAspect;
-      if (cropHeight > imgHeight * 0.84) {
-        cropHeight = imgHeight * 0.84;
-        cropWidth = cropHeight * vfAspect;
-      }
-      const originX = Math.max(0, Math.floor((imgWidth - cropWidth) / 2));
-      const originY = Math.max(0, Math.floor((imgHeight - cropHeight) / 2));
-
-      const manipResult = await ImageManipulator.manipulateAsync(
-        uri,
-        [
-          {
-            crop: {
-              originX,
-              originY,
-              width: Math.floor(cropWidth),
-              height: Math.floor(cropHeight),
-            },
-          },
-          { resize: { width: 1080 } },
-        ],
-        { compress: 0.72, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-      );
-      return manipResult;
-    } catch (e) {
-      console.warn('Image crop failed, using uncropped image:', e);
-      return null;
-    }
+  // Preserve the complete label. The guide is not a measured sensor crop,
+  // and gallery images do not have a camera viewfinder at all.
+  const prepareLabelImage = async (uri: string, originalWidth?: number, originalHeight?: number) => {
+    const width = originalWidth || 1080, height = originalHeight || 1080;
+    const resize = Math.max(width, height) > 1600
+      ? [{ resize: width >= height ? { width: 1600 } : { height: 1600 } }]
+      : [];
+    return ImageManipulator.manipulateAsync(uri, resize,
+      { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true });
   };
 
   // ponytail: monotonic asymptotic progress ticker (advances smoothly from 8% -> 95% on Android & iOS)
@@ -253,7 +228,7 @@ export default function ScanScreen() {
 
       if (photo?.uri) {
         AppHaptics.impactHeavy();
-        const cropped = await cropImageToViewfinder(photo.uri, photo.width, photo.height);
+        const cropped = await prepareLabelImage(photo.uri, photo.width, photo.height);
         if (cropped?.uri && cropped?.base64) {
           setSelectedImageUri(cropped.uri);
           setSelectedImageBase64(cropped.base64);
@@ -319,7 +294,7 @@ export default function ScanScreen() {
 
         if (asset.uri) {
           AppHaptics.selection();
-          const cropped = await cropImageToViewfinder(asset.uri, asset.width, asset.height);
+          const cropped = await prepareLabelImage(asset.uri, asset.width, asset.height);
           if (cropped?.uri && cropped?.base64) {
             setSelectedImageUri(cropped.uri);
             setSelectedImageBase64(cropped.base64);
@@ -358,6 +333,9 @@ export default function ScanScreen() {
     setIsLoading(true);
     setErrorMessage(null);
 
+    if (scanAttempt.current?.image !== selectedImageBase64) {
+      scanAttempt.current = { image: selectedImageBase64, key: createScanKey() };
+    }
     try {
       const analysis = await scanFoodLabel(selectedImageBase64, (uploadFraction) => {
         // Real upload progress maps monotonically from 8% to 28%
@@ -366,7 +344,7 @@ export default function ScanScreen() {
         if (uploadFraction >= 1 && uploadDoneTimeRef.current === null) {
           uploadDoneTimeRef.current = Date.now();
         }
-      });
+      }, scanAttempt.current.key);
       if (uploadDoneTimeRef.current === null) {
         uploadDoneTimeRef.current = Date.now();
       }
@@ -402,8 +380,9 @@ export default function ScanScreen() {
       setSelectedImageUri(null);
       setSelectedImageBase64(null);
     } catch (err: any) {
+      if (err instanceof ScanRequestError && !err.canResume) scanAttempt.current = null;
       AppHaptics.warning();
-      if (err?.response?.status === 429 || err?.message?.includes('limit reached')) {
+      if (err?.status === 429 || err?.response?.status === 429 || err?.message?.includes('limit reached')) {
         setQuota((prev) => (prev ? { ...prev, remaining: 0 } : null));
         setQuotaModalVisible(true);
       }
@@ -420,6 +399,7 @@ export default function ScanScreen() {
 
   const handleRetake = () => {
     AppHaptics.selection();
+    scanAttempt.current = null;
     setSelectedImageUri(null);
     setSelectedImageBase64(null);
     setErrorMessage(null);
