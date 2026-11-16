@@ -22,12 +22,14 @@ import OnboardingScreen from './screens/OnboardingScreen';
 import SignedOutScreen from './screens/SignedOutScreen';
 import { checkApiHealth } from './api/client';
 import { FloatingNavBar } from './components/FloatingNavBar';
+import { isNavigationLink } from './navigation/links';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['eatinformed://', 'https://eatinformed.amitdevx.tech'],
+  filter: isNavigationLink,
   config: {
     screens: {
       Main: {
@@ -114,6 +116,7 @@ function MainApp() {
             animation: 'slide_from_right',
           }}
         >
+          <Stack.Group navigationKey={authStatus === 'authenticated' ? `account:${session?.uid}:${session?.isAnonymous ? 'guest' : 'member'}` : 'signed-out'}>
           {authStatus === 'signed_out' ? (
             <Stack.Screen name="SignedOut" component={SignedOutScreen} />
           ) : (
@@ -136,6 +139,7 @@ function MainApp() {
               animation: 'slide_from_bottom',
             }}
           />
+          </Stack.Group>
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

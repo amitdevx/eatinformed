@@ -21,11 +21,11 @@ Evidence resides in `/tmp/eatinformed-waydroid-evidence/` on the test host; temp
 | Full gallery image retained | REPRODUCED | `gallery-selected-no-camera.png`: selected image lost edge text; source applied a central viewfinder crop to gallery uploads. |
 | Profile pull opens Passport/ticker | REPRODUCED | Two pull gestures, including grabber-origin pull, left Profile unchanged. `profile-pull-before.mp4`, `profile-during-pull.png`, `profile-after-pull.xml`. |
 | Grabber tap opens Passport | REPRODUCED | `passport-tap-open.png` stayed on Profile. Settings tap worked, so not every Profile control was blocked. |
-| Achievements Passport button | STATIC VERIFIED | Its state setter was disconnected from the visibility owned by ProfileReveal. Not separately exercised on device. |
+| Achievements Passport button | REPRODUCED | Tapping the button left Profile unchanged (`achievements-passport-tap.png`); its state setter was disconnected from ProfileReveal visibility. |
 | Actual NVIDIA call | RUNTIME VERIFIED | Owner-supplied Vercel logs: first attempt timed out at 20,008 ms; second completed in 17,571 ms, finish reason stop, total tokens 4,229. |
 | Successful analysis and history | REPRODUCED | Device displayed scan_in_progress; History remained 0. Backend ultimately returned 502. This scan did not succeed. |
-| Google sign-in | NOT TESTED | Current session later became obstructed by Android System UI ANR. |
-| Member signup/login and restart persistence | NOT TESTED | Not executed in this device check. |
+| Google sign-in | REPRODUCED | HTTPS bridge opened in Jelly. Continuing opened Google home, not a completed account flow; bridge stayed Connecting. Back returned a controlled cancellation. No Google identity authenticated. |
+| Member login and restart persistence | RUNTIME VERIFIED | Dedicated synthetic test account authenticated and restored after app force-stop/reopen through launcher. Auth screen incorrectly remained visible before restart (see below). |
 | Blur, moving avatar, repeated Passport open/close | NOT TESTED | Passport did not open in the baseline build. |
 | Physical haptics and animation performance | NOT TESTED | Waydroid cannot establish physical-device behavior. |
 
@@ -63,3 +63,13 @@ The viewport experiment temporarily set 540×960; Android System UI became unres
 - `git diff --check` passed.
 
 The System UI dialog cleared after selecting its Close app action (System UI only); the EatInformed process and existing Waydroid session remained running. Original viewport remained restored. Device checks resumed afterward.
+
+## Additional auth/navigation defect
+
+Status: REPRODUCED in baseline APK; FIX IMPLEMENTED in follow-up source.
+
+The synthetic test account returned `account_exists` on registration retry. Signing in with its credentials finished without an error but left Auth visible. Pressing Back returned to the launcher. Force-stopping only EatInformed and reopening it through the launcher loaded Home with the persisted session. Thus authentication success was not reliably transitioning the navigator; this is separate from a backend credential failure.
+
+React Navigation retains shared screens across auth branches unless their navigation key changes. The shared Auth route now belongs to a group keyed by verified account/guest status. OAuth callbacks are filtered out of the screen router and remain owned by Expo's pending authentication session. References: [authentication flow](https://reactnavigation.org/docs/auth-flow/) and [link filtering](https://reactnavigation.org/docs/configuring-links/).
+
+Normal Profile scrolling was verified after System UI recovery (`profile-normal-scroll.png`). Google bridge/cancellation evidence: `google-browser-handoff.png`, `google-return-from-popup.png`, `google-cancelled-app.png`. The synthetic registered test account is retained; no user records were deleted. Its random test credentials are stored only in a private temporary host file, not this repository.
