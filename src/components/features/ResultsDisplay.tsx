@@ -263,6 +263,7 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
   const hasStructuredNutrition = nutrition?.nutrients && nutrition.nutrients.length > 0;
 
   const renderStars = (rating: number | null | undefined) => {
+    if (rating == null) return <span className="text-muted-foreground">Rating unavailable</span>;
     const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
     return (
       <div className="flex items-center gap-1.5">
@@ -464,7 +465,7 @@ export default function ResultsDisplay(props: ResultsDisplayProps) {
                       <TableRow key={index} className="border-b-border hover:bg-muted/30 transition-colors">
                         <TableCell className="font-medium text-xs sm:text-sm text-foreground">{item.nutrient}</TableCell>
                         <TableCell className="text-right text-xs sm:text-sm text-muted-foreground">{item.perServing ?? '-'}</TableCell>
-                        <TableCell className="text-right text-xs sm:text-sm text-muted-foreground">{item.per100mL ?? '-'}</TableCell>
+                        <TableCell className="text-right text-xs sm:text-sm text-muted-foreground">{item.per100g ? `${item.per100g} /100 g` : item.per100mL ? `${item.per100mL} /100 mL` : '—'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

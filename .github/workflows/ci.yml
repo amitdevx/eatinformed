@@ -1,72 +1,48 @@
-name: CI Checks
-
+name: Checks
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  env_check:
-    name: Check for committed .env files
+  backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fail if any tracked .env* files exist
-        shell: bash
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - name: Reject committed secrets
         run: |
-          if git ls-files -z | tr '\0' '\n' | grep -E '^\.env($|[^/]*)' >/dev/null; then
-            echo "::error::A tracked .env* file was found in the repository. Remove it and add '.env*' to .gitignore."
-            exit 1
-          else
-            echo "No tracked .env* files found."
-          fi
-  
-  lint:
-    name: ESLint
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then exit 1; fi
+  mobile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn lint
-
-  typecheck:
-    name: TypeScript Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn typecheck
-      - name: Mobile TypeScript Check
-        run: |
-          cd mobile
-          npm ci || npm install
-          npx tsc --noEmit
-
-  build:
-    name: Build Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
+          node-version: '22'
+      - run: npm ci
+      - run: npm install -g pnpm@11.6.0
+      - run: pnpm install --frozen-lockfile
+        working-directory: mobile
+      - run: pnpm typecheck
+        working-directory: mobile
+      - run: npx expo export --platform android
+        working-directory: mobile

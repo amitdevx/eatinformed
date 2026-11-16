@@ -9,13 +9,16 @@ import { Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 function MobileAuthContent() {
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get('redirect_uri') || 'eatinformed://auth/callback';
-  const redirectUri = decodeURIComponent(rawRedirect);
+  const redirectUri = 'eatinformed://auth/callback';
+  const state = searchParams.get('state') || '';
+  const challenge = searchParams.get('challenge') || '';
+  const validRedirect = rawRedirect === redirectUri && /^[a-f0-9]{64}$/.test(challenge) && /^[a-f0-9-]{36}$/.test(state);
 
   const [status, setStatus] = useState<'loading' | 'signing_in' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const startGoogleSignIn = async () => {
-    if (!auth) {
+    if (!auth || !validRedirect) {
       setStatus('error');
       setErrorMessage('Authentication service is not configured on the server.');
       return;
@@ -39,14 +42,17 @@ function MobileAuthContent() {
       setStatus('success');
 
       // Hand off token and credentials back to the mobile app deep link
-      const delimiter = redirectUri.includes('?') ? '&' : '?';
-      const callbackUrl = `${redirectUri}${delimiter}token=${encodeURIComponent(idToken)}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&photoUrl=${encodeURIComponent(photoUrl)}`;
+      const delimiter = '#';
+      const exchange = await fetch('/api/auth/bridge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'create', idToken, refreshToken: user.refreshToken, challenge }) });
+      if (!exchange.ok) throw new Error('Could not complete sign-in. Please try again.');
+      const { code } = await exchange.json();
+      const callbackUrl = `${redirectUri}${delimiter}state=${encodeURIComponent(state)}&code=${encodeURIComponent(code)}`;
 
       window.location.replace(callbackUrl);
     } catch (err: any) {
       if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
-        const delimiter = redirectUri.includes('?') ? '&' : '?';
-        window.location.replace(`${redirectUri}${delimiter}error=cancelled`);
+        const delimiter = '#';
+        window.location.replace(`${redirectUri}${delimiter}state=${encodeURIComponent(state)}&error=cancelled`);
         return;
       }
       setStatus('error');

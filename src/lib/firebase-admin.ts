@@ -1,29 +1,16 @@
-
 import admin from 'firebase-admin';
 
-// Check if the app is already initialized to prevent errors
 if (!admin.apps.length) {
   try {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    
-    // Only initialize if the environment variable is properly set
-    if (serviceAccountJson && serviceAccountJson !== 'undefined') {
-      const serviceAccount = JSON.parse(serviceAccountJson);
-      
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    } else {
-      console.warn("Firebase Admin SDK not initialized: FIREBASE_SERVICE_ACCOUNT_JSON is not set or is undefined");
+    const credentials = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (credentials) {
+      admin.initializeApp({ credential: admin.credential.cert(JSON.parse(credentials)) });
+    } else if (process.env.NODE_ENV !== 'production' && process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FIRESTORE_EMULATOR_HOST) {
+      admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-eatinformed' });
     }
-  } catch (error) {
-    console.error("Failed to initialize Firebase Admin SDK:", error);
-    // You might want to throw an error here or handle it gracefully
-    // depending on whether server-side auth is critical at startup.
+  } catch {
+    console.error(JSON.stringify({ event: 'firebase_configuration_invalid' }));
   }
 }
-
-// It's safer to export the initialized auth object
-const adminAuth = admin.apps.length ? admin.auth() : null;
-
-export { adminAuth };
+export const adminAuth = admin.apps.length ? admin.auth() : null;
+export const adminDb = admin.apps.length ? admin.firestore() : null;

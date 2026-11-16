@@ -1,32 +1,17 @@
-# EatInformed: Backend Final Verification & Acceptance
+# Final verification — 2026-11-16
 
-**Date**: November 15, 2026  
-**Status**: VERIFIED & PRODUCTION READY  
-**Git Branch**: `master` (Default, Single Branch)  
+Implemented security, storage, output-validation, web/mobile contract and Profile gesture repairs. No production deployment or push.
 
----
+INTEGRATION VERIFIED: 6/6 Firebase Auth/Firestore emulator tests; concurrency final slot, independent store instances, fresh-process read, replay/conflict/pending behavior, account isolation/deletion, profile ownership and upstream error classification.
+STATIC VERIFIED: backend/web and mobile TypeScript; 8/8 unit/security tests; lint 0 errors, 2 warnings; git diff whitespace check.
+RUNTIME VERIFIED: one live NVIDIA OCR calibration call, 13.965 seconds, successful extraction. Synthetic printed calibration image only; real food-label accuracy NOT TESTED.
+BLOCKED: repaired APK installation, Waydroid gestures, actual blur screenshots, physical haptics, FPS/performance comparison. Waydroid container manager timed out; ADB had no devices. No APK build completion was observed.
+NOT TESTED: real Google sign-in/guest Google upgrade, production Firebase credentials/rules, live multi-instance deployment, comprehensive real-label corpus, full GymMane animation parity. Legacy unowned history is untouched; explicit authorized migration remains needed.
 
-## 1. Compliance Checklist Against Audit Requirements
+Operational prerequisites: Firebase Admin service account and web Firebase configuration; Anonymous Auth enabled; Firestore available; APP_ORIGIN set to public origin; NVIDIA_API_KEY. No local fallback grants access when these are absent. Firestore rules are provided but not deployed. Plan TTL cleanup for unused authExchanges; recover stale pending operations explicitly without replaying paid work. Deployment signup-abuse controls, provider spending limits and observability require operational setup.
 
-| Audit Requirement | Implementation Details | Verification Evidence | Status |
-| :--- | :--- | :--- | :--- |
-| **Authentication Enforcement** | Firebase Admin verification for ID tokens & session cookies with `checkRevoked: true`. Cryptographic HMAC-SHA256 verification for guests. | `verifyUserToken` rejects empty/forged/unverified tokens with HTTP 401. | **RUNTIME VERIFIED** |
-| **Remove Public Test Bypass** | Completely deleted `clientType === 'test'` from `/api/scan` and removed `test_member_` / `test_guest_` backdoors. | `x-eatinformed-client: test` returns HTTP 401 when unauthenticated. | **RUNTIME VERIFIED** |
-| **Secure Guest Authentication** | Firebase Anonymous Auth or cryptographically signed HMAC guest tokens with UUID. Removed dummy local timestamp strings in mobile `auth.ts`. | Tests verify forged signatures and altered payloads are rejected. | **RUNTIME VERIFIED** |
-| **Authoritative Sliding-Window Quota** | 4 scans per rolling 2 hours for guests (7,200s window) with file-backed atomic store (`.data/scan_quota_store.json`), retry-after, and slot refunds. | Automated quota tests confirm exactly 4 scans admitted, 5th rejected. | **RUNTIME VERIFIED** |
-| **Secure Web Server Actions** | Web scanning in `ImageUploadForm.tsx` refactored to use `POST /api/scan` with user's Firebase token. | Web scans submit to API with token and consume authoritative quota. | **RUNTIME VERIFIED** |
-| **Defensive Image Validation** | Magic bytes verification (`FF D8 FF`, `89 50 4E 47`, `52 49 46 46`) and Sharp dimension caps (<= 6000px, <= 25MP). | Non-image text payloads rejected with HTTP 415; oversized rejected with 400. | **RUNTIME VERIFIED** |
-| **Honest AI Output (No Fake Defaults)** | `novaGroup`, `rating`, and dietary flags parse as `null` when missing from packaging label. | Schema nullability tests confirm `null` output, not defaulted to 4 or 2.5. | **RUNTIME VERIFIED** |
-| **Error Handling & Semantics** | Proper HTTP status codes (400, 401, 413, 415, 422, 429, 502, 503, 504) with structured JSON and `requestId`. | Slot refunded on failure/unreadable label; internal stack traces sanitized. | **RUNTIME VERIFIED** |
-| **Account-Isolated Mobile History** | Partitioned storage keys `@eatinformed_recent_v3_<scope>` and durable lifetime ledger `@eatinformed_ledger_v3_<scope>`. | Lifetime metrics and exports compute over full ledger; zero multi-user cross-talk. | **RUNTIME VERIFIED** |
-| **Zero Emojis & Zero Em-Dashes** | Enforced 0 emojis and 0 em-dashes across all modified UI and backend text. | Grep checks confirm 0 matches across `src/` and `mobile/src/`. | **RUNTIME VERIFIED** |
+Dependency audit after compatible updates: 0 critical, 6 high and 16 moderate runtime advisories remain, including Firebase transitive packages, sharp and zod. Forced major upgrades were not applied. This revision is not declared production-ready.
 
----
+Production web build completed successfully, including TypeScript and all 15 generated pages. A browser smoke run initially timed out on page load under host pressure; rerun uses DOMContentLoaded and a 120-second budget.
 
-## 2. Test Execution Sign-off
-
-- `npm test`: **7 / 7 PASSED (100%)**
-- `npx tsx tests/e2e-verification.ts`: **34 / 34 PASSED (100%)**
-- Web TypeScript (`npx tsc --noEmit`): **0 errors (Exit code 0)**
-- Mobile TypeScript (`cd mobile && npx tsc --noEmit`): **0 errors (Exit code 0)**
-- ESLint (`npm run lint`): **0 errors (Exit code 0)**
+Browser smoke verification: 3/3 passed at 360/768/1440px, testing /, /check, /support and /login for horizontal overflow and runtime page errors. This does not exercise authenticated scans or Android gestures.

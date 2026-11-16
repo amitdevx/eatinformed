@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider, linkWithCredential, linkWithPopup,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInAnonymously,
@@ -98,7 +99,7 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
       await setPersistence(auth, browserLocalPersistence);
 
       const userCredential = action === 'signUp'
-        ? await createUserWithEmailAndPassword(auth, email, password)
+        ? auth.currentUser?.isAnonymous ? await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(email, password)) : await createUserWithEmailAndPassword(auth, email, password)
         : await signInWithEmailAndPassword(auth, email, password);
       
       await createUserProfileDocument(userCredential.user);
@@ -128,7 +129,7 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
       const provider = new GoogleAuthProvider();
       // Set persistence to 'local' to survive browser restarts
       await setPersistence(auth, browserLocalPersistence);
-      const result = await signInWithPopup(auth, provider);
+      const result = auth.currentUser?.isAnonymous ? await linkWithPopup(auth.currentUser, provider) : await signInWithPopup(auth, provider);
       
       await createUserProfileDocument(result.user);
       const idToken = await result.user.getIdToken();
@@ -150,40 +151,10 @@ export function AuthForm({ onAuthSuccess, initialTab = 'login' }: AuthFormProps)
     setIsProcessing(true);
     setError(null);
     try {
-      if (auth) {
-        try {
-          await setPersistence(auth, browserLocalPersistence);
-          const result = await signInAnonymously(auth);
-          await createUserProfileDocument(result.user);
-          const idToken = await result.user.getIdToken();
-          
-          toast({
-            title: 'Signed in as Guest',
-            description: 'Your progress will be saved for this session.',
-          });
-          await handleAuthSuccess(idToken);
-          return;
-        } catch (fbErr) {
-          console.warn('Firebase anonymous sign-in failed, attempting backend guest session fallback:', fbErr);
-        }
-      }
-
-      // Backend fallback guest session (works even if Firebase Anonymous is disabled in console)
-      const res = await fetch('/api/auth/mobile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'guest' }),
-      });
-      const data = await res.json();
-      if (data.token) {
-        toast({
-          title: 'Signed in as Guest',
-          description: 'Your progress will be saved for this session.',
-        });
-        await handleAuthSuccess(data.token);
-        return;
-      }
-      throw new Error(data.error || 'Failed to initialize guest session');
+      if (!auth) throw new Error('Authentication is unavailable.');
+      await setPersistence(auth, browserLocalPersistence);
+      const result = auth.currentUser?.isAnonymous ? { user: auth.currentUser } : await signInAnonymously(auth);
+      await handleAuthSuccess(await result.user.getIdToken());
     } catch (err) {
       const msg = formatAuthError(err);
       if (msg) setError(msg);

@@ -62,7 +62,7 @@ const AuthButton = ({ isMobile = false, onAction }: { isMobile?: boolean; onActi
     onAction?.();
     if (auth) {
       await signOut(auth);
-      await fetch('/api/auth/logout', { method: 'GET' });
+      await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/');
     }
   };

@@ -141,7 +141,7 @@ export default function HomePage() {
             Clear standards for every scan.
           </h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            EatInformed uses verified nutritional metrics to help you understand food quality.
+            EatInformed extracts label information and offers AI estimates of food processing.
           </p>
         </div>
 

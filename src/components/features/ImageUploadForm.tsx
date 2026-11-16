@@ -32,13 +32,7 @@ interface HistoryItem {
   imagePreviewUrl?: string | null;
 }
 
-const LOADING_STEPS = [
-  'Detecting packaging & label text with Vision AI...',
-  'Extracting ingredients & nutrition facts table...',
-  'Cross-referencing food additives with safety standards...',
-  'Computing NOVA processing classification & balance...',
-  'Finalizing comprehensive health assessment...'
-];
+const LOADING_STEPS = ['Analyzing your label…', 'Waiting for the analysis service…'];
 
 export function CheckPageClient() {
   const { toast } = useToast();
@@ -82,56 +76,19 @@ export function CheckPageClient() {
 
   const activeTabRef = useRef('upload');
 
-  // Load scan history from localStorage on initial client mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('eatinformed_history');
-      if (stored) {
-        setRecentScans(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.warn('Failed to load scan history from localStorage:', e);
-    }
-  }, []);
+    let active = true;
+    setRecentScans([]);
+    setAnalysisData(null);
+    if (user) user.getIdToken().then(token => fetch('/api/history', { headers: { Authorization: `Bearer ${token}` } }))
+      .then(response => response.ok ? response.json() : null)
+      .then(data => { if (active && data) setRecentScans(data.items.slice(0, 6)); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [user?.uid]);
 
-  // Save scan to history
-  const saveToHistory = useCallback((data: ProductAnalysisOutput, previewUrl: string | null) => {
-    try {
-      const newItem: HistoryItem = {
-        id: Date.now().toString(),
-        timestamp: Date.now(),
-        productName: data.productName || 'Scanned Food Product',
-        brand: data.brand || '',
-        rating: data.rating,
-        novaGroup: data.novaGroup,
-        data,
-        imagePreviewUrl: previewUrl,
-      };
-
-      // ponytail: only deduplicate by name for specific branded items; never erase unnamed scans
-      const isGenericName = (name: string) =>
-        !name || /^(scanned food product|packaged food item|food product)$/i.test(name.trim());
-
-      setRecentScans((prev) => {
-        const filtered = prev.filter((item) => {
-          if (isGenericName(newItem.productName)) {
-            return item.id !== newItem.id;
-          }
-          return item.productName.toLowerCase() !== newItem.productName.toLowerCase();
-        });
-        const updated = [newItem, ...filtered].slice(0, 6);
-        try {
-          localStorage.setItem('eatinformed_history', JSON.stringify(updated));
-        } catch (e) {
-          console.warn('localStorage quota reached, omitting preview image:', e);
-          const fallback = updated.map(item => ({ ...item, imagePreviewUrl: null }));
-          localStorage.setItem('eatinformed_history', JSON.stringify(fallback));
-        }
-        return updated;
-      });
-    } catch (err) {
-      console.warn('Could not save to scan history:', err);
-    }
+  const saveToHistory = useCallback((data: ProductAnalysisOutput & { scanId?: string }, _previewUrl: string | null) => {
+    setRecentScans(prev => [{ id: data.scanId || crypto.randomUUID(), timestamp: Date.now(), productName: data.productName, brand: data.brand, rating: data.rating, novaGroup: data.novaGroup, data }, ...prev].slice(0, 6));
   }, []);
 
   // Monotonic asymptotic progress ticker during AI analysis (never loops)
@@ -404,6 +361,7 @@ export function CheckPageClient() {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Idempotency-Key': crypto.randomUUID(),
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -507,7 +465,7 @@ export function CheckPageClient() {
   const handleClearHistory = () => {
     setRecentScans([]);
     try {
-      localStorage.removeItem('eatinformed_history');
+      // Clear the recent display only; account records remain available in history.
     } catch (e) {
       console.warn('Failed to clear scan history:', e);
     }

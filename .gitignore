@@ -69,3 +69,8 @@ mobile/.expo/
 mobile/dist/
 mobile/android/
 mobile/ios/
+
+!docs/BACKEND_ARCHITECTURE_AUDIT.md
+!docs/MOTION_ARCHITECTURE.md
+/test-results/
+/playwright-report/

@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: "Is my personal food scan data private?",
-    a: "Yes. Your scan history is saved directly on your local device (in browser localStorage or mobile secure storage). EatInformed does not sell your scan records or build commercial profiles from your dietary habits."
+    a: "Scan results are stored under your authenticated account in Firebase. Mobile keeps an account-scoped offline cache. Submitted label images are sent to the AI provider for analysis."
   },
   {
     q: "Is EatInformed completely free to use?",
@@ -158,7 +158,7 @@ export default function SupportPage() {
           </div>
           <div className="text-xs text-muted-foreground space-y-3 leading-relaxed">
             <p>
-              EatInformed is built around a local-first privacy standard. Your scanned product images, history records, and dietary preferences are stored directly on your personal device (in your browser localStorage or phone Secure Storage).
+              EatInformed stores scan results and dietary preferences under your authenticated Firebase account. Mobile maintains an account-scoped offline cache. Uploaded label images are processed transiently and sent to the AI provider; the scan service does not store raw images.
             </p>
             <p>
               Images sent for optical parsing are processed ephemerally in volatile memory strictly to extract ingredient text and compute NOVA classifications. We do not sell user data, train commercial advertising models on your dietary choices, or serve third-party tracker pixels.

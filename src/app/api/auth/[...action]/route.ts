@@ -1,204 +1,96 @@
-import { adminAuth } from '@/lib/firebase-admin';
-import { createCryptographicGuestToken } from '@/lib/quota';
-import crypto from 'crypto';
-import { cookies } from 'next/headers';
+import { randomUUID, createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { authenticate, checkOrigin, readJson } from '@/lib/request';
+import { ApiError } from '@/lib/api-error';
+import { apiFailure } from '@/lib/scan-service';
 
-const SESSION_COOKIE_NAME = 'session';
-
-// Define cookie options with proper security settings
-const getCookieOptions = (expires: number) => ({
-  name: SESSION_COOKIE_NAME,
-  value: '',
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  path: '/',
-  expires,
-});
-
-type RouteContext = {
-  params: Promise<{ action?: string[] } | any>;
-};
-
-export async function POST(request: NextRequest, context: RouteContext) {
-  const { action } = await context.params;
-  const currentAction = action?.[0];
-
-  // ponytail: support mobile and web client authentication
-  if (currentAction === 'mobile') {
-    try {
-      const body = await request.json();
-      const { email, password, type = 'signIn' } = body;
-      const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
-
-      if (type === 'guest') {
-        if (apiKey) {
-          try {
-            const fbRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ returnSecureToken: true }),
-            });
-            const fbData = await fbRes.json();
-            if (fbRes.ok && fbData.idToken) {
-              const token = adminAuth
-                ? await adminAuth.createSessionCookie(fbData.idToken, { expiresIn: 60 * 60 * 24 * 14 * 1000 }).catch(() => fbData.idToken)
-                : fbData.idToken;
-              return NextResponse.json({
-                status: 'success',
-                token,
-                user: { email: '', name: 'Guest Explorer', isAnonymous: true },
-              });
-            }
-          } catch (e) {
-            console.warn('Firebase guest creation failed, using local session:', e);
-          }
-        }
-
-        const guestUid = `guest_${crypto.randomUUID()}`;
-        const signedToken = createCryptographicGuestToken(guestUid);
-
-        return NextResponse.json({
-          status: 'success',
-          token: signedToken,
-          user: { email: '', name: 'Guest Explorer', isAnonymous: true },
-        });
-      }
-
-      if (!email || !password) {
-        return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
-      }
-      if (password.length < 6) {
-        return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
-      }
-
-      if (!apiKey) {
-        return NextResponse.json(
-          { error: 'Authentication service is not configured on the server (missing FIREBASE_API_KEY).' },
-          { status: 503 }
-        );
-      }
-
-      const endpoint = type === 'signUp'
-        ? `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`
-        : `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
-
-      const fbRes = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-      });
-      const fbData = await fbRes.json();
-      if (!fbRes.ok) {
-        const rawMsg = fbData.error?.message || 'Authentication failed';
-        const cleanMsg = rawMsg.replace(/_/g, ' ').toLowerCase();
-        return NextResponse.json(
-          { error: cleanMsg.charAt(0).toUpperCase() + cleanMsg.slice(1) },
-          { status: 400 }
-        );
-      }
-
-      const token = adminAuth
-        ? await adminAuth.createSessionCookie(fbData.idToken, { expiresIn: 60 * 60 * 24 * 14 * 1000 }).catch(() => fbData.idToken)
-        : fbData.idToken;
-
-      return NextResponse.json({
-        status: 'success',
-        token,
-        user: {
-          email: fbData.email || email,
-          name: fbData.displayName || email.split('@')[0],
-          isAnonymous: false,
-        },
-      });
-    } catch (err: unknown) {
-      console.error('Mobile auth error:', err);
-      return NextResponse.json({ error: err instanceof Error ? err.message : 'Authentication failed' }, { status: 500 });
-    }
-  }
-
-  if (currentAction === 'logout') {
-    return handleLogout();
-  }
-
-  if (currentAction === 'login') {
-    try {
-      const { idToken } = await request.json();
-      if (!idToken) {
-        return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
-      }
-
-      const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
-      const sessionCookie = adminAuth
-        ? await adminAuth.createSessionCookie(idToken, { expiresIn }).catch(() => idToken)
-        : idToken;
-
-      const options = getCookieOptions(Date.now() + expiresIn);
-      options.value = sessionCookie;
-
-      const cookieStore = await cookies();
-      cookieStore.set(options.name, options.value, options);
-
-      return NextResponse.json({ status: 'success', token: sessionCookie }, { status: 200 });
-    } catch (error: unknown) {
-      console.error('Session login error:', error);
-      let errorMessage = 'An unexpected error occurred.';
-      if (error && typeof error === 'object' && 'code' in error) {
-        const errorCode = (error as { code: string }).code;
-        if (errorCode === 'auth/id-token-revoked') {
-          errorMessage = 'The ID token has been revoked. Please re-authenticate.';
-        } else if (errorCode === 'auth/argument-error') {
-          errorMessage = 'Invalid ID token provided.';
-        }
-      }
-      return NextResponse.json({ error: errorMessage }, { status: 401 });
-    }
-  }
-
-  return NextResponse.json({ error: `Unsupported action: ${currentAction}` }, { status: 404 });
-}
-
-export async function GET(_request: NextRequest, context: RouteContext) {
-  const { action } = await context.params;
-  const currentAction = action?.[0];
-
-  if (currentAction === 'logout') {
-    return handleLogout();
-  }
-
-  return NextResponse.json({ error: `Not found` }, { status: 404 });
-}
-
-async function handleLogout() {
+type Context = { params: Promise<{ action?: string[] }> };
+const mobileSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('guest') }).strict(),
+  z.object({ type: z.enum(['signIn', 'signUp']), email: z.string().email().max(254), password: z.string().min(6).max(256) }).strict(),
+  z.object({ type: z.literal('refresh'), refreshToken: z.string().min(1).max(8192) }).strict(),
+  z.object({ type: z.literal('link'), email: z.string().email().max(254), password: z.string().min(6).max(256), idToken: z.string().min(1).max(8192) }).strict(),
+]);
+export async function POST(request: NextRequest, context: Context) {
+  const requestId = randomUUID();
   try {
-    let sessionCookie: string | undefined;
-    try {
-      const cookieStore = await cookies();
-      sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-    } catch (_) {
-      // In standalone API tests or non-request stores, cookies() may throw
+    checkOrigin(request);
+    const { action } = await context.params;
+    if (action?.length !== 1) throw new ApiError(404, 'not_found', 'Not found.');
+    if (action[0] === 'logout') {
+      const response = NextResponse.json({ status: 'success' });
+      response.cookies.set('session', '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 0 });
+      return response;
     }
-
-    if (adminAuth && sessionCookie) {
-      const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie).catch(() => null);
-      if (decodedClaims) {
-        await adminAuth.revokeRefreshTokens(decodedClaims.sub).catch(() => null);
+    if (!adminAuth) throw new ApiError(503, 'auth_unavailable', 'Authentication is temporarily unavailable.');
+    let body = await readJson(request, 16384);
+    if (action[0] === 'bridge') {
+      if (!adminDb) throw new ApiError(503, 'store_unavailable', 'Sign-in is temporarily unavailable.');
+      const create = z.object({ mode: z.literal('create'), idToken: z.string().max(8192), refreshToken: z.string().max(8192), challenge: z.string().regex(/^[a-f0-9]{64}$/) }).strict().safeParse(body);
+      if (create.success) {
+        const claims = await adminAuth.verifyIdToken(create.data.idToken, true);
+        const code = randomUUID();
+        await adminDb.collection('authExchanges').doc(code).create({ uid: claims.uid, refreshToken: create.data.refreshToken, challenge: create.data.challenge, expiresAt: Date.now() + 60000 });
+        return NextResponse.json({ code }, { headers: { 'Cache-Control': 'no-store' } });
       }
+      const exchange = z.object({ mode: z.literal('exchange'), code: z.string().uuid(), verifier: z.string().min(32).max(128) }).strict().safeParse(body);
+      if (!exchange.success) throw new ApiError(400, 'invalid_exchange', 'Invalid sign-in exchange.');
+      const ref = adminDb.collection('authExchanges').doc(exchange.data.code);
+      const refreshToken = await adminDb.runTransaction(async tx => {
+        const record = await tx.get(ref), data = record.data();
+        if (!data || data.expiresAt < Date.now() || data.challenge !== createHash('sha256').update(exchange.data.verifier).digest('hex')) throw new ApiError(401, 'invalid_exchange', 'Sign-in expired. Please try again.');
+        tx.delete(ref);
+        return data.refreshToken;
+      });
+      body = { type: 'refresh', refreshToken };
     }
-
-    const response = NextResponse.json({ status: 'success' }, { status: 200 });
-    const options = getCookieOptions(0);
-    response.cookies.set(options.name, '', { ...options, maxAge: 0 });
-
-    try {
-      const cookieStore = await cookies();
-      cookieStore.set(options.name, '', options);
-    } catch (_) {}
-
-    return response;
+    if (action[0] === 'login') {
+      const input = z.object({ idToken: z.string().min(1).max(8192) }).strict().safeParse(body);
+      if (!input.success) throw new ApiError(400, 'invalid_input', 'A Firebase ID token is required.');
+      let claims;
+      try { claims = await adminAuth.verifyIdToken(input.data.idToken, true); }
+      catch { throw new ApiError(401, 'invalid_credentials', 'Please sign in again.'); }
+      if (Date.now() / 1000 - claims.auth_time > 300) throw new ApiError(401, 'recent_login_required', 'Please sign in again.');
+      const expiresIn = 14 * 86400000;
+      const session = await adminAuth.createSessionCookie(input.data.idToken, { expiresIn });
+      const response = NextResponse.json({ status: 'success' });
+      response.cookies.set('session', session, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: expiresIn / 1000 });
+      return response;
+    }
+    if (action[0] !== 'mobile' && action[0] !== 'bridge') throw new ApiError(404, 'not_found', 'Not found.');
+    const input = mobileSchema.safeParse(body);
+    if (!input.success) throw new ApiError(400, 'invalid_input', 'Check the authentication details and try again.');
+    const data = input.data;
+    const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
+    if (!key) throw new ApiError(503, 'auth_unavailable', 'Authentication is temporarily unavailable.');
+    if (data.type === 'link') {
+      const identity = await authenticate(request);
+      const claims = await adminAuth.verifyIdToken(data.idToken, true);
+      if (!identity.isGuest || claims.uid !== identity.uid) throw new ApiError(403, 'link_denied', 'Only your own guest account can be upgraded.');
+    }
+    const refresh = data.type === 'refresh';
+    const emulator = process.env.NODE_ENV !== 'production' ? process.env.FIREBASE_AUTH_EMULATOR_HOST : undefined;
+    const base = emulator ? `http://${emulator}/identitytoolkit.googleapis.com/v1` : 'https://identitytoolkit.googleapis.com/v1';
+    const secureBase = emulator ? `http://${emulator}/securetoken.googleapis.com/v1` : 'https://securetoken.googleapis.com/v1';
+    const endpoint = refresh ? `${secureBase}/token` : `${base}/accounts:${data.type === 'signIn' ? 'signInWithPassword' : data.type === 'link' ? 'update' : 'signUp'}`;
+    const payload = refresh ? { grant_type: 'refresh_token', refresh_token: data.refreshToken }
+      : data.type === 'guest' ? { returnSecureToken: true }
+      : { email: data.email, password: data.password, returnSecureToken: true, ...(data.type === 'link' ? { idToken: data.idToken } : {}) };
+    const upstream = await fetch(`${endpoint}?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(8000) });
+    const result = await upstream.json();
+    if (!upstream.ok) {
+      const conflict = result.error?.message === 'EMAIL_EXISTS';
+      throw new ApiError(conflict ? 409 : upstream.status === 429 ? 429 : 401, conflict ? 'account_exists' : 'authentication_failed', conflict ? 'This account already exists. Sign in to it; guest records will remain separate.' : 'Authentication failed. Check your details or try again later.');
+    }
+    const token = result.idToken || result.id_token;
+    const claims = await adminAuth.verifyIdToken(token, true);
+    const user = await adminAuth.getUser(claims.uid);
+    return NextResponse.json({ status: 'success', token, refreshToken: result.refreshToken || result.refresh_token,
+      expiresAt: Date.now() + Number(result.expiresIn || result.expires_in || 3600) * 1000,
+      user: { uid: claims.uid, email: user.email || '', name: user.displayName || user.email?.split('@')[0] || 'Guest Explorer', isAnonymous: claims.firebase?.sign_in_provider === 'anonymous', photoUrl: user.photoURL || null } }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    console.error('Logout error:', error);
-    return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
+    return apiFailure(error, requestId);
   }
 }

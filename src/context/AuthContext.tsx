@@ -39,18 +39,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
+        setUserProfile(null);
         setUser(firebaseUser);
-        if (firestore) {
-          try {
-            const userDocRef = doc(firestore, "users", firebaseUser.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-              setUserProfile(userDoc.data() as UserProfile);
-            }
-          } catch (profileError) {
-            console.warn("Failed to load user profile from Firestore:", profileError);
-          }
-        }
+        try {
+          const response = await fetch('/api/profile', { headers: { Authorization: `Bearer ${await firebaseUser.getIdToken()}` } });
+          const result = await response.json();
+          if (response.ok && auth?.currentUser?.uid === firebaseUser.uid) setUserProfile({ ...result.profile, uid: firebaseUser.uid, email: firebaseUser.email || '', name: result.profile?.name || firebaseUser.displayName || 'Member' });
+        } catch { /* Account remains authenticated when profile storage is unavailable. */ }
       } else {
         setUser(null);
         setUserProfile(null);

@@ -10,22 +10,6 @@ const nextConfig = {
       bodySizeLimit: '10mb',
     },
   },
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          // ponytail: per MDN CORS spec, do not pair wildcards with Allow-Credentials: true
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT,OPTIONS' },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
-          },
-        ],
-      },
-    ];
-  },
   async rewrites() {
     if (!firebaseProjectId) return [];
     return [

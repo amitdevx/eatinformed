@@ -1,63 +1,15 @@
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '.env.local' });
-
-async function run() {
-  try {
-    const imagePath = process.env.TEST_IMAGE_PATH || process.argv[2] || path.join(__dirname, 'test-label.jpg');
-    if (!fs.existsSync(imagePath)) {
-      console.log(`Test image not found at ${imagePath}. Pass path as argument or set TEST_IMAGE_PATH.`);
-      return;
-    }
-    console.log(`Loading image from ${imagePath}...`);
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    const dataUri = `data:image/jpeg;base64,${base64Image}`;
-
-    console.log("Extracting ingredients using NVIDIA NIM 11b...");
-    const { nimClient, parseNIMResponse } = await import('./src/ai/nim');
-    
-    const systemPrompt = `You are a strict JSON data extraction API. Return NOTHING BUT A RAW JSON OBJECT. No markdown, no conversational text.
-
-{
-  "ingredients": ["item1"],
-  "nutrition": {
-    "rawText": "...",
-    "servingSizeLabel": "...",
-    "nutrients": [{"nutrient": "Fat", "perServing": "1g", "per100mL": "2g"}]
-  },
-  "status": "success"
+import { config } from 'dotenv';
+import { readFile } from 'node:fs/promises';
+config({ path: '.env.local' });
+async function main() {
+  if (!process.argv[2]) throw new Error('Usage: npx tsx test-ai.ts path/to/label.jpg');
+  const { validateImagePayload } = await import('./src/lib/image-validation');
+  const { analyzeProduct } = await import('./src/ai/flows/product-analysis');
+  const bytes = await readFile(process.argv[2]);
+  const image = await validateImagePayload(`data:image/jpeg;base64,${bytes.toString('base64')}`);
+  if (!image.valid) throw new Error(image.error);
+  const started = Date.now();
+  const result = await analyzeProduct(image.normalized!);
+  console.log(JSON.stringify({ status: result.status, durationMs: Date.now() - started, result }, null, 2));
 }
-
-Extract the ingredients list and nutritional facts. IF YOU OUTPUT ANY TEXT OUTSIDE THE JSON OBJECT, THE SYSTEM WILL CRASH.`;
-
-    const response = await nimClient!.chat.completions.create({
-      model: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: systemPrompt },
-            { type: 'image_url', image_url: { url: dataUri } },
-          ],
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.1,
-      top_p: 0.9,
-    });
-    
-    const msg = response.choices?.[0]?.message as any;
-    const rawContent = msg?.content || msg?.reasoning_content;
-    console.log("\n--- Extraction Result ---");
-    console.log("RAW preview:", rawContent ? rawContent.substring(0, 300) : "NULL");
-    const extractResult = parseNIMResponse(rawContent);
-    console.log("PARSED SUCCESS:", JSON.stringify(extractResult, null, 2));
-  } catch (err) {
-    console.error("Error running test:", err);
-  }
-}
-
-run();
+main().catch(error => { console.error(error instanceof Error ? error.message : 'Live test failed'); process.exitCode = 1; });
