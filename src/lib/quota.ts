@@ -40,6 +40,11 @@ export class ScanStore {
       if (previous.exists) {
         const data = previous.data()!;
         if (data.hash !== hash) throw new ApiError(409, 'idempotency_conflict', 'This request key belongs to a different image.');
+        if (data.state === 'pending' && now - data.createdAt >= 120000) {
+          const response = { status: 'error', code: 'scan_interrupted', error: 'This scan was interrupted. Start a new scan.', quota };
+          tx.update(op, { state: 'complete', response, status: 504 });
+          return { id: op.id, quota, replay: response, status: 504 };
+        }
         if (data.state === 'pending') throw new ApiError(409, 'scan_in_progress', 'This scan is still processing. Retry with the same request key.');
         return { id: op.id, quota, replay: data.response, status: data.status as number };
       }

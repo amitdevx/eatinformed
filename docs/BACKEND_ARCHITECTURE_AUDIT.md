@@ -21,3 +21,7 @@ Other public entries: auth/mobile (guest, password, refresh, authorized email li
 Trust boundaries: all client inputs, headers, images and model content are untrusted. Firebase claims establish UID and anonymous provider. Admin access bypasses Firestore rules, so routes derive every account path from verified identity. Submitted images are transient, normalized, stripped of metadata and sent to NVIDIA; they are not persisted. Analysis records are account-owned. No shared image cache remains.
 
 Threats addressed: forged guest credentials, public action invocation, quota races, duplicate charging, cross-account history, OAuth redirect credential leakage, malformed images, truncated AI JSON, unknown assessments presented as facts. Remaining risks: anonymous-account farming needs deployment-level abuse controls; authentication/signup and provider spending need operational monitoring. No production configuration or Firestore rules were read from the live project.
+
+## Second-pass correction
+
+See SECOND_PASS_AUDIT.md for confirmed incomplete repairs and the current remaining-work register. Stale pending scans settle to a 504 interrupted tombstone after 120 seconds when retried, preserving quota and preventing provider re-execution. Missing provider configuration is rejected before reservation. The complete original scope remains unfinished; no production-readiness claim is made.

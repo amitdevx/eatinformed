@@ -102,9 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionState(current);
       setAuthStatus('authenticated');
     } else {
-      const guest = await signInAsGuest();
-      setSessionState(guest);
-      setAuthStatus('authenticated');
+      setSessionState(null);
+      setAuthStatus('signed_out');
     }
   }, []);
 

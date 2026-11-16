@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - 'mobile/**'
+      - 'src/ai/flows/product-analysis-types.ts'
+      - 'package-lock.json'
       - '.github/workflows/build-android-apk.yml'
   workflow_dispatch:
 
@@ -39,9 +41,12 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Install shared schema dependencies
+        run: npm ci
+
       - name: Install mobile dependencies
         working-directory: mobile
-        run: pnpm install --prefer-offline
+        run: pnpm install --frozen-lockfile
 
       - name: Prebuild Android native project
         working-directory: mobile

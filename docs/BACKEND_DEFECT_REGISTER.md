@@ -18,3 +18,7 @@
 | Medium | Profile gesture | nested responders and mismatched motion ranges | coordinated native gesture, shared progress and blur target | FIX IMPLEMENTED; Android runtime BLOCKED |
 
 Public test-header shortcut was already removed at baseline. No new bypass was introduced. Confirmed findings are based on source; no production exploitation is claimed.
+
+## Second-pass correction
+
+See SECOND_PASS_AUDIT.md for confirmed incomplete repairs and the current remaining-work register. Stale pending scans settle to a 504 interrupted tombstone after 120 seconds when retried, preserving quota and preventing provider re-execution. Missing provider configuration is rejected before reservation. The complete original scope remains unfinished; no production-readiness claim is made.

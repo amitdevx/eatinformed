@@ -27,7 +27,7 @@ import { FadeInView, PressableScale } from '../theme/animations';
 import { borderRadius, layout, spacing, typography } from '../theme/tokens';
 import { AppHaptics } from '../lib/haptics';
 import {
-  getScanHistory,
+  getFullScanLedger,
   deleteHistoryItem,
   clearAllHistory,
   getThirtyDayHeatmapData,
@@ -49,7 +49,7 @@ export default function HistoryScreen() {
 
   const loadHistory = useCallback(async () => {
     const [items, days] = await Promise.all([
-      getScanHistory(),
+      getFullScanLedger(),
       getThirtyDayHeatmapData(),
     ]);
     setHistoryItems(items);

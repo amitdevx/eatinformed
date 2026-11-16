@@ -38,16 +38,11 @@ export function ProfileReveal({ children, name, email, photo, handle, count, cle
   useEffect(() => { const subscription = AppState.addEventListener('change', s => setActive(s === 'active')); return () => subscription.remove(); }, []);
   useEffect(() => { if (!focused || !active) close(); }, [focused, active, close]);
   useEffect(() => { navigation.setOptions({ tabBarStyle: visible ? { display: 'none' } : undefined }); return () => navigation.setOptions({ tabBarStyle: undefined }); }, [visible, navigation]);
-  useEffect(() => {
-    if (!visible) return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => { close(); return true; });
-    return () => sub.remove();
-  }, [visible, close]);
   const open = () => { setVisible(true); setDragging(false); AppHaptics.success(); };
   const arm = () => { setArmed(true); AppHaptics.impactHeavy(); };
   const begin = () => { measureAvatar(); setDragging(true); setArmed(false); };
   const finish = () => { setDragging(false); setArmed(false); };
-  const pan = Gesture.Pan().enabled(focused && active && !visible).manualActivation(true)
+  const pan = Gesture.Pan().enabled(focused && active).manualActivation(true)
     .onTouchesDown(e => {
       const touch = e.allTouches[0];
       if (!touch) return;

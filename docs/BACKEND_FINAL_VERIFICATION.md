@@ -17,3 +17,11 @@ Production web build completed successfully, including TypeScript and all 15 gen
 Browser smoke verification: 3/3 passed at 360/768/1440px, testing /, /check, /support and /login for horizontal overflow and runtime page errors. This does not exercise authenticated scans or Android gestures.
 
 Android bundle verification: `npx expo export --platform android --max-workers 1` completed successfully, producing a 6 MB Hermes bytecode bundle and 17 assets. This validates bundling; actual native installation and gesture/blur execution remain BLOCKED.
+
+## Second-pass correction
+
+See SECOND_PASS_AUDIT.md for confirmed incomplete repairs and the current remaining-work register. Stale pending scans settle to a 504 interrupted tombstone after 120 seconds when retried, preserving quota and preventing provider re-execution. Missing provider configuration is rejected before reservation. The complete original scope remains unfinished; no production-readiness claim is made.
+
+Second-pass results supersede broad interpretations of earlier checks: 8/8 unit/security tests, 7/7 Firebase integration tests, both typechecks, and production web build passed. Remaining feature gaps are explicitly listed in SECOND_PASS_AUDIT.md. Complete end-to-end Android scan and Passport interaction are still NOT TESTED. Native bundling exposed a Metro shared-schema resolution regression, under repair in this pass.
+
+Second-pass Android export after Metro repair exited 0: 6.1 MB Hermes bytecode bundle generated. Runtime native behavior still NOT TESTED. Final checks for this repair set: unit 8/8, Firebase integration 7/7, browser 3/3, both typechecks, lint (two warnings), production web build and Android export passed.

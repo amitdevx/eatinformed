@@ -28,7 +28,7 @@ async function getHistoryScope(): Promise<string> {
   return session.uid;
 }
 
-export async function getFullScanLedger(): Promise<HistoryItem[]> {
+export async function getFullScanLedger(allowOffline = true): Promise<HistoryItem[]> {
   const uid = await getHistoryScope();
   const key = `${CACHE_PREFIX}${uid}`;
   try {
@@ -43,7 +43,7 @@ export async function getFullScanLedger(): Promise<HistoryItem[]> {
     await AsyncStorage.setItem(key, JSON.stringify(items));
     return items;
   } catch (error: any) {
-    if (await getHistoryScope() !== uid || error.response?.status === 401 || error.response?.status === 403) throw error;
+    if (!allowOffline || await getHistoryScope() !== uid || error.response) throw error;
     const cached = await AsyncStorage.getItem(key);
     if (cached) return JSON.parse(cached);
     throw error;
@@ -53,9 +53,16 @@ export async function getScanHistory(): Promise<HistoryItem[]> {
   return (await getFullScanLedger()).slice(0, 20);
 }
 export async function saveScanToHistory(data: ProductAnalysisOutput, _imagePreviewUrl?: string | null): Promise<HistoryItem[]> {
-  // A successful scan is persisted atomically by the backend before it is returned.
-  if (!data.scanId) return getScanHistory();
-  return getScanHistory();
+  // Cache the response already committed by the server; a history outage must not hide a successful result.
+  if (!data.scanId) throw new Error('Missing saved scan identifier.');
+  const uid = await getHistoryScope(), key = `${CACHE_PREFIX}${uid}`;
+  const raw = await AsyncStorage.getItem(key);
+  const previous: HistoryItem[] = raw ? JSON.parse(raw) : [];
+  const item: HistoryItem = { id: data.scanId, timestamp: Date.now(), productName: data.productName,
+    brand: data.brand, rating: data.rating, novaGroup: data.novaGroup, data };
+  const items = [item, ...previous.filter(entry => entry.id !== item.id)];
+  await AsyncStorage.setItem(key, JSON.stringify(items));
+  return items.slice(0, 20);
 }
 export async function deleteHistoryItem(id: string): Promise<HistoryItem[]> {
   await apiClient.delete('/api/history', { params: { id } });
@@ -65,7 +72,7 @@ export async function deleteHistoryItem(id: string): Promise<HistoryItem[]> {
 }
 export async function clearAllHistory(): Promise<boolean> {
   const uid = await getHistoryScope();
-  const items = await getFullScanLedger();
+  const items = await getFullScanLedger(false);
   for (const item of items) {
     if (await getHistoryScope() !== uid) throw new Error('Account changed.');
     await apiClient.delete('/api/history', { params: { id: item.id } });

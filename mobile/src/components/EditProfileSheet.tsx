@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
+  Alert,
   Text,
   StyleSheet,
   Modal,
@@ -88,7 +89,6 @@ export function EditProfileSheet({
 
   const handleSave = async () => {
     setIsSaving(true);
-    AppHaptics.success();
     try {
       const updated = await updateUserProfile({
         name: name.trim() || 'Member',
@@ -96,10 +96,11 @@ export function EditProfileSheet({
         photoUrl: photoUri || undefined,
         allergens: allergensList,
       });
+      AppHaptics.success();
       onProfileUpdated(updated);
       onClose();
     } catch (e) {
-      console.warn('Failed to update profile:', e);
+      Alert.alert('Profile could not be saved', e instanceof Error ? e.message : 'Please try again.');
     } finally {
       setIsSaving(false);
     }

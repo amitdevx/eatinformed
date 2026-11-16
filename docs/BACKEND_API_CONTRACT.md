@@ -11,3 +11,7 @@ Quota: 4 accepted guest scans over 7200 seconds. Members default to 50/3600 seco
 GET /api/scan: process liveness only. `?quota=true` requires authentication. GET /api/history: pages of 100 with cursor and accurate retained totalScans. DELETE /api/history?id=scanId deletes the caller's record and replaces replay product data with a tombstone. Profile PATCH validates name, handle, allergen preferences; handle claims are transactional. Avatars remain local references, not trusted backend assets.
 
 Mobile sessions use Firebase ID/refresh tokens stored in SecureStore. Legacy custom guest sessions require a new login. Email guest upgrades link the same UID. Existing-account conflicts keep histories separate. Google bridge returns only a one-use code to an exact app callback and requires its SHA-256 verifier. Expired unused exchanges need an operational TTL policy; no TTL or rules were deployed.
+
+## Second-pass correction
+
+See SECOND_PASS_AUDIT.md for confirmed incomplete repairs and the current remaining-work register. Stale pending scans settle to a 504 interrupted tombstone after 120 seconds when retried, preserving quota and preventing provider re-execution. Missing provider configuration is rejected before reservation. The complete original scope remains unfinished; no production-readiness claim is made.

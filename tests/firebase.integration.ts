@@ -103,3 +103,18 @@ test('provider error remains 503, never unreadable; profile handles enforce owne
   assert.equal((await profilePatch(req('/api/profile',other.token,{handle},'PATCH'))).status,409);
   assert.equal((await profilePatch(req('/api/profile',other.token,{uid:guest.user.uid,name:'intruder'},'PATCH'))).status,400);
 });
+
+test('crashed scans settle as interrupted without a second provider execution or quota charge', async () => {
+  const identity = { uid: randomUUID(), isGuest: true };
+  let now = 10_000_000;
+  const store = new ScanStore(adminDb!, () => now);
+  const key = randomUUID();
+  assert.equal((await store.reserve(identity, key, 'image')).status, 202);
+  now += 120000;
+  const replay = await store.reserve(identity, key, 'image');
+  assert.equal(replay.status, 504);
+  assert.equal(replay.replay.code, 'scan_interrupted');
+  assert.equal(replay.quota.remaining, 3);
+  assert.equal((await store.reserve(identity, key, 'image')).status, 504);
+  await assert.rejects(store.finish(identity, key, { status: 'success' }, 200), { code: 'operation_completed' });
+});

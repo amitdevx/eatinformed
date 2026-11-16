@@ -391,7 +391,7 @@ export default function ScanScreen() {
         setQuota((analysis as any).quota);
       }
 
-      await saveScanToHistory(analysis, selectedImageUri);
+      await saveScanToHistory(analysis, selectedImageUri).catch(() => { /* Server history is already committed. */ });
       AppHaptics.success();
 
       navigation.navigate('Result', {

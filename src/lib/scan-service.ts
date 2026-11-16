@@ -7,6 +7,8 @@ import { getScanStore } from './quota';
 import { validateImagePayload } from './image-validation';
 import { adminDb } from './firebase-admin';
 import { preferenceWarnings } from './allergens';
+import { isNimConfigured } from '@/ai/nim';
+import { ProductAnalysisOutputSchema } from '@/ai/flows/product-analysis-types';
 import { analyzeProduct } from '@/ai/flows/product-analysis';
 
 export function apiFailure(error: unknown, requestId: string) {
@@ -32,6 +34,7 @@ export function createScanHandler(analyze = analyzeProduct) {
       if (!key || !/^[a-zA-Z0-9_-]{16,128}$/.test(key)) throw new ApiError(400, 'invalid_idempotency_key', 'A valid Idempotency-Key is required.');
       const image = await validateImagePayload(parsed.data.image);
       if (!image.valid) throw new ApiError(image.httpStatus || 400, image.code || 'invalid_image', image.error || 'Invalid image.');
+      if (analyze === analyzeProduct && !isNimConfigured()) throw new ApiError(503, 'ai_offline', 'Food analysis is temporarily unavailable.');
       stage = 'quota';
       const store = getScanStore();
       const reservation = await store.reserve(identity, key, createHash('sha256').update(parsed.data.image).digest('hex'));
@@ -40,7 +43,9 @@ export function createScanHandler(analyze = analyzeProduct) {
       stage = 'analysis';
       let result: Record<string, unknown>, status = 200;
       try {
-        const analysis = await analyze(image.normalized!);
+        const validated = ProductAnalysisOutputSchema.safeParse(await analyze(image.normalized!));
+        if (!validated.success) throw new ApiError(502, 'invalid_ai_output', 'The analysis response was invalid.');
+        const analysis = validated.data;
         if (analysis.status !== 'success') throw new ApiError(422, analysis.status === 'unreadable' ? 'label_unreadable' : 'no_food_data', 'No readable ingredients or nutrition panel were found. Try a clearer label photo.');
         const profile = await adminDb!.collection('profiles').doc(identity.uid).get();
         analysis.warnings = [...analysis.warnings, ...preferenceWarnings(analysis.ingredients, profile.data()?.allergens || [])];

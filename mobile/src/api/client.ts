@@ -1,3 +1,4 @@
+import { ProductAnalysisOutputSchema } from '../../../src/ai/flows/product-analysis-types';
 import axios, { AxiosError } from 'axios';
 import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -55,7 +56,7 @@ apiClient.interceptors.request.use(async (config) => {
       const result = await axios.post(`${getBaseUrl()}/api/auth/mobile`, { type: 'refresh', refreshToken: session.refreshToken }, { timeout: 12000 });
       const currentRaw = await SecureStore.getItemAsync('eatinformed_user_session_v1');
       const current = currentRaw ? JSON.parse(currentRaw) : null;
-      if (current?.uid !== session.uid) throw new Error('Account changed. Please retry.');
+      if (current?.uid !== session.uid || result.data.user?.uid !== session.uid) throw new Error('Account changed. Please retry.');
       await SecureStore.setItemAsync('eatinformed_user_session_v1', JSON.stringify({ ...current, token: result.data.token, refreshToken: result.data.refreshToken, expiresAt: result.data.expiresAt }));
     })().finally(() => { refreshInFlight = null; });
     await refreshInFlight;
@@ -120,9 +121,10 @@ export async function scanFoodLabel(
           },
         }
       );
-      if (response.data.status !== 'success' || !Array.isArray(response.data.ingredients) || !response.data.nutrition) throw new Error('Invalid scan result received.');
+      const result = ProductAnalysisOutputSchema.safeParse(response.data);
+      if (!result.success || result.data.status !== 'success' || !response.data.scanId) throw new Error('Invalid scan result received.');
       await recordScanDuration(Date.now() - startTime);
-      return response.data;
+      return { ...result.data, scanId: response.data.scanId };
     } catch (err) {
       lastError = err;
       const axiosErr = err as AxiosError;

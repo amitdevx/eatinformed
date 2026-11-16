@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Image, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { BackHandler, Image, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { useAnimatedStyle, useSharedValue, useReducedMotion, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -16,8 +16,13 @@ export function FoodPassportModal({ visible, onClose, blurTarget, userName, user
   const { colors, isDark } = useTheme(), insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const reduced = useReducedMotion(), reveal = useSharedValue(0);
-  useEffect(() => { reveal.set(visible ? withSpring(1, { duration: 300, dampingRatio: 0.8 }) : 0); }, [visible, reveal]);
+  useEffect(() => { reveal.set(visible ? reduced ? 1 : withSpring(1, { duration: 300, dampingRatio: 0.8 }) : 0); }, [visible, reveal, reduced]);
   const dismiss = useCallback(() => { reveal.set(withTiming(0, { duration: reduced ? 0 : 180 }, done => { if (done) scheduleOnRN(onClose); })); }, [onClose, reduced, reveal]);
+  useEffect(() => {
+    if (!visible) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => { dismiss(); return true; });
+    return () => subscription.remove();
+  }, [visible, dismiss]);
   const background = useAnimatedStyle(() => ({ opacity: reveal.get() }));
   const card = useAnimatedStyle(() => ({ opacity: reveal.get(), transform: [{ translateY: reduced ? 0 : (1 - reveal.get()) * 24 }, { scale: reduced ? 1 : 0.92 + reveal.get() * 0.08 }] }));
   if (!visible) return null;
