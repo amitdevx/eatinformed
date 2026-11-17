@@ -90,16 +90,25 @@ class AuthController extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> signIn({String? email, String? password}) async {
+  Future<void> signIn({
+    String? email,
+    String? password,
+    bool create = false,
+    bool google = false,
+  }) async {
     if (busy || _disposed) return;
     final generation = ++_generation;
     busy = true;
     failure = null;
     _notify();
     try {
-      final fresh = email == null
+      final fresh = google
+          ? await repository.google()
+          : email == null
           ? await repository.guest()
-          : await repository.email(email, password ?? '');
+          : create && session?.isGuest == true
+          ? await repository.link(await validSession(), email, password ?? '')
+          : await repository.email(email, password ?? '', create: create);
       if (generation != _generation || _disposed) return;
       await _persist(fresh, generation);
       if (generation != _generation || _disposed) return;
@@ -122,8 +131,81 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<AccountSession>? _refresh;
+  Future<AccountSession> validSession() async {
+    final current = session;
+    if (current == null) {
+      throw const ApiFailure(
+        'auth_required',
+        'Please sign in again.',
+        status: 401,
+      );
+    }
+    if (current.expiresAt.isAfter(_clock().add(const Duration(minutes: 1)))) {
+      return current;
+    }
+    if (_refresh != null) return _refresh!;
+    final generation = _generation;
+    final future = () async {
+      final refreshed = await repository.refresh(current);
+      final fresh = refreshed.withProfile(
+        photoUrl: current.photoUrl?.startsWith('file:') == true
+            ? current.photoUrl
+            : null,
+      );
+      if (_disposed || generation != _generation || fresh.uid != current.uid) {
+        throw const ApiFailure(
+          'account_changed',
+          'Account changed. Retry this request.',
+        );
+      }
+      await _persist(fresh, generation);
+      if (_disposed || generation != _generation) {
+        throw const ApiFailure(
+          'account_changed',
+          'Account changed. Retry this request.',
+        );
+      }
+      session = fresh;
+      _notify();
+      return fresh;
+    }();
+    _refresh = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_refresh, future)) _refresh = null;
+    }
+  }
+
+  Future<void> updateProfile({
+    String? name,
+    String? handle,
+    String? photoUrl,
+    List<String>? allergens,
+    String? expectedUid,
+  }) async {
+    final current = session;
+    if (current == null ||
+        (expectedUid != null && current.uid != expectedUid)) {
+      throw const ApiFailure('auth_required', 'Please sign in again.');
+    }
+    final generation = _generation;
+    final updated = current.withProfile(
+      name: name,
+      handle: handle,
+      photoUrl: photoUrl,
+      allergens: allergens,
+    );
+    await _persist(updated, generation);
+    if (_disposed || generation != _generation) return;
+    session = updated;
+    _notify();
+  }
+
   Future<void> signOut() async {
     ++_generation;
+    _refresh = null;
     session = null;
     phase = AuthPhase.signedOut;
     failure = null;

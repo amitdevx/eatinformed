@@ -11,6 +11,7 @@ class AccountSession {
     required this.isGuest,
     this.photoUrl,
     this.handle,
+    this.allergens = const [],
   });
 
   factory AccountSession.fromJson(Map<String, dynamic> data) {
@@ -30,6 +31,7 @@ class AccountSession {
       isGuest: user['isAnonymous'] as bool,
       photoUrl: optionalText(user, 'photoUrl'),
       handle: optionalText(user, 'handle'),
+      allergens: (user['allergens'] as List?)?.cast<String>() ?? [],
     );
   }
 
@@ -37,6 +39,25 @@ class AccountSession {
   final DateTime expiresAt;
   final bool isGuest;
   final String? photoUrl, handle;
+  final List<String> allergens;
+
+  AccountSession withProfile({
+    String? name,
+    String? handle,
+    String? photoUrl,
+    List<String>? allergens,
+  }) => AccountSession(
+    uid: uid,
+    token: token,
+    refreshToken: refreshToken,
+    expiresAt: expiresAt,
+    email: email,
+    name: name ?? this.name,
+    isGuest: isGuest,
+    handle: handle ?? this.handle,
+    photoUrl: photoUrl ?? this.photoUrl,
+    allergens: allergens ?? this.allergens,
+  );
 
   Map<String, dynamic> toJson() => {
     'token': token,
@@ -49,6 +70,7 @@ class AccountSession {
       'isAnonymous': isGuest,
       'photoUrl': photoUrl,
       'handle': handle,
+      'allergens': allergens,
     },
   };
 }

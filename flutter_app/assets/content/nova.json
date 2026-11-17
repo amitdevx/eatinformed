@@ -1,0 +1,50 @@
+[
+  {
+    "group": 1,
+    "title": "Unprocessed or Minimally Processed",
+    "description": "Whole foods in their natural form or cleaned, chilled, ground, or fermented without adding industrial fats, sugars, or salt.",
+    "examples": [
+      "Fresh fruits & leafy vegetables",
+      "Whole grains & rolled oats",
+      "Plain non-fat yogurt, milk & eggs",
+      "Raw nuts, seeds, and legumes"
+    ],
+    "impact": "Optimal nutrient density, intact cellular matrix, and highest health score."
+  },
+  {
+    "group": 2,
+    "title": "Processed Culinary Ingredients",
+    "description": "Substances extracted directly from nature or Group 1 foods, used in kitchens to season and cook whole foods.",
+    "examples": [
+      "Extra-virgin olive oil & cold-pressed oils",
+      "Unsalted butter and traditional ghee",
+      "Pure honey and maple syrup",
+      "Iodized sea salt and culinary starches"
+    ],
+    "impact": "Safe and beneficial when used in moderate home-cooking proportions."
+  },
+  {
+    "group": 3,
+    "title": "Processed Foods",
+    "description": "Products made by adding Group 2 culinary ingredients (salt, oil, sugar) to Group 1 foods for preservation or palatability.",
+    "examples": [
+      "Canned legumes or vegetables in brine",
+      "Traditional cheeses (mozzarella, cheddar)",
+      "Freshly baked sourdough or artisan bread",
+      "Roasted salted nuts and canned fish"
+    ],
+    "impact": "Healthy in balanced dietary patterns; monitor sodium and added sugar."
+  },
+  {
+    "group": 4,
+    "title": "Ultra-Processed Foods (UPFs)",
+    "description": "Industrial formulations typically containing five or more ingredients including emulsifiers, artificial flavors, synthetic dyes, and preservatives.",
+    "examples": [
+      "Carbonated sodas & sweetened energy drinks",
+      "Instant flavored noodles & extruded chips",
+      "Mass-produced packaged confectionery",
+      "Reconstituted processed meat products"
+    ],
+    "impact": "Associated with metabolic disruption, gut barrier alteration, and overconsumption."
+  }
+]
