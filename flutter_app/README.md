@@ -18,7 +18,7 @@ The API origin defaults to `https://eatinformed.amitdevx.tech`. Override only wi
 
 ## Foundation scope
 
-Implemented: configuration, safe JSON transport, typed verified session, encrypted local storage adapter, restoration/refresh, email sign-in and guest adapters, auth-state navigation, light/dark/system themes, safe-area scroll layout, one-shot entrances, and bounded opt-in frame metrics.
+Implemented: configuration, safe JSON transport, typed verified session, encrypted local storage adapter, restoration/refresh, email sign-in and guest adapters, auth-state navigation, light/dark/system themes, safe-area scroll layout, one-shot entrances, lifecycle-aware decorative typography, and bounded opt-in frame metrics.
 
 The authenticated account boundary is intentionally small. It is not the finished Home or Profile screen. Google, signup/linking, full onboarding, camera/scanning, history/results, Guide, Passport, preference persistence and export are subsequent ports. No sample scan or rating is used to disguise an incomplete feature.
 

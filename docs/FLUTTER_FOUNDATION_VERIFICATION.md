@@ -34,7 +34,7 @@ HTTP and platform storage boundaries are mocked in these tests. No arbitrary tes
 | Feature | Status |
 |---|---|
 | Android/iOS project and foundation | IMPLEMENTED, UNVERIFIED on device |
-| GitHub-built profile APK | NOT STARTED at local verification checkpoint |
+| GitHub-built profile APK | VERIFIED for foundation commit ffb573c; build and checksum only |
 | Live Flutter guest/email authentication | NOT STARTED |
 | Google, signup/linking and full onboarding | NOT STARTED |
 | Home, History, Guide, Results and full Profile ports | NOT STARTED |
@@ -46,3 +46,17 @@ HTTP and platform storage boundaries are mocked in these tests. No arbitrary tes
 | Physical Android camera/haptic/performance testing | BLOCKED: no physical device connected |
 
 No new Waydroid session was started. No local APK was compiled. No screen or animation is declared equivalent based on compilation or widget tests.
+
+## GitHub artifact verification
+
+Run https://github.com/amitdevx/eatinformed/actions/runs/44078334331 completed successfully for `ffb573c6bf4fe64bf3bfc95fd24c8bba51c8197a`. Hosted formatting, analysis and all 20 foundation tests passed before profile compilation.
+
+Artifact `14326825007`, `eatinformed-flutter-profile-ffb573c6bf4fe64bf3bfc95fd24c8bba51c8197a`, downloaded through the GitHub connector. ZIP SHA-256 `5544be6228172af37ab4174987a92d05e7f7f13454f41a58860f8860ee1fa3ca` matches GitHub. Included commit.txt matches the tested revision. APK SHA-256 `95eec1c1a745cb2da5831b0f33eee7386e8ff679a0808d92123ee7e7a7b8ce45` matches the included checksum manifest.
+
+Decoded the APK's binary AndroidManifest.xml: package `com.eatinformed.preview.eatinformed_mobile`, version 0.1.0/code 1, label EatInformed Preview, allowBackup=false, usesCleartextTraffic=false. This verifies artifact identity, not runtime behavior. Download retained at `/home/amitdevx/.cache/eatinformed/artifacts/ffb573c-profile/app-profile.apk` on the test host. No APK was compiled locally or installed into a new session.
+
+## Background typography primitive
+
+Added independently authored `lib/design/motion/name_ticker.dart` and `test/name_ticker_test.dart`. Measured text repeats on a canvas through repaint notifications, with alternating row direction. Frame callbacks pause on hidden state, disabled TickerMode, app backgrounding and reduced motion; offset survives pause/resume. Text-layout changes preserve fractional phase. The decorative painter owns no touches or semantic reading order. Controllers, notifier, painter and lifecycle observer are disposed.
+
+Initial analysis detected the installed SDK's deprecated TickerMode.of API. Updated to TickerMode.valuesOf(context).enabled. The subsequent full widget/unit suite passed: 22 tests, 0 failures. The two additional tests assert idle behavior under visibility/reduced-motion gates and lifecycle start/stop/disposal. They do not prove on-device seamlessness, frame rate or Passport integration. This primitive is not yet connected to a ported Profile screen and is not part of the downloaded foundation APK.
