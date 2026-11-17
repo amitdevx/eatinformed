@@ -54,6 +54,8 @@ The source comparison found that Expo supports text summaries and JSON files fro
 
 The expanded connected journey at 320 pixels and 200% text reproduced horizontal overflow in Home activity rows and vertical overflow in the scanner instruction area. Activity labels now flex above their progress track, and unknown ratings use a neutral track. Scanner instructions, waiting content and errors scroll within available space. Onboarding step changes reset their scroll container. The connected journey now executes without layout exceptions at this size and text scale.
 
+The compiled full-screen APK was also inspected. Its package and ABIs were correct, but the camera dependency merged microphone and legacy storage permissions despite still-only capture with audio disabled. The preview manifest explicitly removes those unused permissions. Gallery selection uses system-granted URI access and sharing uses an app-cache FileProvider. The final merged manifest must be rechecked after the next CI build; device camera/gallery/share tests remain required.
+
 ## Release gates
 
 Obtain the GitHub Actions profile APK for the exact UI commit, verify provenance and digest, then test the preview package beside Expo in an existing Android session. Verify actual Google callbacks with both apps installed, existing-account history, guest quota, readable camera/gallery labels, same-key retry, results and restart, TalkBack, larger fonts, actual blur, haptics, repeated gestures and lifecycle interruption. Record physical-device build/raster timings in profile mode. Retain Expo until those gates pass.
