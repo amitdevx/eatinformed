@@ -87,3 +87,7 @@ GET /api/scan?quota=true, GET/PATCH /api/profile, GET /api/history?cursor=..., D
 ## Reporting
 
 Each feature records changed files, executed tests, results, commit and unresolved work. Use VERIFIED only for executed assertions; IMPLEMENTED, UNVERIFIED for missing runtime proof. No compilation-only gesture/blur/performance PASS.
+
+## Foundation implementation notes
+
+The separate client uses Flutter 3.50.0 / Dart 3.14.0 and the official material_ui package introduced by the SDK's component separation. Its package is `com.eatinformed.preview.eatinformed_mobile`, distinct from Expo. Auth, profile and scan endpoints are not modified. Tests inject HTTP and storage boundaries; mock credentials never go to production. Foundation welcome/email/guest and the small authenticated boundary are not full screen parity. Platform secure-storage behavior, live auth, Google callbacks and release smoothness remain device acceptance work.
