@@ -1,9 +1,9 @@
-import 'dart:ui' as ui;
-
 import 'package:material_ui/material_ui.dart';
 
 import '../motion/entrance.dart';
 import '../motion/scroll_depth.dart';
+import '../tokens.dart';
+import 'glass_surface.dart';
 
 class SectionCard extends StatelessWidget {
   const SectionCard({
@@ -93,34 +93,69 @@ class NovaLabel extends StatelessWidget {
   );
 }
 
-Future<T?> glassSheet<T>(BuildContext context, {required Widget child}) =>
-    showModalBottomSheet<T>(
+final ValueNotifier<int> _openGlassSheets = ValueNotifier<int>(0);
+
+Future<T?> glassSheet<T>(BuildContext context, {required Widget child}) async {
+  final level = ++_openGlassSheets.value;
+  try {
+    return await showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface
-          .withValues(alpha: .85),
-      builder: (context) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.viewInsetsOf(context).bottom,
-            ),
-            child: DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: .75,
-              minChildSize: .3,
-              maxChildSize: .95,
-              builder: (context, scroll) => SingleChildScrollView(
-                controller: scroll,
-                padding: const EdgeInsets.all(24),
-                child: child,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: .42),
+      elevation: 0,
+      sheetAnimationStyle: const AnimationStyle(
+        duration: MotionTokens.sheetEnter,
+        reverseDuration: MotionTokens.sheetExit,
+      ),
+      builder: (context) => ValueListenableBuilder<int>(
+        valueListenable: _openGlassSheets,
+        builder: (context, open, _) => TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: open > level ? 36 : 0),
+          duration: MotionTokens.sheetEnter,
+          curve: Curves.easeOutCubic,
+          builder: (context, y, child) =>
+              Transform.translate(offset: Offset(0, y), child: child),
+          child: GlassSurface(
+            radius: LayoutTokens.sheetRadius,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: .75,
+                minChildSize: .3,
+                maxChildSize: .95,
+                builder: (context, scroll) => SingleChildScrollView(
+                  controller: scroll,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withValues(alpha: .35),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      child,
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+  } finally {
+    _openGlassSheets.value = (_openGlassSheets.value - 1).clamp(0, 1000);
+  }
+}

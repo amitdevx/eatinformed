@@ -1,8 +1,8 @@
-import 'dart:ui' as ui;
-
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+
+import 'glass_surface.dart';
 
 /// A single selection surface shared by the four persistent destinations.
 /// Scan remains a route, never a drag destination.
@@ -102,22 +102,13 @@ class _FloatingNavigationState extends State<FloatingNavigation> {
                           ),
                         ],
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(34),
-                        child: BackdropFilter(
-                          filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: scheme.surface.withValues(
-                                alpha: dark ? .72 : .82,
-                              ),
-                              borderRadius: BorderRadius.circular(34),
-                              border: Border.all(
-                                color: scheme.onSurface.withValues(alpha: .12),
-                              ),
-                            ),
-                          ),
+                      child: GlassSurface(
+                        radius: 34,
+                        blur: 30,
+                        tint: scheme.surface.withValues(
+                          alpha: dark ? .72 : .82,
                         ),
+                        child: const SizedBox.expand(),
                       ),
                     ),
                   ),

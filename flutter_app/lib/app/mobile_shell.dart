@@ -17,6 +17,7 @@ import '../features/results/result_screen.dart';
 import '../features/scan/scan_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../design/widgets/floating_navigation.dart';
+import '../design/widgets/edge_blur.dart';
 
 class MobileShell extends StatefulWidget {
   const MobileShell({
@@ -228,6 +229,15 @@ class _MobileShellState extends State<MobileShell> {
                 ),
               ),
             ),
+            if (!_revealing && MediaQuery.viewInsetsOf(context).bottom < 60)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: EdgeBlur(
+                  height: 128 + MediaQuery.viewPaddingOf(context).bottom,
+                ),
+              ),
             if (!_revealing && MediaQuery.viewInsetsOf(context).bottom < 60)
               Positioned(
                 left: 24,
