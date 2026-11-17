@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/selection_pills.dart';
 import 'library.dart';
 
 class GuideScreen extends StatefulWidget {
@@ -84,22 +85,17 @@ class _GuideScreenState extends State<GuideScreen> {
                 'Food Safety Guide',
                 subtitle: 'NOVA classification standards & offline additive reference',
               ),
-              Wrap(
-                spacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('NOVA Groups (1-4)'),
-                    selected: !_additives,
-                    onSelected: (_) => setState(() => _additives = false),
-                  ),
-                  ChoiceChip(
-                    label: Text(
-                      'Additive Dictionary (${widget.library.additives.length})',
-                    ),
-                    selected: _additives,
-                    onSelected: (_) => setState(() => _additives = true),
+              SelectionPills<bool>(
+                grouped: true,
+                options: [
+                  (false, 'NOVA Groups (1-4)'),
+                  (
+                    true,
+                    'Additive Dictionary (${widget.library.additives.length})',
                   ),
                 ],
+                selected: _additives,
+                onChanged: (value) => setState(() => _additives = value),
               ),
               const SizedBox(height: 16),
               if (_additives)

@@ -5,6 +5,7 @@ import '../../core/data/sharing.dart';
 import '../../core/network/json_fields.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/selection_pills.dart';
 import '../library/library.dart';
 import '../home/home_visuals.dart';
 import 'allergen_matches.dart';
@@ -200,22 +201,15 @@ class _ResultScreenState extends State<ResultScreen> {
                     ],
                   ),
                 ),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    for (var i = 0; i < 3; i++)
-                      ChoiceChip(
-                        label: Text(
-                          [
-                            'Overview',
-                            'Ingredients (${r.ingredients.length})',
-                            'Nutrition Facts',
-                          ][i],
-                        ),
-                        selected: _tab == i,
-                        onSelected: (_) => setState(() => _tab = i),
-                      ),
+                SelectionPills<int>(
+                  grouped: true,
+                  options: [
+                    (0, 'Overview'),
+                    (1, 'Ingredients (${ingredientNames.length})'),
+                    (2, 'Nutrition Facts'),
                   ],
+                  selected: _tab,
+                  onChanged: (value) => setState(() => _tab = value),
                 ),
                 const SizedBox(height: 20),
                 if (_tab == 0) ...[

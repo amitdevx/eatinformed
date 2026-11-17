@@ -6,6 +6,7 @@ import '../../core/data/preferences.dart';
 import '../../core/data/sharing.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/selection_pills.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -68,10 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const PageHeading(
-                  'Settings',
-                  subtitle: 'Preferences, appearance and account data',
-                ),
+                const SizedBox(height: 12),
                 if (_busy) const LinearProgressIndicator(),
                 if (_message != null) Notice(_message!),
                 SectionCard(
@@ -81,31 +79,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'APPEARANCE & HAPTICS',
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
-                      DropdownButtonFormField<ThemeMode>(
-                        initialValue: widget.preferences.theme,
-                        decoration: const InputDecoration(
-                          labelText: 'Interface Theme',
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Interface Theme',
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: ThemeMode.system,
-                            child: Text('System'),
-                          ),
-                          DropdownMenuItem(
-                            value: ThemeMode.light,
-                            child: Text('Light'),
-                          ),
-                          DropdownMenuItem(
-                            value: ThemeMode.dark,
-                            child: Text('Dark'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            _run(() => widget.preferences.setTheme(value));
-                          }
-                        },
                       ),
+                      const SizedBox(height: 8),
+                      SelectionPills<ThemeMode>(
+                        grouped: true,
+                        options: const [
+                          (ThemeMode.system, 'System'),
+                          (ThemeMode.dark, 'Dark'),
+                          (ThemeMode.light, 'Light'),
+                        ],
+                        selected: widget.preferences.theme,
+                        onChanged: (value) =>
+                            _run(() => widget.preferences.setTheme(value)),
+                      ),
+                      const Divider(height: 24),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Haptic Tactile Feedback'),
@@ -193,29 +187,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 }
                               }),
                       ),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Delete Account History'),
-                        subtitle: const Text(
-                          'Deletes saved reports across synced devices',
-                        ),
-                        onTap: _busy
-                            ? null
-                            : () => _run(() async {
-                                if (await _confirm(
-                                  'Delete Account History',
-                                  'Delete all saved scan reports from your account? This cannot be undone.',
-                                )) {
-                                  await widget.state.deleteAll();
-                                  if (mounted) {
-                                    setState(
-                                      () =>
-                                          _message = 'Account history deleted.',
-                                    );
-                                  }
-                                }
-                              }),
-                      ),
                     ],
                   ),
                 ),
@@ -246,10 +217,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: const Text('Ping'),
                         ),
                       ),
-                      Text(
-                        'Additive Reference: 22 entries',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
                     ],
                   ),
                 ),
@@ -268,11 +235,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Text('Sign out'),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  'EatInformed Flutter Preview',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => showLicensePage(
                     context: context,

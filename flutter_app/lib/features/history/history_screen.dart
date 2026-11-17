@@ -4,6 +4,7 @@ import '../../core/data/account_state.dart';
 import '../../core/data/models.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/selection_pills.dart';
 import 'activity_heatmap.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -132,22 +133,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   if (state.error != null)
                     Notice(state.error!, onRetry: state.load),
                   if (all != null && all.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final filter in [
-                          (null, 'All'),
-                          (1, 'Clean (1-2)'),
-                          (3, 'Processed (3)'),
-                          (4, 'Ultra (4)'),
-                        ])
-                          ChoiceChip(
-                            label: Text(filter.$2),
-                            selected: _filter == filter.$1,
-                            onSelected: (_) =>
-                                setState(() => _filter = filter.$1),
-                          ),
+                    SelectionPills<int?>(
+                      options: [
+                        (null, 'All (${all.length})'),
+                        (1, 'Clean (1-2)'),
+                        (3, 'Processed (3)'),
+                        (4, 'Ultra (4)'),
                       ],
+                      selected: _filter,
+                      onChanged: (value) => setState(() => _filter = value),
                     ),
                   const SizedBox(height: 20),
                   if (all != null && all.isNotEmpty)
