@@ -16,6 +16,7 @@ import '../features/profile/profile_screen.dart';
 import '../features/results/result_screen.dart';
 import '../features/scan/scan_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../design/widgets/floating_navigation.dart';
 
 class MobileShell extends StatefulWidget {
   const MobileShell({
@@ -213,92 +214,36 @@ class _MobileShellState extends State<MobileShell> {
         if (!didPop && !_revealing) _select(0);
       },
       child: Scaffold(
-        body: SafeArea(
-          bottom: false,
-          child: IndexedStack(
-            index: _tab,
-            children: [
-              for (var i = 0; i < screens.length; i++)
-                TickerMode(enabled: i == _tab, child: screens[i]),
-            ],
-          ),
-        ),
-        bottomNavigationBar: _revealing
-            ? null
-            : SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                  child: Material(
-                    elevation: 8,
-                    borderRadius: BorderRadius.circular(28),
-                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          _destination(0, Icons.home_outlined, 'Home'),
-                          _destination(1, Icons.history, 'History'),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: IconButton.filled(
-                              onPressed: _scan,
-                              tooltip: 'Scan food label',
-                              icon: const Icon(Icons.document_scanner_outlined),
-                            ),
-                          ),
-                          _destination(2, Icons.menu_book_outlined, 'Guide'),
-                          _destination(3, Icons.person_outline, 'Profile'),
-                        ],
-                      ),
-                    ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: SafeArea(
+                bottom: false,
+                child: IndexedStack(
+                  index: _tab,
+                  children: [
+                    for (var i = 0; i < screens.length; i++)
+                      TickerMode(enabled: i == _tab, child: screens[i]),
+                  ],
+                ),
+              ),
+            ),
+            if (!_revealing && MediaQuery.viewInsetsOf(context).bottom < 60)
+              Positioned(
+                left: 24,
+                right: 24,
+                bottom: 18 + MediaQuery.viewPaddingOf(context).bottom,
+                child: RepaintBoundary(
+                  child: FloatingNavigation(
+                    selected: _tab,
+                    onSelect: _select,
+                    onScan: _scan,
                   ),
                 ),
               ),
+          ],
+        ),
       ),
     );
   }
-
-  Widget _destination(int index, IconData icon, String label) => Expanded(
-    child: Semantics(
-      selected: _tab == index,
-      child: Tooltip(
-        message: label,
-        child: InkWell(
-          onTap: () => _select(index),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _tab == index
-                        ? Theme.of(context).colorScheme.primaryContainer
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(icon, size: 22),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelSmall,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

@@ -73,6 +73,7 @@ class _GuideScreenState extends State<GuideScreen> {
               .toList()
         : widget.library.nova;
     return ContentFrame(
+      bottomOverlayClearance: 106,
       slivers: [
         SliverToBoxAdapter(
           child: Column(

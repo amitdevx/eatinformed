@@ -62,7 +62,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Test Reader'), findsWidgets);
     expect(find.text('Continue as guest'), findsNothing);
-    await tester.tap(find.text('Profile').last);
+    await tester.tap(find.byTooltip('Profile'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
@@ -153,7 +153,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile').last);
+      await tester.tap(find.byTooltip('Profile'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();

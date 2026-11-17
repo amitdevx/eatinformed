@@ -263,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 126),
             sliver: SliverList.list(
               children: [
                 TextButton(

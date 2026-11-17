@@ -38,6 +38,7 @@ class HomeScreen extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: state.load,
         child: ContentFrame(
+          bottomOverlayClearance: 106,
           slivers: [
             SliverToBoxAdapter(
               child: Column(
