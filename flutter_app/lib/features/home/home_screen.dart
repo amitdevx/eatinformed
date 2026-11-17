@@ -1,24 +1,24 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/data/account_state.dart';
-import '../../design/motion/rolling_value.dart';
 import '../../core/data/models.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/eatinformed_mark.dart';
 import '../../design/widgets/surfaces.dart';
 import '../library/library.dart';
+import 'home_visuals.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
-    required this.name,
+    required this.haptics,
     required this.state,
     required this.library,
     required this.onScan,
     required this.onTab,
     required this.onSample,
   });
-  final String name;
+  final bool haptics;
   final AccountState state;
   final FoodLibrary library;
   final VoidCallback onScan;
@@ -35,6 +35,22 @@ class HomeScreen extends StatelessWidget {
           ? null
           : rated.fold<double>(0, (v, e) => v + e.result.rating!) /
                 rated.length;
+      final days = List<RatingDay>.generate(7, (index) {
+        final date = DateUtils.dateOnly(DateTime.now())
+            .subtract(Duration(days: 6 - index));
+        final values = state.records
+            ?.where(
+              (e) =>
+                  DateUtils.isSameDay(e.createdAt, date) &&
+                  e.result.rating != null,
+            )
+            .map((e) => e.result.rating!)
+            .toList();
+        final rating = values == null || values.isEmpty
+            ? null
+            : values.reduce((a, b) => a + b) / values.length;
+        return RatingDay(date, rating);
+      });
       return RefreshIndicator(
         onRefresh: state.load,
         child: ContentFrame(
@@ -60,8 +76,6 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                   const PageHeading('Food clarity.\nFor what you eat.'),
-                  Text(name, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
                   const Text(
                     'Scan any ingredient list or nutrition panel for NOVA food processing classifications, additive alerts, and AI rating estimates.',
                   ),
@@ -69,26 +83,36 @@ class HomeScreen extends StatelessWidget {
                   if (state.error != null)
                     Notice(state.error!, onRetry: state.load),
                   SectionCard(
+                    entrance: true,
+                    scrollEffect: true,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Dietary Clarity Index',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 16),
-                        RollingValue(
-                          average == null
-                              ? 'Rating unavailable'
-                              : '${average.toStringAsFixed(1)} / 5',
-                          style: Theme.of(context).textTheme.displaySmall,
-                        ),
-                        Text(
-                          state.records == null
-                              ? 'History unavailable'
-                              : state.records!.isEmpty
-                              ? 'Read labels and estimate food processing'
-                              : '${state.records!.length} product audits logged',
+                        Row(
+                          children: [
+                            RatingRing(average),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Dietary Clarity Index',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge,
+                                  ),
+                                  Text(
+                                    state.records == null
+                                        ? 'History unavailable'
+                                        : state.records!.isEmpty
+                                        ? 'Read labels and estimate food processing'
+                                        : '${state.records!.length} product audits logged',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         FilledButton.icon(
@@ -119,6 +143,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                   SectionCard(
                     index: 1,
+                    entrance: true,
+                    scrollEffect: true,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -128,73 +154,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const Text('Average available AI ratings over time'),
                         const SizedBox(height: 16),
-                        for (var i = 6; i >= 0; i--)
-                          Builder(
-                            builder: (context) {
-                              final date = DateUtils.dateOnly(DateTime.now())
-                                  .subtract(Duration(days: i));
-                              final values = state.records
-                                  ?.where(
-                                    (e) =>
-                                        DateUtils.isSameDay(
-                                          e.createdAt,
-                                          date,
-                                        ) &&
-                                        e.result.rating != null,
-                                  )
-                                  .map((e) => e.result.rating!)
-                                  .toList();
-                              final score = values == null || values.isEmpty
-                                  ? null
-                                  : values.reduce((a, b) => a + b) /
-                                        values.length;
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 6,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            '${date.month}/${date.day}',
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Flexible(
-                                          child: Text(
-                                            score?.toStringAsFixed(1) ??
-                                                'No rating',
-                                            textAlign: TextAlign.end,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    if (score != null)
-                                      LinearProgressIndicator(
-                                        value: score / 5,
-                                        minHeight: 6,
-                                      )
-                                    else
-                                      SizedBox(
-                                        height: 6,
-                                        child: ColoredBox(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .surfaceContainerHighest,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                        SevenDayTrend(days: days, haptics: haptics),
                       ],
                     ),
                   ),
@@ -202,23 +162,26 @@ class HomeScreen extends StatelessWidget {
                     'Try Instant Samples',
                     subtitle: 'Compare real products across the NOVA food processing spectrum',
                   ),
-                  for (final sample in library.samples)
+                  for (var index = 0; index < library.samples.length; index++)
                     SectionCard(
+                      index: 3 + index,
+                      entrance: true,
                       onTap: () => onSample(
                         ProductResult(
-                          Map<String, dynamic>.from(sample['data'] as Map),
+                          Map<String, dynamic>.from(
+                            library.samples[index]['data'] as Map,
+                          ),
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            sample['title'] as String,
+                            library.samples[index]['title'] as String,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          Text(sample['subtitle'] as String),
-                          NovaLabel(sample['novaGroup'] as int),
-                          const Text('Sample report'),
+                          Text(library.samples[index]['subtitle'] as String),
+                          NovaLabel(library.samples[index]['novaGroup'] as int),
                         ],
                       ),
                     ),

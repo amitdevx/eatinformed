@@ -236,7 +236,7 @@ class _MobileShellState extends State<MobileShell>
     final session = widget.auth.session!;
     final screens = <Widget>[
       HomeScreen(
-        name: session.name,
+        haptics: widget.preferences.haptics,
         state: data,
         library: _library!,
         onScan: _scan,

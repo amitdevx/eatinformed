@@ -26,20 +26,21 @@ class ScrollDepth extends StatelessWidget {
           if (viewport != null) {
             final top = viewport.getOffsetToReveal(box, 0).offset;
             height = box.size.height;
-            progress = ((position.pixels - top + 64) / (box.size.height + 64))
-                .clamp(0.0, 1.0);
+            final start = (top - 64).clamp(0.0, double.infinity);
+            final span = top + height - start;
+            final value = span <= 0
+                ? 0.0
+                : ((position.pixels - start) / span).clamp(0.0, 1.0);
+            progress = (value * 200).roundToDouble() / 200;
           }
         }
+        final fade = ((progress - .2) / .75).clamp(0.0, 1.0);
         return Opacity(
-          opacity:
-              1 -
-              Curves.easeInOut.transform(
-                ((progress - .2) / .75).clamp(0.0, 1.0),
-              ),
+          opacity: 1 - fade * fade * (3 - 2 * fade),
           child: Transform.translate(
             offset: Offset(0, progress * height * .18),
             child: Transform.scale(
-              alignment: Alignment.topCenter,
+              alignment: const Alignment(0, -.3),
               scale: 1 - progress * .08,
               child: DecoratedBox(
                 position: DecorationPosition.foreground,

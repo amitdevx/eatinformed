@@ -11,25 +11,36 @@ class SectionCard extends StatelessWidget {
     required this.child,
     this.onTap,
     this.index = 0,
+    this.scrollEffect = false,
+    this.entrance = false,
   });
   final Widget child;
   final VoidCallback? onTap;
   final int index;
+  final bool scrollEffect, entrance;
+  @override
+  Widget build(BuildContext context) {
+    Widget content = Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(padding: const EdgeInsets.all(20), child: child),
+      ),
+    );
+    if (entrance) content = Entrance(index: index, child: content);
+    if (scrollEffect) content = ScrollDepth(child: content);
+    return Padding(padding: const EdgeInsets.only(bottom: 16), child: content);
+  }
+}
+
+class OpenSection extends StatelessWidget {
+  const OpenSection({super.key, required this.child, this.index});
+  final Widget child;
+  final int? index;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
-    child: ScrollDepth(
-      child: Entrance(
-        index: index,
-        child: Card(
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(padding: const EdgeInsets.all(20), child: child),
-          ),
-        ),
-      ),
-    ),
+    child: index == null ? child : Entrance(index: index!, child: child),
   );
 }
 
