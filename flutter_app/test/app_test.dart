@@ -14,14 +14,32 @@ import 'package:eatinformed_mobile/features/auth/auth_repository.dart';
 
 import 'support.dart';
 
+import 'package:eatinformed_mobile/features/library/library.dart';
+
+import 'package:eatinformed_mobile/core/data/preferences.dart';
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late FoodLibrary library;
+  setUpAll(() async {
+    library = await FoodLibrary.load();
+  });
   testWidgets('guest entry changes navigation and logout clears account UI', (
     tester,
   ) async {
     final api = ApiClient(
       AppConfig(apiOrigin: Uri.parse('https://api.example.test')),
       client: MockClient(
-        (_) async => http.Response(jsonEncode(sessionJson(guest: true)), 200),
+        (r) async => http.Response(
+          jsonEncode(
+            r.url.path == '/api/history'
+                ? {'items': <Object>[], 'nextCursor': null}
+                : r.url.path == '/api/profile'
+                ? {'profile': <String, dynamic>{}}
+                : sessionJson(guest: true),
+          ),
+          200,
+        ),
       ),
     );
     final auth = AuthController(AuthRepository(api), MemorySessionStore());
@@ -30,13 +48,34 @@ void main() {
       api.close();
     });
     await auth.restore();
-    await tester.pumpWidget(EatInformedApp(auth: auth));
+    final prefs = MemoryPreferences();
+    await prefs.write('onboarding:firebase-test-uid', 'true');
+    await tester.pumpWidget(
+      EatInformedApp(
+        auth: auth,
+        preferences: AppPreferences(prefs),
+        library: library,
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Continue as guest'));
     await tester.pumpAndSettle();
-    expect(find.text('Test Reader'), findsOneWidget);
+    expect(find.text('Test Reader'), findsWidgets);
     expect(find.text('Continue as guest'), findsNothing);
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Sign out'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sign out'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
     expect(find.text('Test Reader'), findsNothing);
     expect(find.text('Continue as guest'), findsOneWidget);
@@ -60,7 +99,7 @@ void main() {
     await auth.restore();
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await tester.pumpWidget(EatInformedApp(auth: auth));
+    await tester.pumpWidget(EatInformedApp(auth: auth, library: library));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
@@ -82,7 +121,16 @@ void main() {
       final api = ApiClient(
         AppConfig(apiOrigin: Uri.parse('https://api.example.test')),
         client: MockClient(
-          (_) async => http.Response(jsonEncode(sessionJson()), 200),
+          (r) async => http.Response(
+            jsonEncode(
+              r.url.path == '/api/history'
+                  ? {'items': <Object>[], 'nextCursor': null}
+                  : r.url.path == '/api/profile'
+                  ? {'profile': <String, dynamic>{}}
+                  : sessionJson(),
+            ),
+            200,
+          ),
         ),
       );
       final auth = AuthController(AuthRepository(api), MemorySessionStore());
@@ -95,13 +143,25 @@ void main() {
         email: 'reader@example.test',
         password: 'test-password',
       );
-      await tester.pumpWidget(EatInformedApp(auth: auth));
+      final prefs = MemoryPreferences();
+      await prefs.write('onboarding:firebase-test-uid', 'true');
+      await tester.pumpWidget(
+        EatInformedApp(
+          auth: auth,
+          preferences: AppPreferences(prefs),
+          library: library,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Profile').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownButtonFormField<ThemeMode>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Dark').last);
       await tester.pumpAndSettle();
-      final context = tester.element(find.text('Test Reader'));
+      final context = tester.element(find.text('Settings').first);
       expect(Theme.of(context).brightness, Brightness.dark);
       expect(Theme.of(context).scaffoldBackgroundColor, Colors.black);
       expect(auth.session?.uid, 'firebase-test-uid');

@@ -1,31 +1,43 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../design/tokens.dart';
-import '../features/account/account_screen.dart';
+import '../core/data/preferences.dart';
+import 'mobile_shell.dart';
+import '../features/library/library.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/auth/sign_in_screen.dart';
 
 class EatInformedApp extends StatefulWidget {
-  const EatInformedApp({super.key, required this.auth});
+  const EatInformedApp({
+    super.key,
+    required this.auth,
+    this.preferences,
+    this.library,
+  });
   final AuthController auth;
+  final AppPreferences? preferences;
+  final FoodLibrary? library;
   @override
   State<EatInformedApp> createState() => _EatInformedAppState();
 }
 
 class _EatInformedAppState extends State<EatInformedApp> {
-  ThemeMode _theme = ThemeMode.system;
+  late final _preferences =
+      widget.preferences ?? AppPreferences(MemoryPreferences());
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: widget.auth,
+    listenable: Listenable.merge([widget.auth, _preferences]),
     builder: (context, _) => MaterialApp(
       title: 'EatInformed',
       debugShowCheckedModeBanner: false,
       theme: EatTheme.light,
       darkTheme: EatTheme.dark,
-      themeMode: _theme,
+      themeMode: _preferences.theme,
       // Replace the entire navigation scope on identity changes. Auth routes cannot survive logout.
       home: Navigator(
-        key: ValueKey('${widget.auth.phase}:${widget.auth.session?.uid}'),
+        key: ValueKey(
+          '${widget.auth.phase}:${widget.auth.session?.uid}:${widget.auth.session?.isGuest}',
+        ),
         pages: [
           MaterialPage<void>(
             child: switch (widget.auth.phase) {
@@ -37,11 +49,10 @@ class _EatInformedAppState extends State<EatInformedApp> {
                 ),
               ),
               AuthPhase.signedOut => SignInScreen(auth: widget.auth),
-              AuthPhase.signedIn => AccountScreen(
-                session: widget.auth.session!,
-                onSignOut: widget.auth.signOut,
-                themeMode: _theme,
-                onThemeChanged: (value) => setState(() => _theme = value),
+              AuthPhase.signedIn => MobileShell(
+                auth: widget.auth,
+                preferences: _preferences,
+                library: widget.library,
               ),
             },
           ),

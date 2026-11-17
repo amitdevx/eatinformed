@@ -16,13 +16,13 @@ flutter test --reporter expanded
 
 The API origin defaults to `https://eatinformed.amitdevx.tech`. Override only with an HTTPS origin using `--dart-define=EATINFORMED_API_ORIGIN=https://your-test-host.example`. Never put a provider key or service-account credential in the application.
 
-## Foundation scope
+## Screen port scope
 
-Implemented: configuration, safe JSON transport, typed verified session, encrypted local storage adapter, restoration/refresh, email sign-in and guest adapters, auth-state navigation, light/dark/system themes, safe-area scroll layout, one-shot entrances, lifecycle-aware decorative typography, and bounded opt-in frame metrics.
+The preview now includes Welcome, Google/email/guest authentication adapters, onboarding, Home, History, camera/gallery Scan, Results, NOVA Guide and additive dictionary, Profile, Food Passport, profile editing, and Settings. It uses the existing API for identity, user profiles, quotas and saved reports. The original sample reports are explicitly marked and never added to history.
 
-The authenticated account boundary is intentionally small. It is not the finished Home or Profile screen. Google, signup/linking, full onboarding, camera/scanning, history/results, Guide, Passport, preference persistence and export are subsequent ports. No sample scan or rating is used to disguise an incomplete feature.
+Motion uses native Flutter controllers, slivers, measured scroll depth, one-shot entrances, lifecycle-aware canvas typography, value transitions and a continuous Profile/Passport timeline. It contains no copied GymMane implementation or assets. Some reference effects remain deferred and device fidelity is not yet established.
 
-The preview has a separate Android package and session store. It will not automatically import Expo credentials or local records. Sign in with the existing Firebase account and restore server-owned history when that feature is ported. Existing-user signup is not sign-in.
+See [screen verification](../docs/FLUTTER_SCREEN_PORT_VERIFICATION.md) for executed tests, root causes, feature limits and device gates. Custom profile photos remain local because the existing profile API has no avatar upload contract. Existing accounts should sign in rather than create another account. The separate preview does not import Expo's encrypted session; it restores the existing account's server-owned history after authentication.
 
 ## Device acceptance
 

@@ -1,6 +1,6 @@
 # Flutter mobile UI migration
 
-Status: foundation in progress. Production cutover is not authorized.
+Status: mobile screen port implemented, with controlled service/widget verification. Device acceptance and production cutover remain outstanding. See FLUTTER_SCREEN_PORT_VERIFICATION.md.
 
 ## Scope and baselines
 
