@@ -4,6 +4,7 @@ import '../../core/data/account_state.dart';
 import '../../core/data/models.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/surfaces.dart';
+import 'activity_heatmap.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({
@@ -21,6 +22,40 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   int? _filter;
+  Future<void> _clearAll() async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All History'),
+        content: const Text('Delete all saved scan reports from this account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete all'),
+          ),
+        ],
+      ),
+    );
+    if (yes != true) return;
+    try {
+      await widget.state.deleteAll();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not clear all reports. Refresh and try again.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _delete(ScanRecord item) async {
     final yes = await showDialog<bool>(
       context: context,
@@ -76,83 +111,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  PageHeading(
-                    'Scan History',
-                    subtitle: all == null
-                        ? 'Loading saved reports'
-                        : '${all.length} saved reports in your account',
-                  ),
-                  if (state.error != null)
-                    Notice(state.error!, onRetry: state.load),
-                  Wrap(
-                    spacing: 8,
+                  Row(
                     children: [
-                      for (final filter in [
-                        (null, 'All'),
-                        (1, 'Clean (1-2)'),
-                        (3, 'Processed (3)'),
-                        (4, 'Ultra (4)'),
-                      ])
-                        ChoiceChip(
-                          label: Text(filter.$2),
-                          selected: _filter == filter.$1,
-                          onSelected: (_) =>
-                              setState(() => _filter = filter.$1),
+                      Expanded(
+                        child: PageHeading(
+                          'Scan History',
+                          subtitle: all == null
+                              ? 'Loading saved reports'
+                              : '${all.length} saved reports in your account',
+                        ),
+                      ),
+                      if (all != null && all.isNotEmpty)
+                        IconButton(
+                          onPressed: _clearAll,
+                          tooltip: 'Clear all history',
+                          icon: const Icon(Icons.delete_outline),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  if (all != null)
-                    SectionCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '30-Day Nutrition Consistency',
-                            style: Theme.of(context).textTheme.titleMedium,
+                  if (state.error != null)
+                    Notice(state.error!, onRetry: state.load),
+                  if (all != null && all.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final filter in [
+                          (null, 'All'),
+                          (1, 'Clean (1-2)'),
+                          (3, 'Processed (3)'),
+                          (4, 'Ultra (4)'),
+                        ])
+                          ChoiceChip(
+                            label: Text(filter.$2),
+                            selected: _filter == filter.$1,
+                            onSelected: (_) =>
+                                setState(() => _filter = filter.$1),
                           ),
-                          const SizedBox(height: 16),
-                          Wrap(
-                            spacing: 5,
-                            runSpacing: 5,
-                            children: List.generate(30, (i) {
-                              final day = DateUtils.dateOnly(DateTime.now())
-                                  .subtract(Duration(days: 29 - i));
-                              final count = all
-                                  .where(
-                                    (e) =>
-                                        DateUtils.isSameDay(e.createdAt, day),
-                                  )
-                                  .length;
-                              return Tooltip(
-                                message:
-                                    '${day.month}/${day.day}: $count scans',
-                                child: Semantics(
-                                  label:
-                                      '${day.month}/${day.day}: $count scans',
-                                  child: Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: count > 0
-                                          ? Theme.of(context)
-                                                .colorScheme
-                                                .primary
-                                          : Theme.of(context)
-                                                .colorScheme
-                                                .surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text('Activity from saved scan records'),
-                        ],
-                      ),
+                      ],
                     ),
+                  const SizedBox(height: 20),
+                  if (all != null && all.isNotEmpty)
+                    SectionCard(child: ActivityHeatmap(records: all)),
                   if (state.loading) const LinearProgressIndicator(),
                   if (items != null && items.isEmpty)
                     SectionCard(
@@ -163,16 +162,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           Text(
                             all!.isEmpty
                                 ? 'No Saved Scans Yet'
-                                : 'No matching reports',
+                                : 'No Scans in this Category',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          const Text(
-                            'Point your camera at any food ingredient label or explore instant samples from the Home screen.',
+                          Text(
+                            all.isEmpty
+                                ? 'Point your camera at any food ingredient label or explore instant samples from the Home screen.'
+                                : 'None of your saved scans match the selected processing filter.',
                           ),
                           const SizedBox(height: 16),
                           FilledButton(
-                            onPressed: widget.onScan,
-                            child: const Text('Start Scanning'),
+                            onPressed: all.isEmpty
+                                ? widget.onScan
+                                : () => setState(() => _filter = null),
+                            child: Text(
+                              all.isEmpty ? 'Start Scanning' : 'Show All Scans',
+                            ),
                           ),
                         ],
                       ),
