@@ -83,6 +83,14 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
         expect(close.hitTestable(), findsOneWidget);
+        expect(find.text('FOOD PASSPORT').hitTestable(), findsOneWidget);
+        expect(
+          find.ancestor(
+            of: find.text('FOOD PASSPORT'),
+            matching: find.byType(Card),
+          ),
+          findsNothing,
+        );
         expect(changes.last, true);
         expect(find.text('0 saved scans').hitTestable(), findsOneWidget);
         await tester.tap(close);
@@ -113,6 +121,20 @@ void main() {
       await stop(tester);
     },
   );
+  testWidgets('reversing an armed pull before release cancels Passport', (
+    tester,
+  ) async {
+    await mount(tester);
+    final gesture = await tester.startGesture(const Offset(180, 120));
+    await gesture.moveBy(const Offset(0, 380));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, -250));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byTooltip('Close Food Passport').hitTestable(), findsNothing);
+    await stop(tester);
+  });
   testWidgets(
     'pull away from scroll top keeps normal scrolling and does not reveal',
     (tester) async {

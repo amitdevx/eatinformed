@@ -447,87 +447,156 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ],
       );
-      final passport = Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 390),
-            child: Card(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+      final scheme = Theme.of(context).colorScheme;
+      final passport = SafeArea(
+        child: LayoutBuilder(
+          builder: (context, limits) => Stack(
+            children: [
+              Positioned.fill(
+                child: NameTicker(
+                  text: widget.session.name,
+                  color: scheme.onSurface.withValues(alpha: .06),
+                  running: _foreground && _overlay > 0,
+                  rows: 0,
+                ),
+              ),
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: math.max(0, limits.maxHeight - 36),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(child: Text('FOOD PASSPORT')),
-                        IconButton(
-                          onPressed: _close,
-                          tooltip: 'Close Food Passport',
-                          icon: const Icon(Icons.close),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'FOOD PASSPORT',
+                                style:
+                                    EatType.label(
+                                      11,
+                                      color: scheme.onSurface,
+                                    ).copyWith(
+                                      letterSpacing: 1.6,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _close,
+                              tooltip: 'Close Food Passport',
+                              icon: const Icon(
+                                PhosphorIconsRegular.x,
+                                size: 22,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            SizedBox(
+                              key: _destination,
+                              width: 150,
+                              height: 150,
+                              child: AnimatedBuilder(
+                                animation: progress,
+                                builder: (context, _) => Opacity(
+                                  opacity: _timeline.value >= 1.99 || _reduced
+                                      ? 1
+                                      : 0,
+                                  child: AccountAvatar(
+                                    name: widget.session.name,
+                                    photo: widget.session.photoUrl,
+                                    size: 150,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            Text(
+                              widget.session.name,
+                              style: EatType.display(
+                                34,
+                                color: scheme.onSurface,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              widget.session.email.isEmpty
+                                  ? 'Anonymous account'
+                                  : widget.session.email,
+                              textAlign: TextAlign.center,
+                              style: EatType.body(
+                                14,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (widget.session.handle != null)
+                              Text(
+                                '@${widget.session.handle}',
+                                style: EatType.label(14, color: scheme.primary),
+                              ),
+                            const SizedBox(height: 26),
+                            Text(
+                              '${count ?? 'Unknown'} ${widget.data.offline ? 'cached' : 'saved'} scans',
+                              style: EatType.numeric(
+                                36,
+                                color: scheme.onSurface,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              classified == null
+                                  ? 'NOVA estimates unavailable'
+                                  : classified == 0
+                                  ? 'No NOVA estimates yet'
+                                  : '$clean of $classified classified scans estimated NOVA 1-2',
+                              style: EatType.body(
+                                14,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'Your label-reading activity. Food classifications are AI estimates, not health or identity certifications.',
+                              style: EatType.body(
+                                12,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              onPressed: () => shareJson(context, {
+                                'name': widget.session.name,
+                                'handle': widget.session.handle,
+                                'savedScans': count,
+                              }),
+                              icon: const Icon(
+                                PhosphorIconsRegular.shareNetwork,
+                                size: 18,
+                              ),
+                              label: const Text('Share Passport'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    SizedBox(
-                      key: _destination,
-                      width: 100,
-                      height: 100,
-                      child: AnimatedBuilder(
-                        animation: progress,
-                        builder: (context, _) => Opacity(
-                          opacity: _timeline.value >= 1.99 || _reduced ? 1 : 0,
-                          child: AccountAvatar(
-                            name: widget.session.name,
-                            photo: widget.session.photoUrl,
-                            size: 100,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      widget.session.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      widget.session.email.isEmpty
-                          ? 'Anonymous account'
-                          : widget.session.email,
-                      textAlign: TextAlign.center,
-                    ),
-                    if (widget.session.handle != null)
-                      Text('@${widget.session.handle}'),
-                    const SizedBox(height: 24),
-                    Text(
-                      '${count ?? 'Unknown'} ${widget.data.offline ? 'cached' : 'saved'} scans',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      classified == null
-                          ? 'NOVA estimates unavailable'
-                          : classified == 0
-                          ? 'No NOVA estimates yet'
-                          : '$clean of $classified classified scans estimated NOVA 1-2',
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Your label-reading activity. Food classifications are AI estimates, not health or identity certifications.',
-                    ),
-                    const SizedBox(height: 20),
-                    FilledButton.icon(
-                      onPressed: () => shareJson(context, {
-                        'name': widget.session.name,
-                        'handle': widget.session.handle,
-                        'savedScans': count,
-                      }),
-                      icon: const Icon(Icons.ios_share),
-                      label: const Text('Share Passport'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       );
@@ -558,7 +627,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         color: Theme.of(context).colorScheme.onSurface
                             .withValues(alpha: .14),
                         running:
-                            _foreground && (_dragging || _timeline.value > 0),
+                            _foreground &&
+                            (_dragging ||
+                                (_timeline.value > 0 && _overlay == 0)),
                       ),
                     ),
                   ),
@@ -635,21 +706,54 @@ class _ProfileScreenState extends State<ProfileScreen>
                     _to != null)
                   Builder(
                     builder: (context) {
-                      final p = (_timeline.value / 2).clamp(0.0, 1.0);
-                      final rect = Rect.lerp(
-                        _from,
-                        _to,
-                        Curves.easeInOutSine.transform(p),
-                      )!;
-                      final arc =
-                          (_timeline.value < 1 ? _pull : 2 - _timeline.value) *
-                          MediaQuery.sizeOf(context).width *
-                          .12;
+                      final p = _timeline.value.clamp(0.0, 1.0);
+                      final size = 86 + 64 * Curves.easeInOutSine.transform(p);
+                      final target = _to!.center;
+                      final radius = math.max(
+                        0.0,
+                        math.min(
+                          MediaQuery.sizeOf(context).width / 2 - 89,
+                          120,
+                        ),
+                      );
+                      const startAngle = math.pi * .82;
+                      final entry =
+                          target +
+                          Offset(
+                            math.cos(startAngle) * radius,
+                            math.sin(startAngle) * radius,
+                          );
+                      final source =
+                          _from!.center + Offset(0, _pullDistance * .55);
+                      Offset center;
+                      if (p < .3) {
+                        center = Offset.lerp(
+                          source,
+                          entry,
+                          Curves.easeIn.transform(p / .3),
+                        )!;
+                      } else {
+                        final phase = (p - .3) / .7;
+                        final angle =
+                            startAngle -
+                            1.05 *
+                                math.pi *
+                                Curves.easeInOutSine.transform(phase);
+                        final shrink = Curves.easeInCubic.transform(
+                          ((phase - .35) / .65).clamp(0.0, 1.0),
+                        );
+                        center =
+                            target +
+                            Offset(
+                              math.cos(angle) * radius * (1 - shrink),
+                              math.sin(angle) * radius * (1 - shrink),
+                            );
+                      }
                       return Positioned(
-                        left: rect.left + arc,
-                        top: rect.top,
-                        width: rect.width,
-                        height: rect.height,
+                        left: center.dx - size / 2,
+                        top: center.dy - size / 2,
+                        width: size,
+                        height: size,
                         child: IgnorePointer(
                           child: AnimatedScale(
                             scale: _armed ? 1.06 : 1,
@@ -658,7 +762,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             child: AccountAvatar(
                               name: widget.session.name,
                               photo: widget.session.photoUrl,
-                              size: rect.width,
+                              size: size,
                             ),
                           ),
                         ),
