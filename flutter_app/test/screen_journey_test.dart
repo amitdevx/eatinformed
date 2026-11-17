@@ -175,7 +175,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Your allergen flags'), findsOneWidget);
-      expect(find.text('Rating unavailable'), findsOneWidget);
+      expect(find.text('Insufficient evidence for a rating'), findsOneWidget);
       await tester.ensureVisible(find.text('Nutrition Facts'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Nutrition Facts'));

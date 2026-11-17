@@ -25,7 +25,8 @@ class _GuideScreenState extends State<GuideScreen> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 12),
-            NovaLabel((item['group'] ?? item['novaGroup']) as int?),
+            if (item['group'] != null || item['novaGroup'] != null)
+              NovaLabel((item['group'] ?? item['novaGroup']) as int?),
             if (item['code'] != null) Text(item['code'] as String),
             const SizedBox(height: 16),
             SelectableText(item['description'] as String),
@@ -130,7 +131,8 @@ class _GuideScreenState extends State<GuideScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  NovaLabel((row['group'] ?? row['novaGroup']) as int?),
+                  if (row['group'] != null || row['novaGroup'] != null)
+                    NovaLabel((row['group'] ?? row['novaGroup']) as int?),
                   if (row['code'] != null) Text(row['code'] as String),
                   Text(
                     (row['title'] ?? row['name']) as String,
@@ -143,7 +145,8 @@ class _GuideScreenState extends State<GuideScreen> {
                     Text(switch (row['riskLevel']) {
                       'caution' => 'Caution / Limit',
                       'moderate' => 'Moderate',
-                      _ => 'Generally Safe',
+                      'safe' => 'Generally Safe',
+                      _ => 'Risk information unavailable',
                     }),
                     const SizedBox(height: 12),
                     Text('COMMON SOURCES\n${row['foundIn']}'),

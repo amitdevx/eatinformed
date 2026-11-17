@@ -6,6 +6,7 @@ import '../../core/network/json_fields.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/surfaces.dart';
 import '../library/library.dart';
+import '../home/home_visuals.dart';
 import 'allergen_matches.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -28,6 +29,38 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   int _tab = 0;
+  void _showIngredient(String ingredient) {
+    final matches = widget.library.additives.where(
+      (a) =>
+          ingredient.toLowerCase().contains(
+            (a['name'] as String).toLowerCase(),
+          ) ||
+          (a['code'] != null &&
+              RegExp(
+                r'\b' + RegExp.escape(a['code'] as String) + r'\b',
+                caseSensitive: false,
+              ).hasMatch(ingredient)),
+    );
+    glassSheet<void>(
+      context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(ingredient, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 16),
+          for (final match in matches) ...[
+            Text(match['description'] as String),
+            Text('COMMON SOURCES: ${match['foundIn']}'),
+          ],
+          if (matches.isEmpty)
+            const Text(
+              'No matching additive reference. This does not establish safety.',
+            ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _share() async {
     final format = await glassSheet<String>(
       context,
@@ -74,6 +107,17 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     final r = widget.result, d = r.dietary;
+    final analysisRows = {
+      for (final raw in (r.json['ingredientAnalysis'] as List? ?? []))
+        if (jsonObject(raw)['ingredient'] case final String name)
+          name.toLowerCase(): jsonObject(raw),
+    };
+    final ingredientNames = [
+      ...r.ingredients,
+      for (final entry in analysisRows.entries)
+        if (!r.ingredients.any((name) => name.toLowerCase() == entry.key))
+          entry.value['ingredient'] as String,
+    ];
     final matches = personalAllergenMatches(widget.allergens, [
       ...r.ingredients,
       ...stringList(d['allergens']),
@@ -125,13 +169,30 @@ class _ResultScreenState extends State<ResultScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        r.rating == null
-                            ? 'Rating unavailable'
-                            : '${r.rating!.toStringAsFixed(1)} / 5.0',
-                        style: Theme.of(context).textTheme.displaySmall,
+                      Row(
+                        children: [
+                          RatingRing(r.rating),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'AI RATING ESTIMATE',
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                                Text(
+                                  r.rating == null
+                                      ? 'Insufficient evidence for a rating'
+                                      : '${r.rating!.toStringAsFixed(1)} / 5.0',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const Text('AI rating estimate'),
+                      const Divider(height: 24),
                       NovaLabel(r.nova),
                       const Text(
                         'Food classifications and ratings are estimates, not clinically validated health scores.',
@@ -199,71 +260,52 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                 ],
                 if (_tab == 1) ...[
-                  if (r.ingredients.isEmpty)
+                  if (ingredientNames.isEmpty)
                     const Notice('Ingredient information unavailable.'),
-                  for (final ingredient in r.ingredients)
+                  if (ingredientNames.isNotEmpty)
                     SectionCard(
-                      onTap: () {
-                        final matches = widget.library.additives.where(
-                          (a) =>
-                              ingredient.toLowerCase().contains(
-                                (a['name'] as String).toLowerCase(),
-                              ) ||
-                              (a['code'] != null &&
-                                  RegExp(
-                                    r'\b' +
-                                        RegExp.escape(a['code'] as String) +
-                                        r'\b',
-                                    caseSensitive: false,
-                                  ).hasMatch(ingredient)),
-                        );
-                        glassSheet<void>(
-                          context,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                ingredient,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              for (final match in matches) ...[
-                                Text(match['description'] as String),
-                                Text('COMMON SOURCES: ${match['foundIn']}'),
-                              ],
-                              if (matches.isEmpty)
-                                const Text(
-                                  'No matching additive reference. This does not establish safety.',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final ingredient in ingredientNames) ...[
+                            InkWell(
+                              onTap: () => _showIngredient(ingredient),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
                                 ),
-                            ],
-                          ),
-                        );
-                      },
-                      child: Text(ingredient),
-                    ),
-                  for (final raw
-                      in (r.json['ingredientAnalysis'] as List? ?? []))
-                    Builder(
-                      builder: (context) {
-                        final item = jsonObject(raw);
-                        return SectionCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['ingredient'] as String? ?? '',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              Text(item['description'] as String? ?? ''),
-                              Text(item['purpose'] as String? ?? ''),
-                              if (item['isAllergen'] == true)
-                                const Text(
-                                  'Possible allergen: check the label',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      ingredient,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                    if (analysisRows[ingredient.toLowerCase()]
+                                        case final item?) ...[
+                                      if (item['description'] is String &&
+                                          (item['description'] as String)
+                                              .isNotEmpty)
+                                        Text(item['description'] as String),
+                                      if (item['purpose'] is String &&
+                                          (item['purpose'] as String)
+                                              .isNotEmpty)
+                                        Text(item['purpose'] as String),
+                                      if (item['isAllergen'] == true)
+                                        const Text(
+                                          'Possible allergen: check the label',
+                                        ),
+                                    ],
+                                  ],
                                 ),
-                            ],
-                          ),
-                        );
-                      },
+                              ),
+                            ),
+                            const Divider(height: 1),
+                          ],
+                        ],
+                      ),
                     ),
                 ],
                 if (_tab == 2) ...[

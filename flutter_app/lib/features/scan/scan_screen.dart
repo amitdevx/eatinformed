@@ -12,6 +12,47 @@ import '../../core/network/api_failure.dart';
 import '../../design/widgets/surfaces.dart';
 import 'scan_service.dart';
 
+class _ViewfinderCorners extends CustomPainter {
+  const _ViewfinderCorners(this.color);
+  final Color color;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = Paint()
+      ..color = color
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    const reach = 27.0, radius = 14.0;
+    final path = Path()
+      ..moveTo(0, reach)
+      ..lineTo(0, radius)
+      ..quadraticBezierTo(0, 0, radius, 0)
+      ..lineTo(reach, 0)
+      ..moveTo(size.width - reach, 0)
+      ..lineTo(size.width - radius, 0)
+      ..quadraticBezierTo(size.width, 0, size.width, radius)
+      ..lineTo(size.width, reach)
+      ..moveTo(size.width, size.height - reach)
+      ..lineTo(size.width, size.height - radius)
+      ..quadraticBezierTo(
+        size.width,
+        size.height,
+        size.width - radius,
+        size.height,
+      )
+      ..lineTo(size.width - reach, size.height)
+      ..moveTo(reach, size.height)
+      ..lineTo(radius, size.height)
+      ..quadraticBezierTo(0, size.height, 0, size.height - radius)
+      ..lineTo(0, size.height - reach);
+    canvas.drawPath(path, stroke);
+  }
+
+  @override
+  bool shouldRepaint(_ViewfinderCorners oldDelegate) =>
+      oldDelegate.color != color;
+}
+
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key, required this.repository});
   final AccountRepository repository;
@@ -296,7 +337,37 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                       child: Image.memory(_image!, fit: BoxFit.contain),
                     )
                   : _camera?.value.isInitialized == true
-                  ? Center(child: CameraPreview(_camera!))
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Center(child: CameraPreview(_camera!)),
+                        IgnorePointer(
+                          child: Center(
+                            child: LayoutBuilder(
+                              builder: (context, limits) {
+                                final width = (limits.maxWidth * .8).clamp(
+                                  0.0,
+                                  340.0,
+                                );
+                                final height = (limits.maxHeight * .58).clamp(
+                                  0.0,
+                                  440.0,
+                                );
+                                return SizedBox(
+                                  width: width,
+                                  height: height,
+                                  child: CustomPaint(
+                                    painter: _ViewfinderCorners(
+                                      Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
                   : Center(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
@@ -365,11 +436,32 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                             },
                       child: const Text('Retake'),
                     ),
-                  ] else
-                    FilledButton.icon(
-                      onPressed: _camera == null ? null : _capture,
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      label: const Text('Capture'),
+                  ] else if (_camera != null)
+                    Semantics(
+                      button: true,
+                      label: 'Capture food label',
+                      child: InkWell(
+                        onTap: _capture,
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          width: 66,
+                          height: 66,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              width: 3,
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                 ],
               ),
