@@ -60,10 +60,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Continue as guest'));
     await tester.pumpAndSettle();
-    expect(find.text('Test Reader'), findsWidgets);
+    expect(find.text('EatInformed'), findsWidgets);
     expect(find.text('Continue as guest'), findsNothing);
     await tester.tap(find.byTooltip('Profile'));
     await tester.pumpAndSettle();
+    expect(find.text('Test Reader'), findsWidgets);
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -156,8 +157,6 @@ void main() {
       await tester.tap(find.byTooltip('Profile'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(DropdownButtonFormField<ThemeMode>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Dark').last);
       await tester.pumpAndSettle();

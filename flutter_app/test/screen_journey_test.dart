@@ -123,7 +123,10 @@ void main() {
       final additives = find.text('Additive Dictionary (22)');
       await tester.ensureVisible(additives);
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(-150, 0));
+      await tester.drag(
+        find.byType(SingleChildScrollView).first,
+        const Offset(-150, 0),
+      );
       await tester.pumpAndSettle();
       await tester.tap(additives);
       await tester.pumpAndSettle();
