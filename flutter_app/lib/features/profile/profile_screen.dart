@@ -16,6 +16,7 @@ import '../../design/widgets/surfaces.dart';
 import '../../design/widgets/edge_blur.dart';
 import 'avatar.dart';
 import 'pull_physics.dart';
+import 'profile_insights.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -250,6 +251,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         12,
         (m) => year?.where((e) => e.createdAt.month == m + 1).length ?? 0,
       );
+      final cleanPercent = classified == null || classified == 0
+          ? null
+          : ((clean! / classified) * 100).round();
       final progress = _timeline;
       final profile = CustomScrollView(
         controller: _scroll,
@@ -283,164 +287,24 @@ class _ProfileScreenState extends State<ProfileScreen>
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 126),
             sliver: SliverList.list(
               children: [
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    Chip(label: Text('${count ?? 'Unknown'} Scans')),
-                    Chip(
-                      label: Text(
-                        classified == null
-                            ? 'NOVA unavailable'
-                            : '$clean / $classified NOVA 1-2',
-                      ),
-                    ),
-                    Chip(label: Text('${year?.length ?? 'Unknown'} This year')),
-                    Chip(
-                      label: Text(
-                        count == null
-                            ? 'Level unavailable'
-                            : count >= 20
-                            ? 'Master'
-                            : count >= 5
-                            ? 'Scout'
-                            : 'Novice',
-                      ),
-                    ),
-                  ],
+                ProfileStatStrip(
+                  scans: count,
+                  cleanPercent: cleanPercent,
+                  yearScans: year?.length,
                 ),
+                const SizedBox(height: 16),
                 if (widget.data.error != null)
                   Notice(widget.data.error!, onRetry: widget.data.load),
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            'Achievements',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          TextButton(
-                            onPressed: _open,
-                            child: const Text('Passport'),
-                          ),
-                        ],
-                      ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final medal in [
-                            ('First Audit', count != null && count >= 1),
-                            (
-                              'Clean Eater',
-                              count != null &&
-                                  count >= 5 &&
-                                  classified != null &&
-                                  classified > 0 &&
-                                  clean! / classified >= .5,
-                            ),
-                            ('Label Scout', count != null && count >= 10),
-                            ('Bio Shield', count != null && count >= 25),
-                            (
-                              'Daily Streak',
-                              count != null &&
-                                  records!.any(
-                                    (e) => DateUtils.isSameDay(
-                                      e.createdAt,
-                                      DateTime.now(),
-                                    ),
-                                  ) &&
-                                  records.any(
-                                    (e) => DateUtils.isSameDay(
-                                      e.createdAt,
-                                      DateTime.now().subtract(
-                                        const Duration(days: 1),
-                                      ),
-                                    ),
-                                  ) &&
-                                  records.any(
-                                    (e) => DateUtils.isSameDay(
-                                      e.createdAt,
-                                      DateTime.now().subtract(
-                                        const Duration(days: 2),
-                                      ),
-                                    ),
-                                  ),
-                            ),
-                          ])
-                            Chip(
-                              avatar: Icon(
-                                medal.$2 ? Icons.verified : Icons.lock_outline,
-                                size: 18,
-                              ),
-                              label: Text(medal.$1),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                AchievementShelf(records: records, onPassport: _open),
+                RecentSnapshotFan(
+                  records: records,
+                  onHistory: widget.onHistory,
                 ),
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            'Recent Snapshots',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          TextButton(
-                            onPressed: widget.onHistory,
-                            child: const Text('History'),
-                          ),
-                        ],
-                      ),
-                      if (records == null)
-                        const Text('History unavailable')
-                      else if (records.isEmpty)
-                        const Text('No scanned food snapshots yet')
-                      else
-                        for (final item in records.take(4))
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(item.result.name),
-                            subtitle: Text(item.result.brand),
-                            trailing: NovaLabel(item.result.nova),
-                            onTap: () => widget.onOpen(item),
-                          ),
-                    ],
-                  ),
-                ),
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Annual Density',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      Text('${year?.length ?? 'Unknown'} SCANS THIS YEAR'),
-                      const SizedBox(height: 20),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (var m = 0; m < 12; m++)
-                            Chip(
-                              label: Text(
-                                '${m + 1}: ${records == null ? 'Unknown' : months[m]}',
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                AnnualDensity(
+                  months: records == null ? null : months,
+                  yearScans: year?.length,
+                  cleanPercent: cleanPercent,
+                  haptics: widget.preferences.haptics,
                 ),
               ],
             ),
