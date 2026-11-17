@@ -95,6 +95,13 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.byTooltip('Scan food label').hitTestable(), findsOneWidget);
+      await tester.tap(find.byTooltip('Home'));
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tap(find.byTooltip('Guide'));
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tap(find.byTooltip('Profile'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Settings').hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

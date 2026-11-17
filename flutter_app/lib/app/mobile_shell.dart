@@ -18,6 +18,7 @@ import '../features/scan/scan_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../design/widgets/floating_navigation.dart';
 import '../design/widgets/edge_blur.dart';
+import '../design/tokens.dart';
 
 class MobileShell extends StatefulWidget {
   const MobileShell({
@@ -33,7 +34,8 @@ class MobileShell extends StatefulWidget {
   State<MobileShell> createState() => _MobileShellState();
 }
 
-class _MobileShellState extends State<MobileShell> {
+class _MobileShellState extends State<MobileShell>
+    with SingleTickerProviderStateMixin {
   late final repository = AccountRepository(
     widget.auth,
     widget.preferences.store,
@@ -43,6 +45,19 @@ class _MobileShellState extends State<MobileShell> {
   String? _error;
   bool _onboarded = false, _ready = false, _revealing = false;
   int _tab = 0;
+  int? _leavingTab;
+  late final AnimationController _tabMotion =
+      AnimationController(
+        vsync: this,
+        duration: MotionTokens.sheetEnter,
+        value: 1,
+      )..addStatusListener((status) {
+        if (status == AnimationStatus.completed &&
+            mounted &&
+            _leavingTab != null) {
+          setState(() => _leavingTab = null);
+        }
+      });
   @override
   void initState() {
     super.initState();
@@ -88,10 +103,48 @@ class _MobileShellState extends State<MobileShell> {
     }
   }
 
-  void _select(int tab) => setState(() => _tab = tab);
+  void _select(int tab) {
+    if (tab == _tab || tab < 0 || tab > 3) return;
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    setState(() {
+      _leavingTab = reduced ? null : _tab;
+      _tab = tab;
+    });
+    if (reduced) {
+      _tabMotion.value = 1;
+    } else {
+      _tabMotion.forward(from: 0);
+    }
+  }
+
+  Route<T> _detailRoute<T>({required WidgetBuilder builder}) =>
+      PageRouteBuilder<T>(
+        transitionDuration: MotionTokens.sheetEnter,
+        reverseTransitionDuration: MotionTokens.sheetExit,
+        pageBuilder: (context, _, _) => builder(context),
+        transitionsBuilder: (context, animation, secondary, child) {
+          final reduced = MediaQuery.disableAnimationsOf(context);
+          if (reduced) return child;
+          return AnimatedBuilder(
+            animation: animation,
+            child: RepaintBoundary(child: child),
+            builder: (context, child) {
+              final v = Curves.easeOutCubic.transform(animation.value);
+              final away = 1 - v;
+              return Opacity(
+                opacity: v,
+                child: Transform.translate(
+                  offset: Offset(0, 22 * away),
+                  child: Transform.scale(scale: 1 + .03 * away, child: child),
+                ),
+              );
+            },
+          );
+        },
+      );
   Future<void> _result(ProductResult result, {bool sample = false}) async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(
+      _detailRoute<void>(
         builder: (_) => ResultScreen(
           result: result,
           library: _library!,
@@ -105,7 +158,9 @@ class _MobileShellState extends State<MobileShell> {
 
   Future<void> _scan() async {
     final result = await Navigator.of(context).push<ProductResult>(
-      MaterialPageRoute(builder: (_) => ScanScreen(repository: repository)),
+      _detailRoute<ProductResult>(
+        builder: (_) => ScanScreen(repository: repository),
+      ),
     );
     if (!mounted || result == null) return;
     data.load();
@@ -114,7 +169,7 @@ class _MobileShellState extends State<MobileShell> {
 
   Future<void> _upgrade() async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(
+      _detailRoute<void>(
         builder: (_) => SignInScreen(auth: widget.auth, upgrade: true),
       ),
     );
@@ -126,7 +181,7 @@ class _MobileShellState extends State<MobileShell> {
       return;
     }
     await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
+      _detailRoute<bool>(
         builder: (_) => EditProfileScreen(
           repository: repository,
           store: widget.preferences.store,
@@ -137,7 +192,7 @@ class _MobileShellState extends State<MobileShell> {
 
   Future<void> _settings() async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(
+      _detailRoute<void>(
         builder: (_) => SettingsScreen(
           repository: repository,
           state: data,
@@ -154,6 +209,7 @@ class _MobileShellState extends State<MobileShell> {
 
   @override
   void dispose() {
+    _tabMotion.dispose();
     data.dispose();
     super.dispose();
   }
@@ -220,11 +276,51 @@ class _MobileShellState extends State<MobileShell> {
             Positioned.fill(
               child: SafeArea(
                 bottom: false,
-                child: IndexedStack(
-                  index: _tab,
+                child: Stack(
                   children: [
                     for (var i = 0; i < screens.length; i++)
-                      TickerMode(enabled: i == _tab, child: screens[i]),
+                      Positioned.fill(
+                        child: Offstage(
+                          offstage: i != _tab && i != _leavingTab,
+                          child: TickerMode(
+                            enabled: i == _tab,
+                            child: AnimatedBuilder(
+                              animation: _tabMotion,
+                              child: RepaintBoundary(child: screens[i]),
+                              builder: (context, child) {
+                                if (_leavingTab == null) return child!;
+                                final incoming = i == _tab;
+                                final direction = _tab > _leavingTab!
+                                    ? 1.0
+                                    : -1.0;
+                                final v = _tabMotion.value;
+                                final visibility = incoming ? v : 1 - v;
+                                final x = incoming
+                                    ? 26 * direction * (1 - v)
+                                    : -18 * direction * v;
+                                return IgnorePointer(
+                                  ignoring: !incoming,
+                                  child: ExcludeSemantics(
+                                    excluding: !incoming,
+                                    child: Opacity(
+                                      opacity: visibility,
+                                      child: Transform.translate(
+                                        offset: Offset(x, 0),
+                                        child: Transform.scale(
+                                          scale: incoming
+                                              ? 1 + .03 * (1 - v)
+                                              : 1 - .04 * v,
+                                          child: child,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
