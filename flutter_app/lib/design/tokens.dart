@@ -22,6 +22,49 @@ abstract final class MotionTokens {
       Duration(milliseconds: 40 + index.clamp(0, 7) * 70);
 }
 
+/// Nunito roles follow GymMane's display/rounded/body line-height families.
+/// The values here describe roles; screens keep their EatInformed wording.
+abstract final class EatType {
+  static const family = 'Nunito';
+  static TextStyle display(double size, {Color? color}) => TextStyle(
+    fontFamily: family,
+    fontSize: size,
+    fontWeight: FontWeight.w800,
+    height: 1,
+    letterSpacing: -size * .025,
+    color: color,
+  );
+  static TextStyle heading(double size, {Color? color}) => TextStyle(
+    fontFamily: family,
+    fontSize: size,
+    fontWeight: FontWeight.w700,
+    height: 1.15,
+    color: color,
+  );
+  static TextStyle body(double size, {Color? color}) => TextStyle(
+    fontFamily: family,
+    fontSize: size,
+    fontWeight: FontWeight.w400,
+    height: 1.35,
+    color: color,
+  );
+  static TextStyle label(double size, {Color? color}) => TextStyle(
+    fontFamily: family,
+    fontSize: size,
+    fontWeight: FontWeight.w700,
+    height: 1.15,
+    color: color,
+  );
+  static TextStyle numeric(double size, {Color? color}) => TextStyle(
+    fontFamily: family,
+    fontSize: size,
+    fontWeight: FontWeight.w900,
+    height: 1,
+    fontFeatures: const [FontFeature.tabularFigures()],
+    color: color,
+  );
+}
+
 abstract final class EatTheme {
   static ThemeData get light => _theme(Brightness.light);
   static ThemeData get dark => _theme(Brightness.dark);
@@ -41,17 +84,30 @@ abstract final class EatTheme {
               ? const Color(0xFFB3BDB8)
               : const Color(0xFF4A5851),
         );
-    final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      fontFamily: EatType.family,
+    );
+    final text = base.textTheme.apply(fontFamily: EatType.family);
     return base.copyWith(
       scaffoldBackgroundColor: dark ? Colors.black : Colors.white,
-      textTheme: base.textTheme.copyWith(
-        headlineLarge: base.textTheme.headlineLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -1,
-        ),
-        titleLarge: base.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
+      textTheme: text.copyWith(
+        displayLarge: EatType.display(56),
+        displayMedium: EatType.display(45),
+        displaySmall: EatType.numeric(36),
+        headlineLarge: EatType.display(34),
+        headlineMedium: EatType.display(28),
+        headlineSmall: EatType.heading(24),
+        titleLarge: EatType.heading(22),
+        titleMedium: EatType.heading(18),
+        titleSmall: EatType.heading(16),
+        bodyLarge: EatType.body(17),
+        bodyMedium: EatType.body(15),
+        bodySmall: EatType.body(13),
+        labelLarge: EatType.label(14),
+        labelMedium: EatType.label(12),
+        labelSmall: EatType.label(11),
       ),
       cardTheme: CardThemeData(
         elevation: 0,

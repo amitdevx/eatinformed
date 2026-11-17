@@ -2,6 +2,8 @@
 
 Mobile presentation migration on `migration/flutter-ui`. The Expo application in `../mobile/` remains the production mobile implementation. Next.js, Firebase services, Firestore and NVIDIA remain unchanged.
 
+The bundled Nunito variable font comes from the [Nunito project](https://github.com/googlefonts/nunito) at commit `8c6a9bb9732545b9ed53f29ec5e1ab0ff53c4e6f` and is licensed under SIL Open Font License 1.1. Its copyright and full license are retained in `assets/fonts/OFL.txt`. GymMane code, shaders, icons and artwork are not bundled.
+
 Read [the migration plan](../docs/FLUTTER_UI_MIGRATION_PLAN.md) for source references, screen order, licensing boundaries and acceptance gates.
 
 ## Toolchain

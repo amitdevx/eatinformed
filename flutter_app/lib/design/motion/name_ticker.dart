@@ -1,6 +1,8 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
+import '../tokens.dart';
+
 /// Decorative typography; hidden from accessibility and never owns touches.
 /// Paint is driven directly, without rebuilding the profile each frame.
 class NameTicker extends StatefulWidget {
@@ -11,18 +13,20 @@ class NameTicker extends StatefulWidget {
     required this.running,
     this.speed = 38,
     this.fontSize = 118,
+    this.rows = 5,
   });
   final String text;
   final Color color;
   final bool running;
   final double speed, fontSize;
+  final int rows;
   @override
   State<NameTicker> createState() => _NameTickerState();
 }
 
 class _NameTickerState extends State<NameTicker>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  final _position = ValueNotifier<double>(0);
+  final _clock = ValueNotifier<double>(0);
   late final Ticker _ticker;
   TextPainter? _text;
   Duration _previousFrame = Duration.zero;
@@ -37,36 +41,28 @@ class _NameTickerState extends State<NameTicker>
     _ticker = createTicker((elapsed) {
       final delta = elapsed - _previousFrame;
       _previousFrame = elapsed;
-      final span = _text?.width ?? 0;
-      if (span > 0) {
-        _position.value =
-            (_position.value + delta.inMicroseconds / 1000000 * widget.speed) %
-            span;
-      }
+      _clock.value += delta.inMicroseconds / 1000000;
     });
   }
 
   void _measure() {
-    final oldWidth = _text?.width ?? 0;
-    final phase = oldWidth > 0 ? _position.value / oldWidth : 0.0;
     _text?.dispose();
     _text = TextPainter(
       text: TextSpan(
         text:
-            '${widget.text.trim().isEmpty ? 'EATINFORMED' : widget.text.trim().toUpperCase()}   ',
+            '${widget.text.trim().isEmpty ? 'EATINFORMED' : widget.text.trim().toUpperCase()}  ·  ',
         style: TextStyle(
+          fontFamily: EatType.family,
           fontSize: widget.fontSize,
           fontWeight: FontWeight.w900,
           color: widget.color,
-          height: 1.1,
+          height: 1,
           letterSpacing: -widget.fontSize * .04,
         ),
       ),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
+      textDirection: TextDirection.ltr,
       maxLines: 1,
     )..layout();
-    _position.value = phase * _text!.width;
   }
 
   void _sync() {
@@ -114,7 +110,7 @@ class _NameTickerState extends State<NameTicker>
       child: RepaintBoundary(
         child: ClipRect(
           child: CustomPaint(
-            painter: _RowsPainter(_text!, _position),
+            painter: _RowsPainter(_text!, _clock, widget.speed, widget.rows),
             child: const SizedBox.expand(),
           ),
         ),
@@ -126,29 +122,38 @@ class _NameTickerState extends State<NameTicker>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ticker.dispose();
-    _position.dispose();
+    _clock.dispose();
     _text?.dispose();
     super.dispose();
   }
 }
 
 class _RowsPainter extends CustomPainter {
-  _RowsPainter(this.text, this.position) : super(repaint: position);
+  _RowsPainter(this.text, this.clock, this.speed, this.rows)
+    : super(repaint: clock);
   final TextPainter text;
-  final ValueNotifier<double> position;
+  final ValueNotifier<double> clock;
+  final double speed;
+  final int rows;
   @override
   void paint(Canvas canvas, Size size) {
-    final span = text.width, line = text.height;
+    final span = text.width, line = text.height * .86;
     if (span <= 0 || line <= 0) return;
-    for (var row = 0; row * line < size.height; row++) {
-      final shift = row.isEven ? -position.value : position.value - span;
+    final shown = rows <= 0 ? (size.height / line).ceil() + 1 : rows;
+    final top = (size.height - line * shown) / 2;
+    for (var row = 0; row < shown; row++) {
+      final travel = (clock.value * speed * (1 + .18 * (row % 3))) % span;
+      final shift = row.isEven ? -travel : travel - span;
       for (double x = shift; x < size.width; x += span) {
-        text.paint(canvas, Offset(x, row * line));
+        text.paint(canvas, Offset(x, top + row * line - text.height * .07));
       }
     }
   }
 
   @override
   bool shouldRepaint(_RowsPainter oldDelegate) =>
-      oldDelegate.text != text || oldDelegate.position != position;
+      oldDelegate.text != text ||
+      oldDelegate.clock != clock ||
+      oldDelegate.speed != speed ||
+      oldDelegate.rows != rows;
 }
