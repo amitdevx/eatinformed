@@ -42,7 +42,7 @@ The independently authored resistance curve reaches 210 resisted points after ap
 
 - `node flutter_app/tool/sync-content.cjs`: 22 additives, four NOVA groups, three samples, copied from EatInformed's own TypeScript data.
 - `flutter analyze --fatal-infos`: no issues in the screen port pass.
-- `flutter test --concurrency=2 --reporter expanded`: 47 tests passed on the final pre-commit source, including both share choices and the full journey at 320 pixels and 200% text. Log retained locally at `/home/amitdevx/.cache/eatinformed/full-port-tests.log`.
+- `flutter test --concurrency=2 --reporter expanded`: 49 tests passed on the final pre-commit source, including both share choices and the full journey at 320 pixels and 200% text. Log retained locally at `/home/amitdevx/.cache/eatinformed/full-port-tests.log`.
 - `git diff --check`: clean in the screen port pass.
 - `waydroid status`: Session STOPPED. `adb devices`: no connected devices. Device acceptance is BLOCKED in this environment; no new Waydroid session was started.
 
@@ -55,6 +55,8 @@ The source comparison found that Expo supports text summaries and JSON files fro
 The expanded connected journey at 320 pixels and 200% text reproduced horizontal overflow in Home activity rows and vertical overflow in the scanner instruction area. Activity labels now flex above their progress track, and unknown ratings use a neutral track. Scanner instructions, waiting content and errors scroll within available space. Onboarding step changes reset their scroll container. The connected journey now executes without layout exceptions at this size and text scale.
 
 The compiled full-screen APK was also inspected. Its package and ABIs were correct, but the camera dependency merged microphone and legacy storage permissions despite still-only capture with audio disabled. The preview manifest explicitly removes those unused permissions. Gallery selection uses system-granted URI access and sharing uses an app-cache FileProvider. The final merged manifest must be rechecked after the next CI build; device camera/gallery/share tests remain required.
+
+The scroll-depth follow-up corrects upward drift to downward travel proportional to the measured card height, with the reference .18 follow fraction and .08 depth. Opacity eases out as a card leaves the viewport. A foreground tint replaces the color-filter layer. Two focused widget tests check positive measured travel, scale/dimming and static reduced-motion behavior. Pixel equivalence and native frame cost remain unverified.
 
 ## Release gates
 
