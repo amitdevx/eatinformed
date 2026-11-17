@@ -130,7 +130,7 @@ void main() {
     'reduced motion opens and closes immediately and Android Back dismisses',
     (tester) async {
       await mount(tester, reduced: true);
-      final open = find.text('Pull down or tap for Food Passport');
+      final open = find.text('Passport');
       await tester.ensureVisible(open);
       await tester.tap(open);
       await tester.pump();
@@ -144,14 +144,15 @@ void main() {
       await stop(tester);
     },
   );
-  test('pull resistance is continuous, reachable and increasingly damped', () {
+  test('accumulated pull damps downward movement and reverses at 0.8', () {
     expect(PullPhysics.progress(0), 0);
-    expect(PullPhysics.progress(400), 1);
-    expect(PullPhysics.progress(180), lessThan(1));
+    expect(PullPhysics.progress(PullPhysics.advance(0, 400)), 1);
+    expect(PullPhysics.progress(PullPhysics.advance(0, 180)), lessThan(1));
     expect(
-      PullPhysics.displacement(300) - PullPhysics.displacement(250),
-      lessThan(PullPhysics.displacement(100) - PullPhysics.displacement(50)),
+      PullPhysics.advance(150, 50) - 150,
+      lessThan(PullPhysics.advance(0, 50)),
     );
+    expect(PullPhysics.advance(100, -50), 60);
   });
   test('suggested handles preserve chosen input constraints', () {
     for (final email in [

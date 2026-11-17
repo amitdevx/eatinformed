@@ -1,7 +1,9 @@
 import 'dart:ui' as ui;
+import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../core/data/account_state.dart';
 import '../../core/data/models.dart';
@@ -11,6 +13,7 @@ import '../../core/session/session.dart';
 import '../../design/motion/name_ticker.dart';
 import '../../design/tokens.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/edge_blur.dart';
 import 'avatar.dart';
 import 'pull_physics.dart';
 
@@ -45,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Offset? _origin;
   int? _pointer;
   bool _dragging = false, _armed = false, _opening = false, _foreground = true;
+  double _pullDistance = 0;
   Rect? _from, _to;
   @override
   void initState() {
@@ -89,6 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       return;
     }
     _timeline.stop();
+    _pullDistance = _timeline.value.clamp(0, 1) * PullPhysics.reach;
     _pointer = e.pointer;
     _origin = e.localPosition;
     _measure();
@@ -98,6 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   void _move(PointerMoveEvent e) {
     if (e.pointer != _pointer || _origin == null || _opening) return;
     final delta = e.localPosition - _origin!;
+    final wasDragging = _dragging;
     if (!_dragging) {
       if (delta.dx.abs() > 14 && delta.dx.abs() > delta.dy.abs()) {
         _pointer = null;
@@ -111,11 +117,16 @@ class _ProfileScreenState extends State<ProfileScreen>
       setState(() => _dragging = true);
       widget.onReveal(true);
     }
-    final p = PullPhysics.progress(delta.dy);
-    _timeline.value = p;
-    if (p >= 1 && !_armed) {
+    _pullDistance = PullPhysics.advance(
+      _pullDistance,
+      wasDragging ? e.delta.dy : delta.dy,
+    );
+    _timeline.value = PullPhysics.progress(_pullDistance);
+    if (_pullDistance >= PullPhysics.reach && !_armed) {
       _armed = true;
       _haptic();
+    } else if (_pullDistance < PullPhysics.reach) {
+      _armed = false;
     }
   }
 
@@ -169,9 +180,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     _pointer = null;
     _origin = null;
     _armed = false;
+    _pullDistance = 0;
     _opening = false;
     if (_reduced) {
       _timeline.value = 0;
+      _pullDistance = 0;
     } else {
       try {
         await _timeline
@@ -247,36 +260,29 @@ class _ProfileScreenState extends State<ProfileScreen>
           SliverPersistentHeader(
             pinned: true,
             delegate: _Header(
-              avatar: AnimatedBuilder(
-                animation: progress,
-                builder: (context, _) => Opacity(
-                  opacity: _timeline.value == 0 ? 1 : 0,
-                  child: AccountAvatar(
-                    key: _source,
-                    name: widget.session.name,
-                    photo: widget.session.photoUrl,
-                  ),
-                ),
+              avatar: AccountAvatar(
+                key: _source,
+                name: widget.session.name,
+                photo: widget.session.photoUrl,
+                size: 86,
               ),
               name: widget.session.name,
+              identity: widget.session.handle == null
+                  ? widget.session.email.isEmpty
+                        ? 'Anonymous account'
+                        : widget.session.email
+                  : '@${widget.session.handle}',
+              isGuest: widget.session.isGuest,
+              pull: progress,
+              textScale: MediaQuery.textScalerOf(context).scale(1),
               onSettings: widget.onSettings,
+              onEdit: widget.session.isGuest ? widget.onUpgrade : widget.onEdit,
             ),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 126),
             sliver: SliverList.list(
               children: [
-                TextButton(
-                  onPressed: _open,
-                  child: const Text('Pull down or tap for Food Passport'),
-                ),
-                Text(
-                  widget.session.email.isEmpty
-                      ? 'Anonymous account'
-                      : widget.session.email,
-                ),
-                if (widget.session.handle != null)
-                  Text('@${widget.session.handle}'),
                 Wrap(
                   spacing: 8,
                   children: [
@@ -302,29 +308,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ],
                 ),
-                OutlinedButton(
-                  onPressed: widget.session.isGuest
-                      ? widget.onUpgrade
-                      : widget.onEdit,
-                  child: Text(
-                    widget.session.isGuest
-                        ? 'Create an account to customize profile'
-                        : 'Edit Profile',
-                  ),
-                ),
                 if (widget.data.error != null)
                   Notice(widget.data.error!, onRetry: widget.data.load),
                 SectionCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Expanded(
-                            child: Text(
-                              'Achievements',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
+                          Text(
+                            'Achievements',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
                           TextButton(
                             onPressed: _open,
@@ -391,13 +387,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Expanded(
-                            child: Text(
-                              'Recent Snapshots',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
+                          Text(
+                            'Recent Snapshots',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
                           TextButton(
                             onPressed: widget.onHistory,
@@ -679,51 +675,258 @@ class _ProfileScreenState extends State<ProfileScreen>
 }
 
 class _Header extends SliverPersistentHeaderDelegate {
-  _Header({required this.avatar, required this.name, required this.onSettings});
+  _Header({
+    required this.avatar,
+    required this.name,
+    required this.identity,
+    required this.isGuest,
+    required this.pull,
+    required this.textScale,
+    required this.onSettings,
+    required this.onEdit,
+  });
   final Widget avatar;
-  final String name;
-  final VoidCallback onSettings;
+  final String name, identity;
+  final bool isGuest;
+  final Animation<double> pull;
+  final double textScale;
+  final VoidCallback onSettings, onEdit;
   @override
-  double get minExtent => 104;
+  double get minExtent => 60 + math.max(0, textScale - 1) * 30;
   @override
-  double get maxExtent => 190;
+  double get maxExtent => 254 + math.max(0, textScale - 1) * 64;
   @override
   Widget build(
     BuildContext context,
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final p = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
-    return SizedBox.expand(
-      child: ColoredBox(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 82,
-                height: 82,
-                child: Transform.scale(scale: 1 - p * .35, child: avatar),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  name,
-                  style: Theme.of(context).textTheme.titleLarge,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final shrunk = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final bannerBottom = math.max(minExtent, 172 - shrinkOffset);
+    final avatarTop = bannerBottom - 86 + 18;
+    final expanded = (1 - shrunk * 2).clamp(0.0, 1.0);
+    final compact = ((shrunk - .7) / .3).clamp(0.0, 1.0);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: bannerBottom,
+          child: AnimatedBuilder(
+            animation: pull,
+            builder: (context, _) {
+              final p = pull.value.clamp(0.0, 1.0);
+              Widget banner = DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      scheme.primary.withValues(alpha: .28),
+                      scheme.surface,
+                      theme.scaffoldBackgroundColor,
+                    ],
+                    stops: const [0, .58, 1],
+                  ),
                 ),
-              ),
-              IconButton(
-                onPressed: onSettings,
-                tooltip: 'Settings',
-                icon: const Icon(Icons.settings_outlined),
-              ),
-            ],
+                child: const SizedBox.expand(),
+              );
+              if (p > 0 && !MediaQuery.disableAnimationsOf(context)) {
+                banner = ImageFiltered(
+                  imageFilter: ui.ImageFilter.blur(
+                    sigmaX: 14 * p,
+                    sigmaY: 14 * p,
+                  ),
+                  child: Transform.scale(
+                    alignment: Alignment.topCenter,
+                    scale: 1 + .35 * p,
+                    child: banner,
+                  ),
+                );
+              }
+              return Opacity(
+                opacity: ((1 - shrunk) * (1 - p)).clamp(0.0, 1.0),
+                child: ClipRect(child: banner),
+              );
+            },
           ),
         ),
-      ),
+        if (compact > 0)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: Opacity(
+              opacity: compact,
+              child: EdgeBlur(height: minExtent, top: true, sigma: 14),
+            ),
+          ),
+        Positioned(
+          right: 16,
+          top: 6,
+          child: IconButton(
+            onPressed: onSettings,
+            tooltip: 'Settings',
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.black.withValues(alpha: .38),
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(PhosphorIconsRegular.gearSix, size: 18),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: bannerBottom - 9,
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: expanded,
+              child: Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.onSurface.withValues(alpha: .36),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 20,
+          top: avatarTop,
+          child: AnimatedBuilder(
+            animation: pull,
+            child: avatar,
+            builder: (context, child) =>
+                Opacity(opacity: pull.value > 0 ? 0 : expanded, child: child),
+          ),
+        ),
+        Positioned(
+          right: 20,
+          top: avatarTop + 86 - 40,
+          child: IgnorePointer(
+            ignoring: expanded < .5,
+            child: Opacity(
+              opacity: expanded,
+              child: Semantics(
+                button: true,
+                label: isGuest ? 'Create account' : 'Edit Profile',
+                child: Tooltip(
+                  message: isGuest ? 'Create account' : 'Edit Profile',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: onEdit,
+                    child: SizedBox(
+                      height: 40,
+                      child: Center(
+                        child: Container(
+                          height: 28,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: scheme.surface.withValues(alpha: .8),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: scheme.onSurface.withValues(alpha: .12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                PhosphorIconsRegular.pencilSimple,
+                                size: 13,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                isGuest ? 'Sign up' : 'Edit',
+                                style: EatType.label(
+                                  12,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 20,
+          right: 20,
+          top: avatarTop + 86 + 14,
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: expanded,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: EatType.heading(
+                      24,
+                      color: scheme.onSurface,
+                    ).copyWith(fontWeight: FontWeight.w800, letterSpacing: -.3),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    identity,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: EatType.body(13, color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (compact > 0)
+          Positioned(
+            left: 72,
+            right: 72,
+            top: 9,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: compact,
+                child: Transform.translate(
+                  offset: Offset(0, 8 * (1 - compact)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AccountAvatar(name: name, size: 24),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: EatType.heading(
+                            15.5,
+                            color: scheme.onSurface,
+                          ).copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
