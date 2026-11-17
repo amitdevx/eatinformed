@@ -24,41 +24,55 @@ class EatInformedApp extends StatefulWidget {
 class _EatInformedAppState extends State<EatInformedApp> {
   late final _preferences =
       widget.preferences ?? AppPreferences(MemoryPreferences());
+  GlobalKey<NavigatorState> _flowNavigator = GlobalKey<NavigatorState>();
+  String? _flowIdentity;
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([widget.auth, _preferences]),
-    builder: (context, _) => MaterialApp(
-      title: 'EatInformed',
-      debugShowCheckedModeBanner: false,
-      theme: EatTheme.light,
-      darkTheme: EatTheme.dark,
-      themeMode: _preferences.theme,
-      // Replace the entire navigation scope on identity changes. Auth routes cannot survive logout.
-      home: Navigator(
-        key: ValueKey(
-          '${widget.auth.phase}:${widget.auth.session?.uid}:${widget.auth.session?.isGuest}',
-        ),
-        pages: [
-          MaterialPage<void>(
-            child: switch (widget.auth.phase) {
-              AuthPhase.restoring => const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(
-                    semanticsLabel: 'Restoring session',
+    builder: (context, _) {
+      final identity =
+          '${widget.auth.phase}:${widget.auth.session?.uid}:${widget.auth.session?.isGuest}';
+      if (_flowIdentity != identity) {
+        _flowIdentity = identity;
+        _flowNavigator = GlobalKey<NavigatorState>();
+      }
+      return MaterialApp(
+        title: 'EatInformed',
+        debugShowCheckedModeBanner: false,
+        theme: EatTheme.light,
+        darkTheme: EatTheme.dark,
+        themeMode: _preferences.theme,
+        // Replace the entire navigation scope on identity changes. Auth routes cannot survive logout.
+        home: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _flowNavigator.currentState?.maybePop();
+          },
+          child: Navigator(
+            key: _flowNavigator,
+            pages: [
+              MaterialPage<void>(
+                child: switch (widget.auth.phase) {
+                  AuthPhase.restoring => const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(
+                        semanticsLabel: 'Restoring session',
+                      ),
+                    ),
                   ),
-                ),
+                  AuthPhase.signedOut => SignInScreen(auth: widget.auth),
+                  AuthPhase.signedIn => MobileShell(
+                    auth: widget.auth,
+                    preferences: _preferences,
+                    library: widget.library,
+                  ),
+                },
               ),
-              AuthPhase.signedOut => SignInScreen(auth: widget.auth),
-              AuthPhase.signedIn => MobileShell(
-                auth: widget.auth,
-                preferences: _preferences,
-                library: widget.library,
-              ),
-            },
+            ],
+            onDidRemovePage: (_) {},
           ),
-        ],
-        onDidRemovePage: (_) {},
-      ),
-    ),
+        ),
+      );
+    },
   );
 }

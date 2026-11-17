@@ -65,6 +65,14 @@ void main() {
     await tester.tap(find.byTooltip('Profile'));
     await tester.pumpAndSettle();
     expect(find.text('Test Reader'), findsWidgets);
+    await tester.tap(find.text('Passport'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('FOOD PASSPORT'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Settings').hitTestable(), findsOneWidget);
+    expect(find.text('Test Reader'), findsWidgets);
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
