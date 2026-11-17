@@ -258,7 +258,7 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
             Expanded(
               child: _busy
                   ? Center(
-                      child: Padding(
+                      child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -298,7 +298,7 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                   : _camera?.value.isInitialized == true
                   ? Center(child: CameraPreview(_camera!))
                   : Center(
-                      child: Padding(
+                      child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -324,9 +324,13 @@ class _ScanScreenState extends State<ScanScreen> with WidgetsBindingObserver {
                     ),
             ),
             if (_error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Notice(_error!),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Notice(_error!),
+                  ),
+                ),
               ),
             Padding(
               padding: const EdgeInsets.all(16),

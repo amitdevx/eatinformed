@@ -28,11 +28,49 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   int _tab = 0;
-  void _share() => shareJson(
-    context,
-    widget.result.json,
-    filename: 'eatinformed-product-report.json',
-  );
+  Future<void> _share() async {
+    final format = await glassSheet<String>(
+      context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Share Product Report',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pop(context, 'text'),
+            icon: const Icon(Icons.notes),
+            label: const Text('Share as Text Summary'),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pop(context, 'json'),
+            icon: const Icon(Icons.data_object),
+            label: const Text('Share as JSON File'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    final result = widget.result;
+    if (format == 'text') {
+      await shareText(
+        context,
+        '${result.name}${result.brand.isEmpty ? '' : ' (${result.brand})'}\nAI rating estimate: ${result.rating?.toStringAsFixed(1) ?? 'Unknown'}/5.0\nNOVA Group: ${result.nova ?? 'Unknown'}\nAnalyzed with EatInformed. Check the original label.',
+        title: 'EatInformed Product Report',
+      );
+    } else if (format == 'json') {
+      await shareJson(
+        context,
+        result.json,
+        filename: 'eatinformed-product-report.json',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final r = widget.result, d = r.dietary;

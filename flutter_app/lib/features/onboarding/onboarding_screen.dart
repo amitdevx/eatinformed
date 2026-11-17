@@ -79,6 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ],
         ),
         body: ContentFrame(
+          key: ValueKey(_step),
           slivers: [
             SliverToBoxAdapter(
               child: Entrance(

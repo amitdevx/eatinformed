@@ -14,7 +14,7 @@ This is the mobile presentation port, not a backend or website migration. Expo r
 | History | `features/history`, `core/data`: full cursor traversal, repeated products, nullable ratings, filters, real activity, confirmed deletion, UID cache | Pagination, account-change response rejection and connected empty state tests | VERIFIED for controlled service/widget tests. Native offline restart/export/delete integration IMPLEMENTED, UNVERIFIED |
 | Guide | `features/library`, `assets/content`: all four NOVA groups and 22 additive records, search and detail sheets | Content load, E407 search/detail, 320-pixel width and 200% text test | VERIFIED in widgets. Imported educational wording is existing EatInformed content, not newly validated medical guidance |
 | Scan | `features/scan`: dedicated navigation route, camera/gallery, full-image preview without implicit crop, EXIF rotation, bounded JPEG preparation, actual quota, cancellation and same-key retry | Route isolation, complete edge/aspect preservation, EXIF, malformed-image, pending retry/cancel/provider failure tests | VERIFIED at controlled transport/image/widget boundaries. Camera sensor/preview, permissions and real scan workflow IMPLEMENTED, UNVERIFIED |
-| Results | `features/results`: overview, ingredients/reference sheets, nutrition with original bases, null estimates, personal allergen evidence, sharing | Schema rejection/null tests; whole-phrase evidence matches; narrow/large-text report test | VERIFIED in widgets and models. Native share sheet and live provider output IMPLEMENTED, UNVERIFIED |
+| Results | `features/results`: overview, ingredients/reference sheets, nutrition with original bases, null estimates, personal allergen evidence, text/JSON sharing | Schema rejection/null tests; whole-phrase evidence matches; narrow/large-text report test | VERIFIED in widgets and models. Native share sheet and live provider output IMPLEMENTED, UNVERIFIED |
 | Profile/Passport | `features/profile`: collapsing sliver, current avatar/handle, saved-scan statistics, real achievements/activity, measured avatar travel, shared reveal/blur/ticker timeline, single threshold haptic, same-scene Passport | Pull/open/close/repeat, short/horizontal/cancel, scroll-top, reduced motion and Android Back widget assertions | VERIFIED for widget state/gesture assertions. Android blur rendering, haptics, visual comparison and profile timings IMPLEMENTED, UNVERIFIED |
 | Settings | `features/settings`: persistent System/Light/AMOLED themes and haptics, profile/allergens, offline reference, JSON export, cache clearing, confirmed history deletion, process reachability and logout | Theme/identity and confirmed logout widget tests | VERIFIED for those assertions. Native exports, OS persistence and deletion against an isolated account IMPLEMENTED, UNVERIFIED |
 
@@ -42,11 +42,17 @@ The independently authored resistance curve reaches 210 resisted points after ap
 
 - `node flutter_app/tool/sync-content.cjs`: 22 additives, four NOVA groups, three samples, copied from EatInformed's own TypeScript data.
 - `flutter analyze --fatal-infos`: no issues in the screen port pass.
-- `flutter test --concurrency=2 --reporter expanded`: 46 tests passed on the final pre-commit source. Log retained locally at `/home/amitdevx/.cache/eatinformed/full-port-tests.log`.
+- `flutter test --concurrency=2 --reporter expanded`: 47 tests passed on the final pre-commit source, including both share choices and the full journey at 320 pixels and 200% text. Log retained locally at `/home/amitdevx/.cache/eatinformed/full-port-tests.log`.
 - `git diff --check`: clean in the screen port pass.
 - `waydroid status`: Session STOPPED. `adb devices`: no connected devices. Device acceptance is BLOCKED in this environment; no new Waydroid session was started.
 
 The tests inject provider-independent HTTP responses at the client transport boundary. Test sessions, example food reports and synthetic image bytes never went to the live backend. These tests do not prove real Firebase/Firestore/NVIDIA integration, server quota concurrency or production readiness. Existing backend tests and contracts were not rewritten.
+
+## Follow-up parity and accessibility check
+
+The source comparison found that Expo supports text summaries and JSON files from Results. Both choices are now present; native share failures show a recoverable message. A widget test opens both choices and dismisses the sheet with Android Back. Native sheet delivery remains unverified.
+
+The expanded connected journey at 320 pixels and 200% text reproduced horizontal overflow in Home activity rows and vertical overflow in the scanner instruction area. Activity labels now flex above their progress track, and unknown ratings use a neutral track. Scanner instructions, waiting content and errors scroll within available space. Onboarding step changes reset their scroll container. The connected journey now executes without layout exceptions at this size and text scale.
 
 ## Release gates
 

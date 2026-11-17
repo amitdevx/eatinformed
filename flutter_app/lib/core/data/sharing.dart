@@ -10,7 +10,8 @@ Future<void> shareJson(
   String filename = 'eatinformed-history.json',
 }) async {
   final box = context.findRenderObject() as RenderBox?;
-  await SharePlus.instance.share(
+  await _share(
+    context,
     ShareParams(
       files: [
         XFile.fromData(
@@ -26,4 +27,36 @@ Future<void> shareJson(
           : box.localToGlobal(Offset.zero) & box.size,
     ),
   );
+}
+
+Future<void> shareText(
+  BuildContext context,
+  String text, {
+  String? title,
+}) async {
+  final box = context.findRenderObject() as RenderBox?;
+  await _share(
+    context,
+    ShareParams(
+      text: text,
+      title: title,
+      sharePositionOrigin: box == null
+          ? null
+          : box.localToGlobal(Offset.zero) & box.size,
+    ),
+  );
+}
+
+Future<void> _share(BuildContext context, ShareParams params) async {
+  try {
+    await SharePlus.instance.share(params);
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Could not open sharing. Please try again.'),
+        ),
+      );
+    }
+  }
 }

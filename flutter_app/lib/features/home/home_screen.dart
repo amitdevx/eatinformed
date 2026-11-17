@@ -151,22 +151,44 @@ class HomeScreen extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 6,
                                 ),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    SizedBox(
-                                      width: 64,
-                                      child: Text('${date.month}/${date.day}'),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${date.month}/${date.day}',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Flexible(
+                                          child: Text(
+                                            score?.toStringAsFixed(1) ??
+                                                'No rating',
+                                            textAlign: TextAlign.end,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Expanded(
-                                      child: LinearProgressIndicator(
-                                        value: (score ?? 0) / 5,
+                                    const SizedBox(height: 8),
+                                    if (score != null)
+                                      LinearProgressIndicator(
+                                        value: score / 5,
                                         minHeight: 6,
+                                      )
+                                    else
+                                      SizedBox(
+                                        height: 6,
+                                        child: ColoredBox(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .surfaceContainerHighest,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      score?.toStringAsFixed(1) ?? 'No rating',
-                                    ),
                                   ],
                                 ),
                               );

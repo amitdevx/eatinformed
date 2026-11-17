@@ -27,10 +27,12 @@ void main() {
   testWidgets(
     'onboarding completes into Home, tabs navigate and scanner excludes floating controls',
     (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
+      tester.view.physicalSize = const Size(320, 760);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       final api = ApiClient(
         AppConfig(apiOrigin: Uri.parse('https://api.example.test')),
         client: MockClient(
@@ -65,10 +67,12 @@ void main() {
       expect(find.text('Your food, informed.'), findsOneWidget);
       for (var i = 0; i < 2; i++) {
         await tester.ensureVisible(find.text('Continue'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
       }
       await tester.ensureVisible(find.text('Get Started'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Get Started'));
       await tester.pumpAndSettle();
       expect(prefs.values['onboarding:firebase-test-uid'], 'true');
@@ -170,6 +174,31 @@ void main() {
       await tester.tap(find.text('Nutrition Facts'));
       await tester.pumpAndSettle();
       expect(find.textContaining('4 g'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'report offers both existing share formats and dismisses without native side effects',
+    (tester) async {
+      final report = ProductResult({
+        'status': 'success',
+        'productName': 'Label',
+        'rating': null,
+        'novaGroup': null,
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ResultScreen(result: report, library: library),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Share report'));
+      await tester.pumpAndSettle();
+      expect(find.text('Share as Text Summary').hitTestable(), findsOneWidget);
+      expect(find.text('Share as JSON File').hitTestable(), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Share Product Report'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
