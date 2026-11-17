@@ -57,6 +57,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _pickAvatar() async {
+    final session = widget.repository.auth.session;
+    if (session == null || session.isGuest) return;
+    try {
+      final photo = await pickAvatar(session.uid);
+      if (photo == null ||
+          !mounted ||
+          widget.repository.auth.session?.uid != session.uid) {
+        return;
+      }
+      await widget.store.write('avatar:${session.uid}', photo);
+      await widget.repository.auth.updateProfile(
+        photoUrl: photo,
+        expectedUid: session.uid,
+      );
+      if (mounted) setState(() => _error = null);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Could not choose a photo. Please try again.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = widget.repository.auth.session!;
@@ -67,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Welcome to EatInformed'),
+          title: const Text('EatInformed'),
           leading: _step == 0
               ? null
               : BackButton(onPressed: () => setState(() => _step--)),
@@ -91,54 +114,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     const SizedBox(height: 24),
                     PageHeading(
                       [
-                        'Your food, informed.',
+                        'What should we call you?',
                         'Choose your avatar',
-                        'Ready to get started',
+                        'You are ready to explore',
                       ][_step],
                     ),
                     if (_step == 0) ...[
-                      const Text('NOVA Classification'),
-                      const Text(
-                        'Detect ultra-processed formulations and additives instantly.',
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('Allergen Protection'),
-                      const Text(
-                        'Flag allergens and synthetic preservatives in real time.',
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('Nutrition Passport'),
-                      const Text(
-                        'Keep your saved food-label reports together across devices.',
-                      ),
                       const SizedBox(height: 24),
                       Text(
                         session.name,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
-                        session.email.isEmpty
-                            ? 'Guest Explorer'
-                            : session.email,
+                        session.isGuest
+                            ? 'Guest profile customization is locked.'
+                            : session.handle == null
+                            ? 'Choose a handle for your Food Passport.'
+                            : '@${session.handle}',
                       ),
+                      if (!session.isGuest) ...[
+                        const SizedBox(height: 16),
+                        OutlinedButton(
+                          onPressed: _edit,
+                          child: const Text('Choose name and handle'),
+                        ),
+                      ],
                     ],
                     if (_step == 1) ...[
+                      const SizedBox(height: 24),
                       Center(
-                        child: AccountAvatar(
-                          name: session.name,
-                          photo: session.photoUrl,
-                          size: 100,
+                        child: Semantics(
+                          button: !session.isGuest,
+                          label: session.isGuest
+                              ? 'Guest avatar'
+                              : 'Choose your avatar',
+                          child: GestureDetector(
+                            onTap: session.isGuest ? null : _pickAvatar,
+                            child: AccountAvatar(
+                              name: session.name,
+                              photo: session.photoUrl,
+                              size: 100,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       if (session.isGuest)
                         const Text(
-                          'Sign up with Google or email to choose your name and handle, customize your profile, and unlock higher scan limits.',
+                          'Create an account to choose a profile photo.',
                         )
                       else
                         OutlinedButton(
-                          onPressed: _edit,
-                          child: const Text('Choose name, handle and avatar'),
+                          onPressed: _pickAvatar,
+                          child: const Text('Choose your avatar'),
                         ),
                     ],
                     if (_step == 2) ...[
@@ -155,11 +183,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       if (session.handle != null) Text('@${session.handle}'),
-                      Text(
-                        session.isGuest
-                            ? 'Guest profile customization is locked. You can create an account from Profile.'
-                            : 'Your existing account and saved scans stay with you.',
-                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Food ratings are AI estimates. Check the original label, especially for allergens.',

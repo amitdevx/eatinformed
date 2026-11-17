@@ -89,6 +89,59 @@ void main() {
     expect(find.text('Test Reader'), findsNothing);
     expect(find.text('Continue as guest'), findsOneWidget);
   });
+  testWidgets('guest onboarding uses profile, avatar, and review steps', (
+    tester,
+  ) async {
+    final api = ApiClient(
+      AppConfig(apiOrigin: Uri.parse('https://api.example.test')),
+      client: MockClient(
+        (r) async => http.Response(
+          jsonEncode(
+            r.url.path == '/api/history'
+                ? {'items': <Object>[], 'nextCursor': null}
+                : r.url.path == '/api/profile'
+                ? {'profile': <String, dynamic>{}}
+                : sessionJson(guest: true),
+          ),
+          200,
+        ),
+      ),
+    );
+    final auth = AuthController(AuthRepository(api), MemorySessionStore());
+    addTearDown(() {
+      auth.dispose();
+      api.close();
+    });
+    await auth.restore();
+    await tester.pumpWidget(
+      EatInformedApp(
+        auth: auth,
+        preferences: AppPreferences(MemoryPreferences()),
+        library: library,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue as guest'));
+    await tester.pumpAndSettle();
+    expect(find.text('What should we call you?'), findsOneWidget);
+    expect(find.text('NOVA Classification'), findsNothing);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose your avatar'), findsOneWidget);
+    expect(
+      find.text('Create an account to choose a profile photo.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('You are ready to explore'), findsOneWidget);
+    expect(
+      find.text(
+        'Food ratings are AI estimates. Check the original label, especially for allergens.',
+      ),
+      findsOneWidget,
+    );
+  });
   testWidgets('welcome tolerates narrow viewport and 200 percent text', (
     tester,
   ) async {

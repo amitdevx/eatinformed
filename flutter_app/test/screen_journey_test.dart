@@ -64,7 +64,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Your food, informed.'), findsOneWidget);
+      expect(find.text('What should we call you?'), findsOneWidget);
       for (var i = 0; i < 2; i++) {
         await tester.ensureVisible(find.text('Continue'));
         await tester.pumpAndSettle();
