@@ -38,6 +38,23 @@ The independently authored resistance curve reaches 210 resisted points after ap
 | Unknown NOVA could lower a displayed percentage | Report classified counts separately; no numerical classification assigned to unknown scans | Nullable model assertions and static inspection | Statistics represent retained records, or explicitly labelled recent offline cache |
 | Account switch could apply a stale profile result | Profile updates check expected UID; API requests reject changed identity | Account change rejection tests | Live cross-account runtime acceptance outstanding |
 
+## Compiled artifact verification
+
+VERIFIED: GitHub Actions [run 44089717145](https://github.com/amitdevx/eatinformed/actions/runs/44089717145) completed successfully for application commit `f82ee1ba3f210ed2fde08ca6254bec544f194c18`. Its logs report 49 passing tests, clean formatting/static analysis and a successful 62.3 MB profile APK build. Native compilation ran on GitHub, not this workstation.
+
+The artifact was downloaded and both checksums verified:
+
+- ZIP SHA256: `ecbe73a7f1581d42f47c09d6e65a6e63798a69891e6b6eec3151815ca97d1332`.
+- APK SHA256: `d12bc90f8fbe2c13661593c4e4124e023f17ad93aa7d92e90a48a4cb3c0d6dee`.
+- APK: `/home/amitdevx/.cache/eatinformed/artifacts/f82ee1b-profile/app-profile.apk`, 62,293,585 bytes.
+- Embedded commit.txt matches the application commit.
+- Decoded binary manifest: `com.eatinformed.preview.eatinformed_mobile`, version 0.1.0/code 6, minimum SDK 24, target SDK 36, backup and cleartext disabled.
+- Both arm64-v8a and x86_64 application libraries are present. All three EatInformed content JSON assets are embedded.
+- Final merged permissions include camera and network access. Microphone, READ_EXTERNAL_STORAGE and WRITE_EXTERNAL_STORAGE are absent. The exact Google bridge callback remains `eatinformed://auth/callback`.
+- This is a debuggable profile/test artifact, not a production release. No installation or runtime claim is made.
+
+Machine-readable local evidence: `/home/amitdevx/.cache/eatinformed/artifacts/f82ee1b-profile/verification.json`. Documentation commits after the tested application commit do not change the APK source.
+
 ## Executed checks
 
 - `node flutter_app/tool/sync-content.cjs`: 22 additives, four NOVA groups, three samples, copied from EatInformed's own TypeScript data.
@@ -54,7 +71,7 @@ The source comparison found that Expo supports text summaries and JSON files fro
 
 The expanded connected journey at 320 pixels and 200% text reproduced horizontal overflow in Home activity rows and vertical overflow in the scanner instruction area. Activity labels now flex above their progress track, and unknown ratings use a neutral track. Scanner instructions, waiting content and errors scroll within available space. Onboarding step changes reset their scroll container. The connected journey now executes without layout exceptions at this size and text scale.
 
-The compiled full-screen APK was also inspected. Its package and ABIs were correct, but the camera dependency merged microphone and legacy storage permissions despite still-only capture with audio disabled. The preview manifest explicitly removes those unused permissions. Gallery selection uses system-granted URI access and sharing uses an app-cache FileProvider. The final merged manifest must be rechecked after the next CI build; device camera/gallery/share tests remain required.
+The compiled full-screen APK was also inspected. Its package and ABIs were correct, but the camera dependency merged microphone and legacy storage permissions despite still-only capture with audio disabled. The preview manifest explicitly removes those unused permissions. Gallery selection uses system-granted URI access and sharing uses an app-cache FileProvider. The final merged manifest was rechecked in the successful build described above; the permissions are absent. Device camera/gallery/share tests remain required.
 
 The scroll-depth follow-up corrects upward drift to downward travel proportional to the measured card height, with the reference .18 follow fraction and .08 depth. Opacity eases out as a card leaves the viewport. A foreground tint replaces the color-filter layer. Two focused widget tests check positive measured travel, scale/dimming and static reduced-motion behavior. Pixel equivalence and native frame cost remain unverified.
 
