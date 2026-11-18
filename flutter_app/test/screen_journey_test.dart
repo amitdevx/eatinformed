@@ -76,6 +76,10 @@ void main() {
       await tester.tap(find.text('Get Started'));
       await tester.pumpAndSettle();
       expect(prefs.values['onboarding:firebase-test-uid'], 'true');
+      expect(find.text('0 saved scans'), findsOneWidget);
+      expect(find.text('0 rated reports'), findsOneWidget);
+      expect(find.text('4.8 / 5 AI estimate'), findsOneWidget);
+      expect(find.text('Zero Additive Cache'), findsNothing);
       await tester.tap(find.byTooltip('History'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('No Saved Scans Yet'));

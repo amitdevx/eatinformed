@@ -1,12 +1,95 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../core/data/account_state.dart';
 import '../../core/data/models.dart';
+import '../../design/motion/entrance.dart';
 import '../../design/widgets/content_frame.dart';
 import '../../design/widgets/eatinformed_mark.dart';
 import '../../design/widgets/surfaces.dart';
 import '../library/library.dart';
 import 'home_visuals.dart';
+
+class _SampleTile extends StatelessWidget {
+  const _SampleTile({required this.sample, required this.onOpen});
+  final Map<String, dynamic> sample;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final result = ProductResult(
+      Map<String, dynamic>.from(sample['data'] as Map),
+    );
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sample['title'] as String,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(sample['subtitle'] as String),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(PhosphorIconsRegular.caretRight, size: 18),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          PhosphorIconsFill.star,
+                          size: 15,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            result.rating == null
+                                ? 'Rating unavailable'
+                                : '${result.rating!.toStringAsFixed(1)} / 5 AI estimate',
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      result.nova == null
+                          ? 'NOVA unavailable'
+                          : 'NOVA ${result.nova}',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -75,7 +158,28 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const PageHeading('Food clarity.\nFor what you eat.'),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12, bottom: 24),
+                    child: Semantics(
+                      header: true,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            const TextSpan(text: 'Food clarity.\n'),
+                            TextSpan(
+                              text: 'For what you eat.',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                    ),
+                  ),
                   const Text(
                     'Scan any ingredient list or nutrition panel for NOVA food processing classifications, additive alerts, and AI rating estimates.',
                   ),
@@ -107,13 +211,24 @@ class HomeScreen extends StatelessWidget {
                                         ? 'History unavailable'
                                         : state.records!.isEmpty
                                         ? 'Read labels and estimate food processing'
-                                        : '${state.records!.length} product audits logged',
+                                        : 'Average of available AI rating estimates',
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
+                        if (state.records != null) ...[
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 14,
+                            runSpacing: 6,
+                            children: [
+                              Text('${state.records!.length} saved scans'),
+                              Text('${rated!.length} rated reports'),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         FilledButton.icon(
                           onPressed: onScan,
@@ -122,19 +237,32 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Wrap(
-                          spacing: 8,
+                          spacing: 4,
+                          runSpacing: 4,
                           children: [
-                            TextButton(
+                            TextButton.icon(
                               onPressed: () => onTab(1),
-                              child: const Text('History'),
+                              icon: const Icon(
+                                PhosphorIconsRegular.clockCounterClockwise,
+                                size: 16,
+                              ),
+                              label: const Text('History'),
                             ),
-                            TextButton(
+                            TextButton.icon(
                               onPressed: () => onTab(2),
-                              child: const Text('NOVA Guide'),
+                              icon: const Icon(
+                                PhosphorIconsRegular.bookOpen,
+                                size: 16,
+                              ),
+                              label: const Text('NOVA Guide'),
                             ),
-                            TextButton(
+                            TextButton.icon(
                               onPressed: () => onTab(3),
-                              child: const Text('Account'),
+                              icon: const Icon(
+                                PhosphorIconsRegular.userCircle,
+                                size: 16,
+                              ),
+                              label: const Text('Account'),
                             ),
                           ],
                         ),
@@ -163,40 +291,41 @@ class HomeScreen extends StatelessWidget {
                     subtitle: 'Compare real products across the NOVA food processing spectrum',
                   ),
                   for (var index = 0; index < library.samples.length; index++)
-                    SectionCard(
+                    Entrance(
                       index: 3 + index,
-                      entrance: true,
-                      onTap: () => onSample(
-                        ProductResult(
-                          Map<String, dynamic>.from(
-                            library.samples[index]['data'] as Map,
+                      child: _SampleTile(
+                        sample: library.samples[index],
+                        onOpen: () => onSample(
+                          ProductResult(
+                            Map<String, dynamic>.from(
+                              library.samples[index]['data'] as Map,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            library.samples[index]['title'] as String,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          Text(library.samples[index]['subtitle'] as String),
-                          NovaLabel(library.samples[index]['novaGroup'] as int),
-                        ],
                       ),
                     ),
                   SectionCard(
                     onTap: () => onTab(2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          'The NOVA Standard',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        const Icon(PhosphorIconsRegular.bookOpen, size: 20),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'The NOVA Standard',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const Text(
+                                'Developed at the University of Sao Paulo to classify foods by the extent and purpose of industrial processing. Explore our guide to learn more.',
+                              ),
+                            ],
+                          ),
                         ),
-                        const Text(
-                          'Developed at the University of Sao Paulo to classify foods by the extent and purpose of industrial processing. Explore our guide to learn more.',
-                        ),
+                        const SizedBox(width: 8),
+                        const Icon(PhosphorIconsRegular.caretRight, size: 18),
                       ],
                     ),
                   ),
