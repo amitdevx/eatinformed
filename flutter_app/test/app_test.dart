@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:eatinformed_mobile/app/app.dart';
 import 'package:eatinformed_mobile/app/config.dart';
 import 'package:eatinformed_mobile/core/network/api_client.dart';
@@ -23,6 +24,13 @@ void main() {
   late FoodLibrary library;
   setUpAll(() async {
     library = await FoodLibrary.load();
+    PackageInfo.setMockInitialValues(
+      appName: 'EatInformed',
+      packageName: 'com.eatinformed.preview.eatinformed_mobile',
+      version: '0.1.0',
+      buildNumber: '42',
+      buildSignature: '',
+    );
   });
   testWidgets('guest entry changes navigation and logout clears account UI', (
     tester,
@@ -75,13 +83,18 @@ void main() {
     expect(find.text('Test Reader'), findsWidgets);
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
+    expect(find.text('Allergen preferences'), findsOneWidget);
+    expect(find.text('Additive dictionary'), findsOneWidget);
+    expect(find.text('Strict Allergen Alerts'), findsNothing);
+    expect(find.text('Offline Additive Protection'), findsNothing);
+    expect(find.text('EatInformed 0.1.0 (42)'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Sign out'),
+      find.text('Exit Guest Mode'),
       250,
       scrollable: find.byType(Scrollable).last,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sign out'));
+    await tester.tap(find.text('Exit Guest Mode'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Confirm'));
@@ -218,6 +231,9 @@ void main() {
       await tester.tap(find.byTooltip('Profile'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sign Out of EatInformed'), findsOneWidget);
+      await tester.tap(find.text('Interface Theme'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Dark').last);
       await tester.pumpAndSettle();

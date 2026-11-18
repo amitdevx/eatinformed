@@ -106,7 +106,11 @@ class NovaLabel extends StatelessWidget {
 
 final ValueNotifier<int> _openGlassSheets = ValueNotifier<int>(0);
 
-Future<T?> glassSheet<T>(BuildContext context, {required Widget child}) async {
+Future<T?> glassSheet<T>(
+  BuildContext context, {
+  required Widget child,
+  bool compact = false,
+}) async {
   final level = ++_openGlassSheets.value;
   try {
     return await showModalBottomSheet<T>(
@@ -135,32 +139,55 @@ Future<T?> glassSheet<T>(BuildContext context, {required Widget child}) async {
               padding: EdgeInsets.only(
                 bottom: MediaQuery.viewInsetsOf(context).bottom,
               ),
-              child: DraggableScrollableSheet(
-                expand: false,
-                initialChildSize: .75,
-                minChildSize: .3,
-                maxChildSize: .95,
-                builder: (context, scroll) => SingleChildScrollView(
-                  controller: scroll,
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withValues(alpha: .35),
-                          borderRadius: BorderRadius.circular(2),
+              child: compact
+                  ? SafeArea(
+                      top: false,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface
+                                    .withValues(alpha: .35),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            child,
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      child,
-                    ],
-                  ),
-                ),
-              ),
+                    )
+                  : DraggableScrollableSheet(
+                      expand: false,
+                      initialChildSize: .75,
+                      minChildSize: .3,
+                      maxChildSize: .95,
+                      builder: (context, scroll) => SingleChildScrollView(
+                        controller: scroll,
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface
+                                    .withValues(alpha: .35),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            child,
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),
