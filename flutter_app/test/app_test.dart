@@ -14,6 +14,7 @@ import 'package:eatinformed_mobile/design/tokens.dart';
 import 'package:eatinformed_mobile/features/auth/auth_controller.dart';
 import 'package:eatinformed_mobile/features/auth/auth_repository.dart';
 import 'package:eatinformed_mobile/features/auth/sign_in_screen.dart';
+import 'package:eatinformed_mobile/features/library/guide_screen.dart';
 
 import 'support.dart';
 
@@ -90,6 +91,18 @@ void main() {
     expect(find.text('Strict Allergen Alerts'), findsNothing);
     expect(find.text('Offline Additive Protection'), findsNothing);
     expect(find.text('EatInformed 0.1.0 (42)'), findsOneWidget);
+    await tester.tap(find.text('Allergen preferences'));
+    await tester.pumpAndSettle();
+    expect(find.text('Create or sign in to an account'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Additive dictionary'));
+    await tester.pumpAndSettle();
+    expect(find.byType(GuideScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Profile'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Exit Guest Mode'),
       250,
