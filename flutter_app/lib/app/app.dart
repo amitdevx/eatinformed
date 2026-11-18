@@ -55,8 +55,15 @@ class _EatInformedAppState extends State<EatInformedApp> {
                 child: switch (widget.auth.phase) {
                   AuthPhase.restoring => const Scaffold(
                     body: Center(
-                      child: CircularProgressIndicator(
-                        semanticsLabel: 'Restoring session',
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            semanticsLabel: 'Restoring your session',
+                          ),
+                          SizedBox(height: 16),
+                          Text('Restoring your session...'),
+                        ],
                       ),
                     ),
                   ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
@@ -12,6 +13,7 @@ import 'package:eatinformed_mobile/design/motion/entrance.dart';
 import 'package:eatinformed_mobile/design/tokens.dart';
 import 'package:eatinformed_mobile/features/auth/auth_controller.dart';
 import 'package:eatinformed_mobile/features/auth/auth_repository.dart';
+import 'package:eatinformed_mobile/features/auth/sign_in_screen.dart';
 
 import 'support.dart';
 
@@ -102,6 +104,45 @@ void main() {
     expect(find.text('Test Reader'), findsNothing);
     expect(find.text('Continue as guest'), findsOneWidget);
   });
+  testWidgets(
+    'guest authentication shows its action and blocks duplicate taps',
+    (tester) async {
+      final pending = Completer<http.Response>();
+      var requests = 0;
+      final api = ApiClient(
+        AppConfig(apiOrigin: Uri.parse('https://api.example.test')),
+        client: MockClient((_) {
+          requests++;
+          return pending.future;
+        }),
+      );
+      final auth = AuthController(AuthRepository(api), MemorySessionStore());
+      addTearDown(() {
+        auth.dispose();
+        api.close();
+      });
+      await auth.restore();
+      await tester.pumpWidget(MaterialApp(home: SignInScreen(auth: auth)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue as guest'));
+      await tester.pump();
+      expect(find.text('Starting guest session...'), findsOneWidget);
+      expect(requests, 1);
+      final button = tester.widget<OutlinedButton>(
+        find.ancestor(
+          of: find.text('Starting guest session...'),
+          matching: find.byType(OutlinedButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+      pending.complete(
+        http.Response(jsonEncode(sessionJson(guest: true)), 200),
+      );
+      await tester.pumpAndSettle();
+      expect(auth.session?.isGuest, isTrue);
+      expect(requests, 1);
+    },
+  );
   testWidgets('guest onboarding uses profile, avatar, and review steps', (
     tester,
   ) async {

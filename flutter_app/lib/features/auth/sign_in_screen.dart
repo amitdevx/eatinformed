@@ -17,13 +17,28 @@ class _SignInScreenState extends State<SignInScreen> {
   final _email = TextEditingController(), _password = TextEditingController();
   final _form = GlobalKey<FormState>();
   bool _showEmail = false, _create = false;
+  String? _busyLabel;
+
+  Future<void> _begin(String label, Future<void> Function() action) async {
+    if (widget.auth.busy) return;
+    setState(() => _busyLabel = label);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _busyLabel = null);
+    }
+  }
+
   Future<void> _submit() async {
     if (_form.currentState?.validate() ?? false) {
       FocusScope.of(context).unfocus();
-      await widget.auth.signIn(
-        email: _email.text,
-        password: _password.text,
-        create: _create,
+      await _begin(
+        _create ? 'Creating account...' : 'Signing in...',
+        () => widget.auth.signIn(
+          email: _email.text,
+          password: _password.text,
+          create: _create,
+        ),
       );
     }
   }
@@ -133,7 +148,13 @@ class _SignInScreenState extends State<SignInScreen> {
                         const SizedBox(height: 20),
                         FilledButton(
                           onPressed: widget.auth.busy ? null : _submit,
-                          child: Text(_create ? 'Create Account' : 'Sign in'),
+                          child: Text(
+                            widget.auth.busy && _busyLabel != null
+                                ? _busyLabel!
+                                : _create
+                                ? 'Create Account'
+                                : 'Sign in',
+                          ),
                         ),
                         TextButton(
                           onPressed: widget.auth.busy
@@ -159,9 +180,17 @@ class _SignInScreenState extends State<SignInScreen> {
                       OutlinedButton.icon(
                         onPressed: widget.auth.busy
                             ? null
-                            : () => widget.auth.signIn(google: true),
+                            : () => _begin(
+                                'Waiting for Google sign-in...',
+                                () => widget.auth.signIn(google: true),
+                              ),
                         icon: const Icon(Icons.account_circle_outlined),
-                        label: const Text('Continue with Google'),
+                        label: Text(
+                          widget.auth.busy &&
+                                  _busyLabel?.contains('Google') == true
+                              ? _busyLabel!
+                              : 'Continue with Google',
+                        ),
                       ),
                       if (widget.upgrade)
                         const Text(
@@ -173,16 +202,32 @@ class _SignInScreenState extends State<SignInScreen> {
                           child: OutlinedButton(
                             onPressed: widget.auth.busy
                                 ? null
-                                : () => widget.auth.signIn(),
-                            child: const Text('Continue as guest'),
+                                : () => _begin(
+                                    'Starting guest session...',
+                                    () => widget.auth.signIn(),
+                                  ),
+                            child: Text(
+                              widget.auth.busy &&
+                                      _busyLabel?.contains('guest') == true
+                                  ? _busyLabel!
+                                  : 'Continue as guest',
+                            ),
                           ),
                         ),
                       if (widget.auth.busy)
-                        const Padding(
-                          padding: EdgeInsets.all(20),
+                        Padding(
+                          padding: const EdgeInsets.all(20),
                           child: Center(
-                            child: CircularProgressIndicator(
-                              semanticsLabel: 'Signing in',
+                            child: Semantics(
+                              liveRegion: true,
+                              label: _busyLabel ?? 'Completing sign-in...',
+                              child: const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                             ),
                           ),
                         ),
