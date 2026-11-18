@@ -107,6 +107,25 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onScan;
   final ValueChanged<int> onTab;
   final ValueChanged<ProductResult> onSample;
+
+  Widget _quickLink(IconData icon, String label, VoidCallback onTap) =>
+      Expanded(
+        child: TextButton(
+          onPressed: onTap,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            minimumSize: const Size(48, 56),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18),
+              const SizedBox(height: 5),
+              Text(label, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      );
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: state,
@@ -236,33 +255,22 @@ class HomeScreen extends StatelessWidget {
                           label: const Text('Scan Food Label'),
                         ),
                         const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
+                        Row(
                           children: [
-                            TextButton.icon(
-                              onPressed: () => onTab(1),
-                              icon: const Icon(
-                                PhosphorIconsRegular.clockCounterClockwise,
-                                size: 16,
-                              ),
-                              label: const Text('History'),
+                            _quickLink(
+                              PhosphorIconsRegular.clockCounterClockwise,
+                              'History',
+                              () => onTab(1),
                             ),
-                            TextButton.icon(
-                              onPressed: () => onTab(2),
-                              icon: const Icon(
-                                PhosphorIconsRegular.bookOpen,
-                                size: 16,
-                              ),
-                              label: const Text('NOVA Guide'),
+                            _quickLink(
+                              PhosphorIconsRegular.bookOpen,
+                              'NOVA Guide',
+                              () => onTab(2),
                             ),
-                            TextButton.icon(
-                              onPressed: () => onTab(3),
-                              icon: const Icon(
-                                PhosphorIconsRegular.userCircle,
-                                size: 16,
-                              ),
-                              label: const Text('Account'),
+                            _quickLink(
+                              PhosphorIconsRegular.userCircle,
+                              'Account',
+                              () => onTab(3),
                             ),
                           ],
                         ),
